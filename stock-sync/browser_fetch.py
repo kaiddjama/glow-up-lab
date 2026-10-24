@@ -39,6 +39,7 @@ class BrowserReader:
         self.city = os.environ.get("BROWSER_CITY", "Dubai")
         self.pw = self.ctx = self.page = None
         self.count = 0
+        self.city_picked = False
 
     def start(self):
         from playwright.sync_api import sync_playwright  # imported here: the HTTP-only sync does not need it
@@ -104,6 +105,10 @@ class BrowserReader:
         debug("pop-up buttons:", p.evaluate("""() => [...document.querySelectorAll(
             '.a-popover button, .a-popover input[type=submit], .a-popover .a-button-text, .a-popover a')]
             .map(b => (b.id || '') + ':' + (b.innerText || b.value || '').trim().slice(0, 40)).filter(x => x.length > 1).slice(0, 40)"""))
+        debug("pop-up text:", p.evaluate("() => [...document.querySelectorAll('.a-popover')].map(e => e.innerText.replace(/\\s+/g, ' ').slice(0, 600)).join(' || ')"))
+        debug("pop-up ids:", p.evaluate("() => [...document.querySelectorAll('.a-popover [id]')].map(e => e.id + '<' + e.tagName.toLowerCase() + '.' + (e.className + '').slice(0, 30)).slice(0, 120)"))
+        if self._pick_in_dropdowns():
+            selects = []
         done = False
         for s in selects:
             match = next((o for o in s["options"] if self.city.lower() in o.lower()), None)
@@ -114,7 +119,7 @@ class BrowserReader:
                 p.wait_for_timeout(1500)
                 done = True
                 break
-        if not done:
+        if not done and not self.city_picked:
             raise LocationLost(f"no {self.city} choice found in the Deliver-to pop-up (see BROWSER_DEBUG output)")
         for sel in ("#GLUXConfirmClose", "input[aria-labelledby='GLUXZipUpdate-announce']",
                     ".a-popover-footer button", "button:has-text('Done')", "button:has-text('Apply')",
@@ -131,6 +136,39 @@ class BrowserReader:
         debug("location after change:", self.location_text())
         if not self.location_ok():
             raise LocationLost(f"delivery location is '{self.location_text()}', not {self.city}")
+
+    def _pick_in_dropdowns(self):
+        """Custom (non-native) Amazon dropdowns: open each one that is not the country list, choose the city."""
+        p = self.page
+        for i in range(4):
+            boxes = p.locator(".a-popover span.a-button-dropdown:visible")
+            n = boxes.count()
+            debug("dropdown boxes:", [(boxes.nth(k).get_attribute("id"), boxes.nth(k).inner_text().strip()[:30]) for k in range(n)])
+            progressed = False
+            for k in range(n):
+                box = boxes.nth(k)
+                bid = box.get_attribute("id") or ""
+                if "Country" in bid:
+                    continue
+                box.click()
+                p.wait_for_timeout(1200)
+                items = p.locator("a.a-dropdown-link:visible")
+                texts = [items.nth(j).inner_text().strip() for j in range(min(items.count(), 80))]
+                debug("dropdown", bid, "items:", texts[:40])
+                idx = next((j for j, t in enumerate(texts) if self.city.lower() in t.lower()), None)
+                if idx is None and i > 0:
+                    idx = next((j for j, t in enumerate(texts) if t and t.lower() != "choose"), None)
+                if idx is None:
+                    p.keyboard.press("Escape")
+                    continue
+                items.nth(idx).click()
+                debug("chose", texts[idx])
+                p.wait_for_timeout(1500)
+                self.city_picked = progressed = True
+                break
+            if not progressed:
+                break
+        return self.city_picked
 
     # -- reading ----------------------------------------------------------------------------------------
     def get(self, url):
