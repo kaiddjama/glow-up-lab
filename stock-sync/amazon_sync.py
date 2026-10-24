@@ -385,6 +385,9 @@ def main():
         if blocked_in_a_row >= 5:
             print(f"Amazon is showing CAPTCHAs: stopping after {n} pages, rest left unchanged")
             break
+        if n % 25 == 0:
+            bad = sum(1 for p in pages.values() if p.get("error"))
+            print(f"{n}/{len(asins)} pages read, {bad} not read ({time.strftime('%H:%M:%S')})", flush=True)
         time.sleep(delay + random.uniform(0, delay / 2))
 
     if READER:
