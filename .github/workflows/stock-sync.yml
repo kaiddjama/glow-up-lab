@@ -33,6 +33,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install the browser
+        timeout-minutes: 8
         run: pip install playwright && playwright install --with-deps chromium
       - name: Sync shard ${{ matrix.shard }}
         working-directory: stock-sync
