@@ -79,16 +79,21 @@ def token():
 
 
 def gql(query, variables):
-    req = urllib.request.Request(
-        f"https://{os.environ['SHOPIFY_STORE']}/admin/api/{API}/graphql.json",
-        data=json.dumps({"query": query, "variables": variables}).encode(),
-        headers={"Content-Type": "application/json",
-                 "X-Shopify-Access-Token": token()})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        res = json.load(r)
-    if res.get("errors"):
-        raise RuntimeError(res["errors"])
-    return res["data"]
+    for attempt in range(1, 11):
+        req = urllib.request.Request(
+            f"https://{os.environ['SHOPIFY_STORE']}/admin/api/{API}/graphql.json",
+            data=json.dumps({"query": query, "variables": variables}).encode(),
+            headers={"Content-Type": "application/json",
+                     "X-Shopify-Access-Token": token()})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            res = json.load(r)
+        throttled = any((e.get("extensions") or {}).get("code") == "THROTTLED" for e in res.get("errors") or [])
+        if throttled and attempt < 10:  # several shards share the store's query budget: wait for it to refill
+            time.sleep(min(60, 3 * attempt) + random.uniform(0, 3))
+            continue
+        if res.get("errors"):
+            raise RuntimeError(res["errors"])
+        return res["data"]
 
 
 def load_variants():
