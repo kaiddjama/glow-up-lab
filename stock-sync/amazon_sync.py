@@ -3,8 +3,7 @@
 
 Usage: python3 -I amazon_sync.py results_dir
 Settings come from environment variables (GitHub Actions secrets and variables): SHOPIFY_STORE and
-SHOPIFY_CLIENT_ID / SHOPIFY_CLIENT_SECRET (or SHOPIFY_TOKEN); PRICE_MULT, SHIPPING_AED_PER_KG and AED_TO_FDJ
-(price formula, kept out of the code). Optional: DRY_RUN=1 (read and report only), LIMIT=n, SHARD=i/n, DELAY.
+SHOPIFY_CLIENT_ID / SHOPIFY_CLIENT_SECRET (or SHOPIFY_TOKEN); PRICE_FORMULA (kept out of the code). Optional: DRY_RUN=1 (read and report only), LIMIT=n, SHARD=i/n, DELAY.
 Without credentials the script does nothing and exits cleanly.
 
 For every active variant that has an ASIN (SKU "B0…" / "AMZ-B0…" or a product metafield) it reads the Amazon.ae
@@ -25,10 +24,10 @@ import urllib.parse
 import urllib.request
 
 API = "2025-07"
-PRICE_FIELDS = ("PRICE_MULT", "SHIPPING_AED_PER_KG", "AED_TO_FDJ")  # price formula, set as GitHub Actions variables
-MARGIN_CUSTOMS = float(os.environ.get("PRICE_MULT") or 0)
-SHIPPING_AED_PER_KG = float(os.environ.get("SHIPPING_AED_PER_KG") or 0)
-AED_TO_FDJ = float(os.environ.get("AED_TO_FDJ") or 0)
+try:  # one secret "a,b,c" holds the price formula, so masking hides it as a whole in the logs
+    MARGIN_CUSTOMS, SHIPPING_AED_PER_KG, AED_TO_FDJ = (float(x) for x in os.environ.get("PRICE_FORMULA", "").split(","))
+except ValueError:
+    MARGIN_CUSTOMS = SHIPPING_AED_PER_KG = AED_TO_FDJ = 0.0
 DEFAULT_WEIGHT_G = 200
 MAX_CHANGE = 1.50  # bigger jumps usually mean a misread page or a wrong listing: held for review
 EXTRA_DAYS = 2
@@ -329,8 +328,8 @@ def main():
     if not (os.environ.get("SHOPIFY_STORE") and (os.environ.get("SHOPIFY_TOKEN") or os.environ.get("SHOPIFY_CLIENT_SECRET"))):
         print("No Shopify credentials set: nothing to do.")
         return
-    if not all(MARGIN_CUSTOMS and SHIPPING_AED_PER_KG and AED_TO_FDJ for _ in [0]):
-        sys.exit("Price formula variables are missing: " + ", ".join(PRICE_FIELDS))
+    if not (MARGIN_CUSTOMS and SHIPPING_AED_PER_KG and AED_TO_FDJ):
+        sys.exit("PRICE_FORMULA secret is missing or malformed.")
     outdir = sys.argv[1]
     os.makedirs(outdir, exist_ok=True)
     dry = os.environ.get("DRY_RUN") == "1"
@@ -503,6 +502,12 @@ def main():
     report["republished"] = sorted({r["handle"] for r in rows if r["productId"] in revive})
     path = os.path.join(outdir, f"sync-{now[:13].replace(':', '')}.json")
     json.dump(report, open(path, "w"), indent=1, ensure_ascii=False)
+    reasons = {}
+    for e in report["errors"]:
+        k = str(e.get("error") if isinstance(e, dict) else e)[:40]
+        reasons[k] = reasons.get(k, 0) + 1
+    if reasons:
+        print("Pages not read, by reason:", reasons)
     prices = sum("price" in c for c in report["changes"])
     stock = sum("inventoryPolicy" in c for c in report["changes"])
     print(f"{'DRY RUN: ' if dry else ''}{prices} prices changed, {stock} stock changes, "
