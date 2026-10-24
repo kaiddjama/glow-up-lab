@@ -1,0 +1,30 @@
+name: Amazon.ae browser probe
+# Test only: reads a few Amazon.ae pages with a real headless browser set to Dubai. No secrets, nothing is changed.
+on:
+  workflow_dispatch:
+    inputs:
+      asins:
+        description: "ASINs to read, separated by spaces"
+        type: string
+        default: "B0CR9LFM72 B0DHVLFR2V B0CWS5QP8F B0BGMGWP14 B015PL0HG0 B06XH28C1K B0019LVGPC B07NWMVMT1 B0013G6FSG B001GCU6KA"
+  push:
+    branches: ["claude/project-thread-9xq2at"]
+    paths: [".github/workflows/browser-probe.yml", "stock-sync/browser_fetch.py", "stock-sync/probe_browser.py"]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install playwright && playwright install --with-deps chromium
+      - name: Read pages
+        working-directory: stock-sync
+        env:
+          DELAY: "8"
+          ASINS: ${{ inputs.asins || 'B0CR9LFM72 B0DHVLFR2V B0CWS5QP8F B0BGMGWP14 B015PL0HG0 B06XH28C1K B0019LVGPC B07NWMVMT1 B0013G6FSG B001GCU6KA' }}
+        run: python3 probe_browser.py $ASINS
