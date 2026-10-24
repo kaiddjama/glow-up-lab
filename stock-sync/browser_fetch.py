@@ -111,77 +111,56 @@ class BrowserReader:
         if self.location_ok():
             return
         p.click(LOCATION_LINK)
+        p.wait_for_selector("#GLUXCityWithDistrictCityInput", state="visible", timeout=10000)
+        self._fill_city_and_district()
         p.wait_for_timeout(2500)
-        selects = p.evaluate("""() => [...document.querySelectorAll('select')].map(s => ({id: s.id, name: s.name,
-            visible: !!(s.offsetWidth || s.offsetHeight), options: [...s.options].slice(0, 60).map(o => o.text.trim())}))""")
-        debug("selects in the pop-up:", selects)
-        debug("pop-up buttons:", p.evaluate("""() => [...document.querySelectorAll(
-            '.a-popover button, .a-popover input[type=submit], .a-popover .a-button-text, .a-popover a')]
-            .map(b => (b.id || '') + ':' + (b.innerText || b.value || '').trim().slice(0, 40)).filter(x => x.length > 1).slice(0, 40)"""))
-        debug("pop-up text:", p.evaluate("() => [...document.querySelectorAll('.a-popover')].map(e => e.innerText.replace(/\\s+/g, ' ').slice(0, 600)).join(' || ')"))
-        debug("pop-up ids:", p.evaluate("() => [...document.querySelectorAll('.a-popover [id]')].map(e => e.id + '<' + e.tagName.toLowerCase() + '.' + (e.className + '').slice(0, 30)).slice(0, 120)"))
-        if self._pick_in_dropdowns():
-            selects = []
-        done = False
-        for s in selects:
-            match = next((o for o in s["options"] if self.city.lower() in o.lower()), None)
-            if match and s["visible"]:
-                sel = f"select#{s['id']}" if s["id"] else f"select[name='{s['name']}']"
-                p.select_option(sel, label=match)
-                debug("selected", match, "in", sel)
-                p.wait_for_timeout(1500)
-                done = True
-                break
-        if not done and not self.city_picked:
-            raise LocationLost(f"no {self.city} choice found in the Deliver-to pop-up (see BROWSER_DEBUG output)")
-        for sel in ("#GLUXConfirmClose", "input[aria-labelledby='GLUXZipUpdate-announce']",
-                    ".a-popover-footer button", "button:has-text('Done')", "button:has-text('Apply')",
-                    "span:has-text('Done') >> nth=0"):
+        for sel in ("#GLUXConfirmClose", "input#GLUXConfirmClose", "button:has-text('Continue')"):  # success dialog
             try:
-                p.click(sel, timeout=2500)
+                p.click(sel, timeout=3000)
                 debug("clicked", sel)
                 break
             except Exception:
                 continue
         p.wait_for_timeout(2500)
         p.goto(HOME, wait_until="domcontentloaded")
+        self._clear_gate()
         p.wait_for_timeout(2000)
         debug("location after change:", self.location_text())
         if not self.location_ok():
             raise LocationLost(f"delivery location is '{self.location_text()}', not {self.city}")
 
-    def _pick_in_dropdowns(self):
-        """Custom (non-native) Amazon dropdowns: open each one that is not the country list, choose the city."""
+    def _suggestions(self, list_id):
+        items = self.page.locator(f"#{list_id} li:visible")
+        return items, [items.nth(i).inner_text().strip() for i in range(min(items.count(), 30))]
+
+    def _fill_city_and_district(self):
+        """The pop-up has two autocomplete boxes (city, then district) and an Apply button."""
         p = self.page
-        for i in range(4):
-            boxes = p.locator(".a-popover span.a-button-dropdown:visible")
-            n = boxes.count()
-            debug("dropdown boxes:", [(boxes.nth(k).get_attribute("id"), boxes.nth(k).inner_text().strip()[:30]) for k in range(n)])
-            progressed = False
-            for k in range(n):
-                box = boxes.nth(k)
-                bid = box.get_attribute("id") or ""
-                if "Country" in bid:
-                    continue
-                box.click()
-                p.wait_for_timeout(1200)
-                items = p.locator("a.a-dropdown-link:visible")
-                texts = [items.nth(j).inner_text().strip() for j in range(min(items.count(), 80))]
-                debug("dropdown", bid, "items:", texts[:40])
-                idx = next((j for j, t in enumerate(texts) if self.city.lower() in t.lower()), None)
-                if idx is None and i > 0:
-                    idx = next((j for j, t in enumerate(texts) if t and t.lower() != "choose"), None)
-                if idx is None:
-                    p.keyboard.press("Escape")
-                    continue
-                items.nth(idx).click()
-                debug("chose", texts[idx])
-                p.wait_for_timeout(1500)
-                self.city_picked = progressed = True
-                break
-            if not progressed:
-                break
-        return self.city_picked
+        p.click("#GLUXCityWithDistrictCityInput")
+        p.keyboard.type(self.city, delay=90)
+        p.wait_for_timeout(2000)
+        items, texts = self._suggestions("GLUXCityWithDistrictCityList")
+        debug("city suggestions:", texts)
+        idx = next((i for i, t in enumerate(texts) if self.city.lower() in t.lower()), None)
+        if idx is None:
+            raise LocationLost(f"no {self.city} suggestion in the Deliver-to pop-up: {texts}")
+        items.nth(idx).click()
+        p.wait_for_timeout(1500)
+        district = os.environ.get("BROWSER_DISTRICT", "")
+        box = p.locator("#GLUXCityWithDistrict_DistrictInput")
+        if box.is_visible():
+            box.click()
+            if district:
+                p.keyboard.type(district, delay=90)
+            p.wait_for_timeout(2000)
+            items, texts = self._suggestions("GLUXCityWithDistrict_DistrictList")
+            debug("district suggestions:", texts[:15])
+            if texts:
+                items.nth(0).click()
+                p.wait_for_timeout(1000)
+        debug("pop-up inputs:", p.evaluate("() => [...document.querySelectorAll('#GLUXSpecifyLocationDiv input')].map(i => i.id + '=' + i.value)"))
+        p.click("#GLUXCityWithDistrictApplyButton, #GLUXCityWithDistrictApplyButtonLabel")
+        self.city_picked = True
 
     # -- reading ----------------------------------------------------------------------------------------
     def get(self, url):
