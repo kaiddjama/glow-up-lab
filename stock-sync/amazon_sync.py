@@ -340,7 +340,8 @@ def main():
     rows = load_variants()
     asins = sorted({r["asin"] for r in rows})
     if os.environ.get("LIMIT"):
-        asins = asins[:int(os.environ["LIMIT"])]
+        n_max = int(os.environ["LIMIT"])  # an evenly spread sample, not just the first ASINs
+        asins = asins[::max(1, len(asins) // n_max)][:n_max]
     if os.environ.get("SHARD"):  # "i/n": this process reads only every n-th ASIN, starting at i (parallel runs)
         i, n = (int(x) for x in os.environ["SHARD"].split("/"))
         asins = asins[i::n]
