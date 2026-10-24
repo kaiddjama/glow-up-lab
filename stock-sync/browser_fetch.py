@@ -81,16 +81,29 @@ class BrowserReader:
         return self.city.lower() in self.location_text().lower()
 
     def _captcha(self):
-        html = self.page.content()
-        low = html.lower()
-        return ("validatecaptcha" in low or "not a robot" in low or "enter the characters you see" in low
-                or "api-services-support@amazon" in low) and 'id="productTitle"' not in html
+        """True for a real CAPTCHA (characters to type)."""
+        return self.page.locator("#captchacharacters").count() > 0
+
+    def _clear_gate(self):
+        """Amazon sometimes shows a 'Click the button below to continue shopping' page; a visitor just presses it."""
+        p = self.page
+        for _ in range(2):
+            if self._captcha() or p.locator("form[action*='validateCaptcha']").count() == 0:
+                return
+            debug("continue-shopping page, pressing the button")
+            try:
+                p.click("form[action*='validateCaptcha'] button, form[action*='validateCaptcha'] input[type=submit]", timeout=5000)
+            except Exception:
+                return
+            p.wait_for_load_state("domcontentloaded")
+            p.wait_for_timeout(2500)
 
     def set_location(self):
         """Choose the UAE city in the Deliver-to pop-up. Raises LocationLost when it cannot be confirmed."""
         p = self.page
         p.goto(HOME, wait_until="domcontentloaded")
         p.wait_for_timeout(2500)
+        self._clear_gate()
         debug("home title:", p.title(), "| location:", self.location_text(), "| html size:", len(p.content()))
         if self._captcha():
             debug("page text:", re.sub(r"\s+", " ", p.inner_text("body"))[:300])
@@ -176,6 +189,7 @@ class BrowserReader:
         self.count += 1
         p = self.page
         p.goto(url, wait_until="domcontentloaded")
+        self._clear_gate()
         try:
             p.wait_for_selector("#productTitle, form[action*='validateCaptcha']", timeout=15000)
         except Exception:
