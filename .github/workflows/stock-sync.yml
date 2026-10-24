@@ -1,0 +1,46 @@
+name: Amazon.ae stock and price sync
+# Reads product pages and updates price and stock. All settings are repository secrets and variables.
+# Run it by hand with "Run workflow": dry_run=true reads and reports only.
+on:
+  schedule:
+    - cron: "0 3,15 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Read and report only, change nothing on Shopify"
+        type: boolean
+        default: true
+      limit:
+        description: "Only read the first N Amazon pages (empty = all)"
+        type: string
+        default: ""
+permissions:
+  contents: read
+concurrency:
+  group: stock-sync
+  cancel-in-progress: false
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ["0/3", "1/3", "2/3"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync shard ${{ matrix.shard }}
+        working-directory: stock-sync
+        env:
+          SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          SHARD: ${{ matrix.shard }}
+          PRICE_MULT: ${{ vars.PRICE_MULT }}
+          SHIPPING_AED_PER_KG: ${{ vars.SHIPPING_AED_PER_KG }}
+          AED_TO_FDJ: ${{ vars.AED_TO_FDJ }}
+          SELLER_RULE: "0"
+          DELAY: "8"
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
+          LIMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.limit || '' }}
+        run: python3 -I amazon_sync.py results
