@@ -41,7 +41,7 @@ jobs:
           SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
           SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
           SHARD: ${{ matrix.shard }}
-          PRICE_FORMULA: ${{ secrets.PRICE_FORMULA || (github.event_name == 'workflow_dispatch' && inputs.dry_run && '1,1,1') || '' }}  # dry runs without the secret still read pages (their prices are meaningless)
+          PRICE_FORMULA: ${{ secrets.PRICE_FORMULA || format('{0},{1},{2}', vars.PRICE_MULT, vars.SHIPPING_AED_PER_KG, vars.AED_TO_FDJ) }}  # the secret wins if set; else the repository variables
           FETCHER: browser
           SELLER_RULE: "0"
           DELAY: "8"
