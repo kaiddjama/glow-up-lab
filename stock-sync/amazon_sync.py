@@ -33,6 +33,7 @@ MAX_CHANGE = 1.50  # bigger jumps usually mean a misread page or a wrong listing
 EXTRA_DAYS = 2
 MAX_DAYS = 7  # Amazon.ae or brand store: delivery to Dubai later than this counts as out of stock
 MAX_DAYS_OTHER = 2  # any other seller: kept only if it delivers within 2 days
+STOCK_GUARD = 0.25  # share of read variants that may newly go Épuisé in one run before stock changes are held
 SELLER_GUARD = 0.25  # share of pages read that may newly go Épuisé because of the seller rule in one run
 SELLER_RULE = os.environ.get("SELLER_RULE", "0") == "1"  # off since 22 Oct (seller rule removed); SELLER_RULE=1 switches it back on
 EXEMPT_TAGS = set(os.environ.get(
@@ -397,6 +398,20 @@ def main():
                 "action": ("exempt (accessoire)" if r["exempt"] else
                            "offre officielle trouvée: " + pg["seller"] if pg.get("buyBoxSeller") else
                            "signalé seulement (garde-fou)" if flagged_rule else "Épuisé")})
+    # Safety nets: a page in stock with no delivery date (location not read, partial page) says nothing about
+    # delivery, so the variant keeps its current setting; and if too many variants would newly go Épuisé in
+    # one run, the page reading is probably off (wrong location, blocking): no stock change is made at all.
+    def no_date(p):
+        return bool(p.get("inStock")) and p.get("sourceDays") is None and not p.get("held")
+
+    live = [r for r in rows if not r["parked"] and pages.get(r["asin"]) and not pages[r["asin"]].get("error")]
+    newly_out = [r for r in live if r["policy"] == "CONTINUE" and not no_date(pages[r["asin"]])
+                 and not sellable(pages[r["asin"]], r)]
+    stock_guard = len(live) >= 20 and len(newly_out) > STOCK_GUARD * len(live)
+    report["stockGuardTripped"] = stock_guard
+    report["noDeliveryDate"] = sum(no_date(pages[r["asin"]]) for r in live)
+    if stock_guard:
+        print(f"Stock guard: {len(newly_out)} of {len(live)} variants would newly go Épuisé, no stock change made.")
     # set-aside (draft) products come back as soon as one of their variants is sellable
     revive = {r["productId"] for r in rows if r["parked"] and pages.get(r["asin"])
               and not pages[r["asin"]].get("error") and sellable(pages[r["asin"]], r)}
@@ -416,7 +431,10 @@ def main():
             report["errors"].append({"asin": r["asin"], "handle": r["handle"], "error": page["error"]})
             continue
         upd = {"id": r["variantId"]}
-        new_policy = "CONTINUE" if sellable(page, r) else "DENY"
+        if stock_guard or no_date(page):
+            new_policy = r["policy"]
+        else:
+            new_policy = "CONTINUE" if sellable(page, r) else "DENY"
         if new_policy != r["policy"]:
             upd["inventoryPolicy"] = new_policy
         if page["aed"] is not None and new_policy == "CONTINUE":
@@ -431,7 +449,7 @@ def main():
             report["changes"].append({"handle": r["handle"], "variant": r["variant"], "asin": r["asin"],
                                       "aed": page["aed"], "oldPrice": r["price"], **upd})
             by_product.setdefault(r["productId"], []).append(upd)
-        if new_policy == "CONTINUE":
+        if new_policy == "CONTINUE" and page.get("sourceDays") is not None:
             rng = delivery_range(page)
             if rng != r["range"]:
                 range_fields.append({"ownerId": r["variantId"], "namespace": "supplier", "key": "delivery_range",
@@ -510,6 +528,19 @@ def main():
         print("Pages not read, by reason:", reasons)
     prices = sum("price" in c for c in report["changes"])
     stock = sum("inventoryPolicy" in c for c in report["changes"])
+    days_seen = {}
+    for r in live:
+        d = pages[r["asin"]].get("sourceDays")
+        days_seen[d] = days_seen.get(d, 0) + 1
+    texts = sorted({str(pages[r["asin"]].get("deliveryText"))[:50] for r in live})[:4]
+    buckets = {"under 5%": 0, "5-20%": 0, "over 20%": 0}
+    for c in report["changes"]:
+        if "price" in c and c.get("oldPrice"):
+            d = abs(float(c["price"]) - c["oldPrice"]) / c["oldPrice"]
+            buckets["under 5%" if d < 0.05 else "5-20%" if d < 0.2 else "over 20%"] += 1
+    print("Delivery days read (None = no date):", days_seen, "| examples:", texts)
+    print("Size of the price changes:", buckets)
+    print(f"{report['noDeliveryDate']} pages in stock without a delivery date (stock left as is).")
     print(f"{'DRY RUN: ' if dry else ''}{prices} prices changed, {stock} stock changes, "
           f"{len(report['skipped'])} big changes held for review, {len(report['errors'])} pages not read, "
           f"{len(report['republished'])} set-aside products back online, {len(report['stillParked'])} still set aside, "
