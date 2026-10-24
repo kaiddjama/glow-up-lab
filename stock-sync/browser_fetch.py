@@ -81,16 +81,19 @@ class BrowserReader:
 
     def _captcha(self):
         html = self.page.content()
-        return "captcha" in html.lower() and 'id="productTitle"' not in html
+        low = html.lower()
+        return ("validatecaptcha" in low or "not a robot" in low or "enter the characters you see" in low
+                or "api-services-support@amazon" in low) and 'id="productTitle"' not in html
 
     def set_location(self):
         """Choose the UAE city in the Deliver-to pop-up. Raises LocationLost when it cannot be confirmed."""
         p = self.page
         p.goto(HOME, wait_until="domcontentloaded")
         p.wait_for_timeout(2500)
+        debug("home title:", p.title(), "| location:", self.location_text(), "| html size:", len(p.content()))
         if self._captcha():
+            debug("page text:", re.sub(r"\s+", " ", p.inner_text("body"))[:300])
             raise Captcha("captcha on the home page")
-        debug("home title:", p.title(), "| location:", self.location_text())
         if self.location_ok():
             return
         p.click(LOCATION_LINK)
