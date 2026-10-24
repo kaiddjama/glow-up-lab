@@ -1,0 +1,29 @@
+name: Amazon.ae lookup
+# Read-only: searches Amazon.ae with the Dubai browser and prints price, stock, delivery. No secrets, nothing is changed.
+on:
+  workflow_dispatch:
+    inputs:
+      query:
+        description: "Search words"
+        type: string
+        default: "PanOxyl Acne Creamy Wash 4% Benzoyl Peroxide 170g"
+  push:
+    branches: ["claude/project-thread-kkmxn4"]
+    paths: [".github/workflows/amazon-lookup.yml", "stock-sync/lookup.py"]
+permissions:
+  contents: read
+jobs:
+  lookup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install playwright && playwright install --with-deps chromium
+      - name: Search and read
+        working-directory: stock-sync
+        env:
+          QUERY: ${{ inputs.query || 'PanOxyl Acne Creamy Wash 4% Benzoyl Peroxide 170g' }}
+        run: python3 lookup.py "$QUERY" panoxyl wash
