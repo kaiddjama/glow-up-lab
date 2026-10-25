@@ -1,6 +1,6 @@
 {%- doc -%}
   Aimé Essentials : une rubrique du menu mobile qui s'ouvre en panneau (flèche retour, titre, croix), avec des lignes
-  « photo + nom + + » qui regroupent les rayons (ex. Maquillage : Teint, Joues et éclat, Lèvres, Yeux).
+  « nom + + » qui regroupent les rayons (ex. Maquillage : Teint, Joues et éclat, Lèvres, Yeux).
   Les rayons viennent du menu principal : un rayon absent des groupes s'affiche seul en fin de liste.
 
   @param {object} link - La rubrique du menu (avec ses sous-liens)
@@ -70,8 +70,6 @@
       <ul class="menu-drawer__menu menu-drawer__menu--childlist gul-rubrique" role="list" tabindex="-1">
         <li class="gul-rubrique__item">
           <a href="{{ link.url }}" class="gul-rubrique__row">
-            {%- assign gul_h_tout = link.url | remove: '/collections/' -%}
-            {% render 'gul-vignette', handle: gul_h_tout %}
             <span class="gul-rubrique__label">Tout {{ link.title | downcase | prepend: 'le ' }}</span>
           </a>
         </li>
@@ -82,8 +80,6 @@
           <li class="gul-rubrique__item">
             <details class="gul-rubrique__details">
               <summary class="gul-rubrique__row">
-                {%- assign gul_h_premier = gul_handles | first -%}
-                {% render 'gul-vignette', handle: gul_h_premier %}
                 <span class="gul-rubrique__label">{{ gul_titre }}</span>
                 <span class="gul-rubrique__plus" aria-hidden="true"></span>
               </summary>
@@ -119,7 +115,6 @@
                 class="gul-rubrique__row"
                 {% if sub.current %}aria-current="page"{% endif %}
               >
-                {% render 'gul-vignette', handle: gul_h %}
                 <span class="gul-rubrique__label">{{ sub.title | escape }}</span>
               </a>
             </li>
@@ -144,7 +139,7 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    min-height: 68px;
+    min-height: 52px;
     padding-block: 6px;
     color: inherit;
     text-decoration: none;
@@ -154,14 +149,6 @@
 
   .gul-rubrique__row::-webkit-details-marker {
     display: none;
-  }
-
-  .gul-rubrique__vignette {
-    flex: 0 0 56px;
-    width: 56px;
-    height: 56px;
-    object-fit: contain;
-    mix-blend-mode: multiply; /* le fond blanc des photos se fond dans le fond crème */
   }
 
   .gul-rubrique__label {
@@ -183,7 +170,7 @@
 
   .gul-rubrique__sous {
     margin: 0;
-    padding: 0 0 12px 72px;
+    padding: 0 0 12px 16px;
     list-style: none;
   }
 
