@@ -28,6 +28,13 @@
   assign products_count = results_size
   assign sort_by = results.sort_by | default: results.default_sort_by
   assign filters = filters | default: results.filters
+
+  # Glow Up Lab : sur les pages collection, "En stock" est toujours appliqué (les produits épuisés sont masqués),
+  # donc ce filtre n'est ni affiché ni compté ; il reste dans les formulaires (champ caché).
+  assign gul_stock_default = false
+  if collection.handle != blank and results.terms == blank
+    assign gul_stock_default = true
+  endif
   assign total_active_values = 0
 
   # Calculate facets margin style
@@ -42,6 +49,9 @@
   endcapture
 
   for filter in filters
+    if gul_stock_default and filter.param_name == 'filter.v.availability'
+      continue
+    endif
     case filter.type
       when 'price_range'
         if filter.min_value.value != null or filter.max_value.value != null
@@ -59,6 +69,9 @@
 
   if results.url
     assign results_url = results.url
+    if gul_stock_default
+      assign results_url = results_url | append: '?filter.v.availability=1'
+    endif
   else
     assign terms = results.terms | escape
     assign results_url = '?q=' | append: terms | append: '&options%5Bprefix%5D=last&sort_by=' | append: sort_by
@@ -190,10 +203,12 @@
           class="facets__form"
           ref="facetsForm"
         >
+          {% if gul_stock_default %}<input type="hidden" name="filter.v.availability" value="1">{% endif %}
           {% if should_show_pane %}
             {% render 'filter-remove-buttons',
               filters: filters,
               results_url: results_url,
+              hide_availability: gul_stock_default,
               show_filter_label: block_settings.show_filter_label,
               should_show_clear_all: true
             %}
@@ -203,6 +218,7 @@
 
               {% capture rendered_filters %}
                 {%- for filter in filters -%}
+                  {%- if gul_stock_default and filter.param_name == 'filter.v.availability' -%}{%- continue -%}{%- endif -%}
                   {% case filter.type %}
                     {% when 'price_range' %}
                       {%- liquid
@@ -290,6 +306,10 @@
                   {% endif %}
                 </span>
               </div>
+
+              {% if block_settings.enable_sorting and gul_stock_default %}
+                {% render 'gul-tri-prix', sort_by: sort_by, results_url: results_url, position: 'desktop' %}
+              {% endif %}
 
               {% if block_settings.enable_sorting %}
                 {% render 'sorting',
@@ -401,6 +421,9 @@
       {% endif %}
     </div>
   </div>
+  {% if block_settings.enable_sorting and gul_stock_default %}
+    {% render 'gul-tri-prix', sort_by: sort_by, results_url: results_url, position: 'mobile' %}
+  {% endif %}
 {% else %}
   <div></div>
 {% endif %}
@@ -434,6 +457,7 @@
           class="facets__form"
           ref="facetsForm"
         >
+          {% if gul_stock_default %}<input type="hidden" name="filter.v.availability" value="1">{% endif %}
           {% capture filter_bubble_html %}
             <span
               class="theme-drawer__badge"
@@ -464,6 +488,7 @@
               {% render 'filter-remove-buttons',
                 filters: filters,
                 results_url: results_url,
+                hide_availability: gul_stock_default,
                 show_filter_label: block_settings.show_filter_label,
                 should_show_clear_all: false
               %}
@@ -473,6 +498,7 @@
                 {% assign is_active = false %}
 
                 {%- for filter in filters -%}
+                  {%- if gul_stock_default and filter.param_name == 'filter.v.availability' -%}{%- continue -%}{%- endif -%}
                   {% case filter.type %}
                     {% when 'price_range' %}
                       {%- liquid
