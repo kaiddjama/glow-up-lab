@@ -70,7 +70,8 @@
       <ul class="menu-drawer__menu menu-drawer__menu--childlist gul-rubrique" role="list" tabindex="-1">
         <li class="gul-rubrique__item">
           <a href="{{ link.url }}" class="gul-rubrique__row">
-            {% render 'gul-vignette', handle: link.url | remove: '/collections/' %}
+            {%- assign gul_h_tout = link.url | remove: '/collections/' -%}
+            {% render 'gul-vignette', handle: gul_h_tout %}
             <span class="gul-rubrique__label">Tout {{ link.title | downcase | prepend: 'le ' }}</span>
           </a>
         </li>
@@ -81,7 +82,8 @@
           <li class="gul-rubrique__item">
             <details class="gul-rubrique__details">
               <summary class="gul-rubrique__row">
-                {% render 'gul-vignette', handle: gul_handles.first %}
+                {%- assign gul_h_premier = gul_handles | first -%}
+                {% render 'gul-vignette', handle: gul_h_premier %}
                 <span class="gul-rubrique__label">{{ gul_titre }}</span>
                 <span class="gul-rubrique__plus" aria-hidden="true"></span>
               </summary>
