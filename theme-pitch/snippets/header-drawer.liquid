@@ -117,11 +117,10 @@
               >
                 {% if link.url == '/collections/maquillage' and link.links != blank %}
                   {%- comment -%}
-                    Glow Up Lab : Maquillage s'ouvre en panneau avec des lignes « photo + nom + + » (voir gul-drawer-rubrique).
+                    Glow Up Lab : Maquillage : accordéon « + » dont les rayons sont regroupés en sous-accordéons (voir gul-drawer-rubrique).
                   {%- endcomment -%}
                   {% render 'gul-drawer-rubrique',
                     link: link,
-                    animation_index: animation_index,
                     groupes: 'Teint|maquillage-fonds-de-teint,maquillage-anticernes,maquillage-poudres,maquillage-sprays-fixateurs;Joues et éclat|maquillage-blush,maquillage-bronzer-eclat;Lèvres|maquillage-rouges-levres,maquillage-gloss-levres;Yeux|maquillage-palettes,maquillage-mascaras,maquillage-eyeliners-sourcils'
                   %}
                 {% elsif block_settings.drawer_accordion and link.links != blank %}
