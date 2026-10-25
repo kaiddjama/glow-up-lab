@@ -559,6 +559,8 @@ def main():
         if "price" in c and c.get("oldPrice"):
             d = abs(float(c["price"]) - c["oldPrice"]) / c["oldPrice"]
             buckets["under 5%" if d < 0.05 else "5-20%" if d < 0.2 else "over 20%"] += 1
+    to_out = sum(c.get("inventoryPolicy") == "DENY" for c in report["changes"])
+    print(f"Stock changes: {to_out} would go Épuisé, {stock - to_out} back on sale.")
     print("Delivery days read (None = no date):", days_seen, "| examples:", texts)
     print("Size of the price changes:", buckets)
     print(f"{report['noDeliveryDate']} pages in stock without a delivery date (stock left as is).")
