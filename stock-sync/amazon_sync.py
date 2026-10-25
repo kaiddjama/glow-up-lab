@@ -33,6 +33,7 @@ MAX_CHANGE = 1.50  # bigger jumps usually mean a misread page or a wrong listing
 EXTRA_DAYS = 2
 MAX_DAYS = 7  # Amazon.ae or brand store: delivery to Dubai later than this counts as out of stock
 MAX_DAYS_OTHER = 2  # any other seller: kept only if it delivers within 2 days
+PRICES_ONLY = os.environ.get("PRICES_ONLY") == "1"  # update prices only: no stock, set-aside or delivery-range change
 STOCK_GUARD = 0.25  # share of read variants that may newly go Épuisé in one run before stock changes are held
 SELLER_GUARD = 0.25  # share of pages read that may newly go Épuisé because of the seller rule in one run
 SELLER_RULE = os.environ.get("SELLER_RULE", "0") == "1"  # off since 22 Oct (seller rule removed); SELLER_RULE=1 switches it back on
@@ -434,7 +435,7 @@ def main():
     if stock_guard:
         print(f"Stock guard: {len(newly_out)} of {len(live)} variants would newly go Épuisé, no stock change made.")
     # set-aside (draft) products come back as soon as one of their variants is sellable
-    revive = {r["productId"] for r in rows if r["parked"] and pages.get(r["asin"])
+    revive = {r["productId"] for r in rows if r["parked"] and pages.get(r["asin"]) and not PRICES_ONLY
               and not pages[r["asin"]].get("error") and sellable(pages[r["asin"]], r)}
     for r in rows:
         page = pages.get(r["asin"])
@@ -452,13 +453,13 @@ def main():
             report["errors"].append({"asin": r["asin"], "handle": r["handle"], "error": page["error"]})
             continue
         upd = {"id": r["variantId"]}
-        if stock_guard or no_date(page):
+        if PRICES_ONLY or stock_guard or no_date(page):
             new_policy = r["policy"]
         else:
             new_policy = "CONTINUE" if sellable(page, r) else "DENY"
         if new_policy != r["policy"]:
             upd["inventoryPolicy"] = new_policy
-        if page["aed"] is not None and new_policy == "CONTINUE":
+        if page["aed"] is not None and new_policy == "CONTINUE" and (page["inStock"] or not PRICES_ONLY):
             new = formula(page["aed"], r["grams"])
             if r["parked"] or abs(new - r["price"]) >= 50:  # a republished product always gets a fresh price
                 if r["price"] and abs(new - r["price"]) / r["price"] > MAX_CHANGE:
@@ -470,7 +471,7 @@ def main():
             report["changes"].append({"handle": r["handle"], "variant": r["variant"], "asin": r["asin"],
                                       "aed": page["aed"], "oldPrice": r["price"], **upd})
             by_product.setdefault(r["productId"], []).append(upd)
-        if new_policy == "CONTINUE" and page.get("sourceDays") is not None:
+        if new_policy == "CONTINUE" and page.get("sourceDays") is not None and not PRICES_ONLY:
             rng = delivery_range(page)
             if rng != r["range"]:
                 range_fields.append({"ownerId": r["variantId"], "namespace": "supplier", "key": "delivery_range",

@@ -10,6 +10,10 @@ on:
         description: "Read and report only, change nothing on Shopify"
         type: boolean
         default: true
+      prices_only:
+        description: "Update prices only: no stock, set-aside or delivery-label change"
+        type: boolean
+        default: false
       limit:
         description: "Only read the first N Amazon pages (empty = all)"
         type: string
@@ -44,6 +48,7 @@ jobs:
           SHARD: ${{ matrix.shard }}
           PRICE_FORMULA: ${{ secrets.PRICE_FORMULA || format('{0},{1},{2}', vars.PRICE_MULT, vars.SHIPPING_AED_PER_KG, vars.AED_TO_FDJ) }}  # the secret wins if set; else the repository variables
           FETCHER: browser
+          PRICES_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.prices_only && '1' || '0' }}
           SELLER_RULE: "0"
           DELAY: "8"
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
