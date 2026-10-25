@@ -48,5 +48,20 @@
     .menu-list__list-item:not([slot]) .menu-list__disclosure:hover {
       opacity: 0.7;
     }
+
+    /* Sous-rayons en colonnes (au lieu d'une longue liste) : plus aéré, moins haut. */
+    .menu-list__list-item:not([slot]) .mega-menu__list {
+      display: block;
+    }
+
+    .menu-list__list-item:not([slot]) .mega-menu__column {
+      width: 100%;
+      columns: 220px 4;
+      column-gap: var(--gap-3xl, 48px);
+    }
+
+    .menu-list__list-item:not([slot]) .mega-menu__column > div {
+      break-inside: avoid;
+    }
   }
 {% endstylesheet %}
