@@ -1,0 +1,52 @@
+{%- comment -%}
+  Aimé Essentials : menu du haut (ordinateur). Chaque rubrique qui a des sous-rayons porte un « + ».
+  Un clic sur le « + » ouvre la liste dessous (le « + » devient « − »), un second clic la referme.
+  Le nom de la rubrique reste un lien vers la page de la rubrique. Un clic ailleurs referme la liste.
+{%- endcomment -%}
+<script>
+  (() => {
+    document.addEventListener('click', (event) => {
+      const ouvert = document.querySelector('.menu-list__disclosure[aria-expanded="true"]');
+      if (!ouvert) return;
+      const element = ouvert.closest('.menu-list__list-item');
+      if (element && element.contains(event.target)) return;
+      ouvert.click();
+    });
+  })();
+</script>
+
+{% stylesheet %}
+  @media screen and (min-width: 750px) {
+    /* Le bouton du thème est caché tant qu'on ne le focalise pas : on le montre toujours, à droite du nom. */
+    .menu-list__list-item:not([slot]) .menu-list__disclosure {
+      position: static;
+      transform: none;
+      opacity: 1;
+      pointer-events: auto;
+      margin-inline-start: calc(var(--gap-sm) * -1 + 2px);
+      margin-inline-end: var(--gap-xs);
+      padding: var(--padding-sm) var(--padding-3xs);
+      min-width: 20px;
+    }
+
+    .menu-list__list-item:not([slot]) .menu-list__disclosure-icon {
+      display: none;
+    }
+
+    .menu-list__list-item:not([slot]) .menu-list__disclosure::before {
+      content: '+';
+      font-size: 1.125rem;
+      font-weight: 300;
+      line-height: 1;
+      color: currentColor;
+    }
+
+    .menu-list__list-item:not([slot]) .menu-list__disclosure[aria-expanded='true']::before {
+      content: '\2212';
+    }
+
+    .menu-list__list-item:not([slot]) .menu-list__disclosure:hover {
+      opacity: 0.7;
+    }
+  }
+{% endstylesheet %}

@@ -97,8 +97,11 @@
         <li
           class="menu-list__list-item"
           on:blur="/deactivate"
+          {%- comment %} Glow Up Lab : les rubriques avec sous-rayons s'ouvrent au clic sur « + », pas au survol. {% endcomment %}
+          {%- if link.links == blank %}
           on:pointerenter="/activate"
           on:pointerleave="/deactivate"
+          {%- endif %}
         >
           {%- if link.links != blank -%}
             <span class="menu-list__trigger">
