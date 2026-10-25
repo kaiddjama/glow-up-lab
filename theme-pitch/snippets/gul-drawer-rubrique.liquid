@@ -132,7 +132,7 @@
 
 {% stylesheet %}
   .gul-rubrique {
-    padding-block: var(--padding-xs, 8px) var(--padding-xl, 32px);
+    padding: var(--padding-xs, 8px) 20px var(--padding-xl, 32px);
   }
 
   .gul-rubrique__item {
@@ -161,6 +161,7 @@
     width: 56px;
     height: 56px;
     object-fit: contain;
+    mix-blend-mode: multiply; /* le fond blanc des photos se fond dans le fond crème */
   }
 
   .gul-rubrique__label {
