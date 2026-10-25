@@ -47,6 +47,8 @@
       const url = new URL(window.location.href);
       const tri = bouton.dataset.gulTri;
       url.searchParams.delete('page');
+      // les épuisés sont masqués : Shopify doit appliquer « En stock » avant de découper en pages
+      url.searchParams.set('filter.v.availability', '1');
       if (url.searchParams.get('sort_by') === tri) {
         url.searchParams.delete('sort_by');
       } else {
