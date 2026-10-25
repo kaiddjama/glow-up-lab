@@ -108,7 +108,9 @@
         {%- for sub in link.links -%}
           {%- assign gul_h = sub.url | remove: '/collections/' -%}
           {%- assign gul_cle = ',' | append: gul_h | append: ',' -%}
-          {%- if sub.url != link.url and gul_deja contains gul_cle == false -%}
+          {%- assign gul_groupe_deja = false -%}
+          {%- if gul_deja contains gul_cle -%}{%- assign gul_groupe_deja = true -%}{%- endif -%}
+          {%- if sub.url != link.url and gul_groupe_deja == false -%}
             <li class="gul-rubrique__item">
               <a
                 href="{{ sub.url }}"
