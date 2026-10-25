@@ -1,0 +1,196 @@
+{%- doc -%}
+  Aimé Essentials : une rubrique du menu mobile qui s'ouvre en panneau (flèche retour, titre, croix), avec des lignes
+  « photo + nom + + » qui regroupent les rayons (ex. Maquillage : Teint, Joues et éclat, Lèvres, Yeux).
+  Les rayons viennent du menu principal : un rayon absent des groupes s'affiche seul en fin de liste.
+
+  @param {object} link - La rubrique du menu (avec ses sous-liens)
+  @param {number} animation_index - Rang de la rubrique, pour l'animation
+  @param {string} groupes - Groupes : « Titre|handle,handle;Titre|handle,handle »
+{%- enddoc -%}
+{%- liquid
+  assign gul_groupes = groupes | split: ';'
+  assign gul_deja = ','
+  for gul_groupe in gul_groupes
+    assign gul_h = gul_groupe | split: '|' | last
+    assign gul_deja = gul_deja | append: gul_h | append: ','
+  endfor
+-%}
+<details
+  id="Details-menu-drawer-menu-item-{{ link.handle }}"
+  class="menu-drawer__menu-container"
+>
+  <summary
+    id="HeaderDrawer-{{ link.handle }}"
+    class="menu-drawer__menu-item menu-drawer__menu-item--mainlist menu-drawer__animated-element"
+    on:click="header-drawer/open/submenu"
+  >
+    <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
+    <span class="svg-wrapper icon-caret icon-caret--forward">
+      {{- 'icon-caret.svg' | inline_asset_content -}}
+    </span>
+  </summary>
+  <div
+    id="link-{{ link.handle | escape }}"
+    class="menu-drawer__submenu has-submenu"
+    tabindex="-1"
+    style="--menu-drawer-animation-index: {{ animation_index }};"
+  >
+    <div class="menu-drawer__inner-submenu">
+      <div class="menu-drawer__nav-buttons menu-drawer__nav-buttons--with-title">
+        <button
+          class="button menu-drawer__back-button focus-inset"
+          on:click="header-drawer/back"
+          aria-label="{{ 'actions.back_to_main_menu' | t }}"
+        >
+          <span class="svg-wrapper icon-caret icon-caret--backward">
+            {{- 'icon-caret.svg' | inline_asset_content -}}
+          </span>
+        </button>
+        <a
+          href="{{ link.url }}"
+          class="menu-drawer__title focus-inset"
+          {% if link.current %}
+            aria-current="page"
+          {% endif %}
+        >
+          <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
+        </a>
+        <button
+          class="button button-unstyled close-button menu-drawer__close-button focus-inset"
+          type="button"
+          aria-label="{{ 'actions.close' | t }}"
+          on:click="header-drawer/close"
+        >
+          <span class="svg-wrapper header-drawer-icon header-drawer-icon--close">
+            {{- 'icon-close-menu.svg' | inline_asset_content -}}
+          </span>
+        </button>
+      </div>
+
+      <ul class="menu-drawer__menu menu-drawer__menu--childlist gul-rubrique" role="list" tabindex="-1">
+        <li class="gul-rubrique__item">
+          <a href="{{ link.url }}" class="gul-rubrique__row">
+            {% render 'gul-vignette', handle: link.url | remove: '/collections/' %}
+            <span class="gul-rubrique__label">Tout {{ link.title | downcase | prepend: 'le ' }}</span>
+          </a>
+        </li>
+
+        {%- for gul_groupe in gul_groupes -%}
+          {%- assign gul_titre = gul_groupe | split: '|' | first -%}
+          {%- assign gul_handles = gul_groupe | split: '|' | last | split: ',' -%}
+          <li class="gul-rubrique__item">
+            <details class="gul-rubrique__details">
+              <summary class="gul-rubrique__row">
+                {% render 'gul-vignette', handle: gul_handles.first %}
+                <span class="gul-rubrique__label">{{ gul_titre }}</span>
+                <span class="gul-rubrique__plus" aria-hidden="true"></span>
+              </summary>
+              <ul class="gul-rubrique__sous" role="list">
+                {%- for gul_h in gul_handles -%}
+                  {%- assign gul_url = '/collections/' | append: gul_h -%}
+                  {%- for sub in link.links -%}
+                    {%- if sub.url == gul_url -%}
+                      <li>
+                        <a
+                          href="{{ sub.url }}"
+                          class="gul-rubrique__sous-lien{% if sub.current %} gul-rubrique__sous-lien--actif{% endif %}"
+                          {% if sub.current %}aria-current="page"{% endif %}
+                        >{{ sub.title | escape }}</a>
+                      </li>
+                    {%- endif -%}
+                  {%- endfor -%}
+                {%- endfor -%}
+              </ul>
+            </details>
+          </li>
+        {%- endfor -%}
+
+        {%- for sub in link.links -%}
+          {%- assign gul_h = sub.url | remove: '/collections/' -%}
+          {%- assign gul_cle = ',' | append: gul_h | append: ',' -%}
+          {%- if sub.url != link.url and gul_deja contains gul_cle == false -%}
+            <li class="gul-rubrique__item">
+              <a
+                href="{{ sub.url }}"
+                class="gul-rubrique__row"
+                {% if sub.current %}aria-current="page"{% endif %}
+              >
+                {% render 'gul-vignette', handle: gul_h %}
+                <span class="gul-rubrique__label">{{ sub.title | escape }}</span>
+              </a>
+            </li>
+          {%- endif -%}
+        {%- endfor -%}
+      </ul>
+    </div>
+  </div>
+</details>
+
+{% stylesheet %}
+  .gul-rubrique {
+    padding-block: var(--padding-xs, 8px) var(--padding-xl, 32px);
+  }
+
+  .gul-rubrique__item {
+    border-bottom: 1px solid #e8dccb;
+    list-style: none;
+  }
+
+  .gul-rubrique__row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 68px;
+    padding-block: 6px;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .gul-rubrique__row::-webkit-details-marker {
+    display: none;
+  }
+
+  .gul-rubrique__vignette {
+    flex: 0 0 56px;
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+  }
+
+  .gul-rubrique__label {
+    flex: 1 1 auto;
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+
+  .gul-rubrique__plus::before {
+    content: '+';
+    font-size: 1.5rem;
+    font-weight: 300;
+    line-height: 1;
+  }
+
+  .gul-rubrique__details[open] .gul-rubrique__plus::before {
+    content: '\2212';
+  }
+
+  .gul-rubrique__sous {
+    margin: 0;
+    padding: 0 0 12px 72px;
+    list-style: none;
+  }
+
+  .gul-rubrique__sous-lien {
+    display: block;
+    padding-block: 9px;
+    font-size: 0.9375rem;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .gul-rubrique__sous-lien--actif {
+    font-weight: 500;
+  }
+{% endstylesheet %}
