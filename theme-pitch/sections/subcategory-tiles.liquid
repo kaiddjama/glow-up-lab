@@ -1,0 +1,286 @@
+{%- comment -%}
+  Sous-catégories : lit le menu choisi (Menu principal par défaut).
+  Page d'une catégorie (lien de premier niveau avec sous-liens) : tuiles illustrées de ses sous-catégories.
+  Page d'une sous-catégorie : rangée de pastilles vers les autres sous-catégories de la même catégorie.
+  L'image d'une tuile est l'image de la collection, sinon la photo du premier produit.
+{%- endcomment -%}
+{%- liquid
+  assign menu_handle = section.settings.menu | default: 'main-menu'
+  assign top_links = linklists[menu_handle].links
+  assign parent_link = nil
+  assign mode = ''
+
+  for link in top_links
+    if link.links.size > 0 and link.type == 'collection_link' and link.object.id == collection.id
+      assign parent_link = link
+      assign mode = 'tiles'
+      break
+    endif
+  endfor
+
+  if mode == ''
+    for link in top_links
+      for child in link.links
+        if child.type == 'collection_link' and child.object.id == collection.id and child.object.id != link.object.id
+          assign parent_link = link
+          assign mode = 'chips'
+        endif
+      endfor
+      if mode != ''
+        break
+      endif
+    endfor
+  endif
+-%}
+
+{%- if mode != '' -%}
+  <nav
+    class="subcats subcats--{{ mode }}"
+    aria-label="{{ parent_link.title | escape }}"
+    style="--subcats-pt: {{ section.settings.padding_top }}px; --subcats-pb: {{ section.settings.padding_bottom }}px;"
+  >
+    <div class="subcats__inner">
+      {%- if mode == 'tiles' -%}
+        {%- if section.settings.heading != blank -%}
+          <p class="subcats__heading">{{ section.settings.heading }}</p>
+        {%- endif -%}
+        {%- assign tile_shown = 0 -%}
+        <ul class="subcats__tiles" role="list">
+          {%- for child in parent_link.links -%}
+            {%- if child.type != 'collection_link' or child.object.id == collection.id -%}
+              {%- continue -%}
+            {%- endif -%}
+            {%- assign sub = child.object -%}
+            {%- assign tile_image = sub.image | default: sub.products.first.featured_image -%}
+            {%- liquid
+              assign tile_loading = 'lazy'
+              if tile_shown == 0
+                assign tile_loading = 'eager'
+              endif
+              assign tile_shown = tile_shown | plus: 1
+            -%}
+            <li class="subcats__tile">
+              <a href="{{ child.url }}" class="subcats__link">
+                <span class="subcats__media">
+                  {%- if tile_image -%}
+                    {{
+                      tile_image
+                      | image_url: width: 800
+                      | image_tag:
+                        widths: '200, 300, 400, 600, 800',
+                        sizes: 'auto, (min-width: 990px) 20vw, (min-width: 750px) 28vw, 42vw',
+                        loading: tile_loading,
+                        alt: child.title
+                    }}
+                  {%- endif -%}
+                </span>
+                <span class="subcats__title">{{ child.title }}</span>
+                <span class="subcats__count">
+                  {{- sub.products_count }}
+                  {% if sub.products_count > 1 %}produits{% else %}produit{% endif -%}
+                </span>
+              </a>
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- else -%}
+        <ul class="subcats__chips" role="list">
+          {%- for child in parent_link.links -%}
+            {%- if child.type != 'collection_link' -%}{%- continue -%}{%- endif -%}
+            {%- assign is_current = false -%}
+            {%- if child.object.id == collection.id -%}{%- assign is_current = true -%}{%- endif -%}
+            <li>
+              <a
+                href="{{ child.url }}"
+                class="subcats__chip{% if is_current %} is-current{% endif %}"
+                {% if is_current %}
+                  aria-current="page"
+                {% endif %}
+              >
+                {%- if child.object.id == parent_link.object.id -%}
+                  {% if request.locale.iso_code == 'en' %}All {% else %}Tout {% endif %}{{ parent_link.title }}
+                {%- else -%}
+                  {{- child.title -}}
+                {%- endif -%}
+              </a>
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+    </div>
+  </nav>
+{%- endif -%}
+
+{% stylesheet %}
+  .subcats {
+    padding-block: var(--subcats-pt, 32px) var(--subcats-pb, 8px);
+  }
+  .subcats__inner {
+    width: min(100% - 32px, var(--page-width, 1400px));
+    margin-inline: auto;
+  }
+  .subcats__heading {
+    margin: 0 0 16px;
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #7b7665;
+  }
+  .subcats__tiles {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 42%;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  .subcats__tiles::-webkit-scrollbar {
+    display: none;
+  }
+  @media screen and (min-width: 750px) {
+    .subcats__tiles {
+      grid-auto-columns: 28%;
+      gap: 16px;
+    }
+  }
+  @media screen and (min-width: 990px) {
+    .subcats__tiles {
+      grid-auto-flow: row;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      overflow: visible;
+      gap: 20px;
+    }
+  }
+  .subcats__tile {
+    scroll-snap-align: start;
+    min-width: 0;
+  }
+  .subcats__link {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: inherit;
+    text-decoration: none;
+  }
+  .subcats__media {
+    display: block;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    background: #efe6da;
+    margin-bottom: 8px;
+  }
+  .subcats__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.5s ease;
+  }
+  .subcats__link:hover .subcats__media img {
+    transform: scale(1.04);
+  }
+  .subcats__title {
+    font-size: 0.95rem;
+    line-height: 1.25;
+  }
+  .subcats__link:hover .subcats__title {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .subcats__count {
+    font-size: 0.75rem;
+    color: #7b7665;
+  }
+  .subcats--chips {
+    padding-block: 20px 0;
+  }
+  .subcats__chips {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 4px;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .subcats__chips::-webkit-scrollbar {
+    display: none;
+  }
+  @media screen and (min-width: 990px) {
+    .subcats__chips {
+      flex-wrap: wrap;
+      overflow: visible;
+    }
+  }
+  .subcats__chip {
+    display: inline-block;
+    white-space: nowrap;
+    padding: 8px 16px;
+    border: 1px solid rgb(var(--color-foreground-rgb, 0 0 0) / 0.18);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    color: inherit;
+    text-decoration: none;
+  }
+  .subcats__chip:hover {
+    border-color: currentColor;
+  }
+  .subcats__chip.is-current {
+    background: #2b2420;
+    border-color: #2b2420;
+    color: #fff;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Sous-catégories",
+  "enabled_on": {
+    "templates": ["collection"]
+  },
+  "settings": [
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Menu",
+      "default": "main-menu"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Titre au-dessus des tuiles",
+      "default": "Explorer par catégorie"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "t:settings.top_padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 32
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "t:settings.bottom_padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 8
+    }
+  ],
+  "presets": [
+    {
+      "name": "Sous-catégories"
+    }
+  ]
+}
+{% endschema %}

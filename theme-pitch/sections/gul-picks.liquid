@@ -1,0 +1,260 @@
+{%- comment -%}
+  Glow Up Lab : sélection de produits.
+  related (fiche produit) : même rayon (tag rayon:<handle de la collection>, puis rubrique cat:), best-sellers d'abord, disponibles seulement.
+  Puis, sous le même mode, un second bloc « Pour compléter » : un best-seller de chaque rayon complémentaire (table comp_map : rayon=rayon1,rayon2,...).
+  manual (accueil) : produits de la collection filtrés par un tag (ex. cat:maquillage), disponibles seulement.
+  Tags : best-seller (best-sellers), incontournable (sélection du haut de l'accueil).
+  Les boucles sont paginées par 250 : sans cela Shopify ne lit que les 50 premiers produits d'une collection.
+{%- endcomment -%}
+{%- liquid
+  assign max_items = section.settings.max_products
+  assign count = 0
+  assign seen = '|'
+  assign mode = section.settings.mode
+  assign link_url = section.settings.link
+  assign link_label = section.settings.button_label
+  assign sub_col = null
+  assign par_col = null
+  assign comp_handles = ''
+  assign comp_max = 0
+  assign comp_count = 0
+  if mode == 'related'
+    assign comp_map = 'maquillage-fonds-de-teint=maquillage-sprays-fixateurs,maquillage-poudres,maquillage-pinceaux-eponges,maquillage-anticernes|maquillage-anticernes=maquillage-fonds-de-teint,maquillage-poudres,maquillage-sprays-fixateurs,maquillage-pinceaux-eponges|maquillage-poudres=maquillage-fonds-de-teint,maquillage-sprays-fixateurs,maquillage-pinceaux-eponges,maquillage-blush|maquillage-sprays-fixateurs=maquillage-fonds-de-teint,maquillage-poudres,maquillage-anticernes,maquillage-pinceaux-eponges|maquillage-mascaras=maquillage-eyeliners-sourcils,maquillage-palettes,maquillage-anticernes,maquillage-rouges-levres|maquillage-eyeliners-sourcils=maquillage-mascaras,maquillage-palettes,maquillage-anticernes,maquillage-rouges-levres|maquillage-palettes=maquillage-mascaras,maquillage-eyeliners-sourcils,maquillage-pinceaux-eponges,maquillage-sprays-fixateurs|maquillage-rouges-levres=maquillage-gloss-levres,maquillage-blush,maquillage-mascaras,maquillage-fonds-de-teint|maquillage-gloss-levres=maquillage-rouges-levres,maquillage-blush,maquillage-mascaras,maquillage-bronzer-eclat|maquillage-blush=maquillage-bronzer-eclat,maquillage-poudres,maquillage-pinceaux-eponges,maquillage-rouges-levres|maquillage-bronzer-eclat=maquillage-blush,maquillage-poudres,maquillage-pinceaux-eponges,maquillage-gloss-levres|maquillage-pinceaux-eponges=maquillage-fonds-de-teint,maquillage-poudres,maquillage-blush,maquillage-palettes|k-beaute-nettoyants=k-beaute-toners,k-beaute-serums-ampoules,k-beaute-cremes,k-beaute-solaires|k-beaute-toners=k-beaute-serums-ampoules,k-beaute-cremes,k-beaute-masques,k-beaute-nettoyants|k-beaute-serums-ampoules=k-beaute-cremes,k-beaute-yeux-patchs,k-beaute-solaires,k-beaute-toners|k-beaute-yeux-patchs=k-beaute-serums-ampoules,k-beaute-cremes,k-beaute-masques,k-beaute-solaires|k-beaute-cremes=k-beaute-solaires,k-beaute-serums-ampoules,k-beaute-masques,k-beaute-yeux-patchs|k-beaute-masques=k-beaute-toners,k-beaute-serums-ampoules,k-beaute-cremes,k-beaute-nettoyants|k-beaute-solaires=k-beaute-nettoyants,k-beaute-cremes,k-beaute-serums-ampoules,k-beaute-corps|k-beaute-corps=k-beaute-solaires,k-beaute-cremes,k-beaute-masques|cheveux-shampoings=cheveux-apres-shampoings,cheveux-masques,cheveux-soins-sans-rincage,cheveux-huiles|cheveux-apres-shampoings=cheveux-shampoings,cheveux-masques,cheveux-soins-sans-rincage,cheveux-huiles|cheveux-masques=cheveux-shampoings,cheveux-apres-shampoings,cheveux-huiles,cheveux-soins-sans-rincage|cheveux-soins-sans-rincage=cheveux-shampoings,cheveux-apres-shampoings,cheveux-huiles,cheveux-accessoires|cheveux-anti-chute=cheveux-shampoings,cheveux-huiles-naturelles,cheveux-masques,cheveux-accessoires|cheveux-huiles=cheveux-soins-sans-rincage,cheveux-masques,cheveux-accessoires,cheveux-gels-coiffants|cheveux-huiles-naturelles=cheveux-poudres-naturelles,cheveux-anti-chute,cheveux-masques,cheveux-huiles|cheveux-poudres-naturelles=cheveux-huiles-naturelles,cheveux-anti-chute,cheveux-shampoings,cheveux-masques|cheveux-boucles=cheveux-gels-coiffants,cheveux-shampoings,cheveux-masques,cheveux-accessoires|cheveux-gels-coiffants=cheveux-boucles,cheveux-accessoires,cheveux-huiles,cheveux-soins-sans-rincage|cheveux-accessoires=cheveux-soins-sans-rincage,cheveux-gels-coiffants,cheveux-shampoings,cheveux-boucles|parapharmacie-nettoyants=parapharmacie-serums,parapharmacie-cremes-visage,parapharmacie-solaires|parapharmacie-serums=parapharmacie-cremes-visage,parapharmacie-solaires,parapharmacie-nettoyants|parapharmacie-cremes-visage=parapharmacie-serums,parapharmacie-solaires,parapharmacie-nettoyants|parapharmacie-solaires=parapharmacie-cremes-visage,parapharmacie-serums,parapharmacie-corps-eclat,parapharmacie-corps|parapharmacie-corps-eclat=parapharmacie-corps,parapharmacie-solaires,parapharmacie-douche-accessoires|parapharmacie-corps=parapharmacie-douche-accessoires,parapharmacie-corps-eclat,parapharmacie-levres-mains,parapharmacie-solaires|parapharmacie-douche-accessoires=parapharmacie-corps,parapharmacie-levres-mains,parapharmacie-rasage,parapharmacie-dentaire|parapharmacie-huiles-essentielles=parapharmacie-corps,parapharmacie-douche-accessoires,parapharmacie-levres-mains|parapharmacie-levres-mains=parapharmacie-corps,parapharmacie-douche-accessoires,parapharmacie-dentaire|parapharmacie-dentaire=parapharmacie-levres-mains,parapharmacie-douche-accessoires,parapharmacie-rasage|parapharmacie-rasage=parapharmacie-douche-accessoires,homme,parapharmacie-corps|homme=parapharmacie-rasage,parapharmacie-dentaire,parapharmacie-douche-accessoires|complements-vitamines=complements-proteines,complements-performance,complements-matcha|complements-proteines=complements-performance,complements-vitamines,complements-sport,complements-matcha|complements-performance=complements-proteines,complements-vitamines,complements-sport|complements-matcha=complements-vitamines,complements-proteines|complements-sport=complements-performance,complements-proteines,complements-vitamines|bebe-toilette=bebe-hydratation,bebe-change,bebe-linge,bebe-soleil-bien-etre|bebe-hydratation=bebe-toilette,bebe-change,bebe-soleil-bien-etre,bebe-sante|bebe-change=bebe-toilette,bebe-hydratation,bebe-linge|bebe-linge=bebe-change,bebe-toilette,bebe-tetines-biberons|bebe-tetines-biberons=bebe-repas,bebe-sante,bebe-linge,bebe-change|bebe-repas=bebe-tetines-biberons,bebe-sante,bebe-hydratation|bebe-sante=bebe-tetines-biberons,bebe-hydratation,bebe-soleil-bien-etre,bebe-repas|bebe-soleil-bien-etre=bebe-hydratation,bebe-toilette,bebe-sante|bebe-soins-maman=bebe-allaitement,bebe-hydratation,bebe-sante|bebe-allaitement=bebe-soins-maman,bebe-tetines-biberons,bebe-hydratation|enfant-repas=enfant-soins,enfant-vitamines|enfant-soins=enfant-cheveux,enfant-repas,enfant-vitamines|enfant-cheveux=enfant-soins,enfant-vitamines|enfant-vitamines=enfant-repas,enfant-soins'
+    assign comp_entries = comp_map | split: '|'
+    assign par_handle = ''
+    assign rayon_key = ''
+    for t in product.tags
+      case t
+        when 'cat:k-beauty'
+          assign par_handle = 'k-beauty'
+        when 'cat:maquillage'
+          assign par_handle = 'maquillage'
+        when 'cat:complements'
+          assign par_handle = 'complements-nutrition'
+        when 'cat:cheveux'
+          assign par_handle = 'cheveux'
+        when 'cat:parapharmacie'
+          assign par_handle = 'parapharmacie-hygiene'
+        when 'cat:bebe'
+          assign par_handle = 'bebe'
+        when 'cat:enfant'
+          assign par_handle = 'enfant'
+      endcase
+      if rayon_key == '' and t contains 'rayon:'
+        assign rayon_key = t | remove_first: 'rayon:'
+      endif
+    endfor
+    assign sub_col = collections[rayon_key]
+    assign par_col = collections[par_handle]
+    if rayon_key != '' and sub_col.title != blank
+      assign link_url = sub_col.url
+    elsif par_handle != '' and par_col.title != blank
+      assign link_url = par_col.url
+    endif
+    if section.settings.complement_enabled
+      assign comp_max = section.settings.complement_max
+      for e in comp_entries
+        assign parts = e | split: '='
+        if parts[0] == rayon_key
+          assign comp_handles = parts[1]
+          break
+        endif
+      endfor
+    endif
+  endif
+  if section.settings.background_color != blank
+    render 'contrast-override', background_color: section.settings.background_color, section_id: section.id
+  endif
+-%}
+
+{%- capture list_items -%}
+  {%- for pass in (1..4) -%}
+    {%- if count >= max_items -%}{%- break -%}{%- endif -%}
+    {%- assign src = null -%}
+    {%- assign need_best = false -%}
+    {%- if mode == 'related' -%}
+      {%- case pass -%}
+        {%- when 1 -%}{%- assign src = sub_col -%}{%- assign need_best = true -%}
+        {%- when 2 -%}{%- assign src = sub_col -%}
+        {%- when 3 -%}{%- assign src = par_col -%}{%- assign need_best = true -%}
+        {%- else -%}{%- assign src = par_col -%}
+      {%- endcase -%}
+    {%- elsif pass == 1 -%}
+      {%- assign src = section.settings.collection -%}
+    {%- endif -%}
+    {%- if src == blank -%}{%- continue -%}{%- endif -%}
+    {%- paginate src.products by 250 -%}
+    {%- for p in src.products -%}
+      {%- if count >= max_items -%}{%- break -%}{%- endif -%}
+      {%- unless p.available -%}{%- continue -%}{%- endunless -%}
+      {%- if mode == 'related' -%}
+        {%- if p.id == product.id -%}{%- continue -%}{%- endif -%}
+        {%- if need_best -%}
+          {%- unless p.tags contains 'best-seller' -%}{%- continue -%}{%- endunless -%}
+        {%- endif -%}
+      {%- elsif section.settings.filter_tag != blank -%}
+        {%- unless p.tags contains section.settings.filter_tag -%}{%- continue -%}{%- endunless -%}
+      {%- endif -%}
+      {%- assign seen_key = '|' | append: p.handle | append: '|' -%}
+      {%- if seen contains seen_key -%}{%- continue -%}{%- endif -%}
+      {%- assign seen = seen | append: p.handle | append: '|' -%}
+      {%- assign count = count | plus: 1 -%}
+      {%- if count > 1 -%}<!--@list/split-->{%- endif -%}
+      <div class='resource-list__item'>
+        {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: p, product_view_context: 'collection' %}
+      </div>
+    {%- endfor -%}
+    {%- endpaginate -%}
+  {%- endfor -%}
+{%- endcapture -%}
+
+{%- capture comp_items -%}
+  {%- if comp_handles != '' -%}
+    {%- assign comp_list = comp_handles | split: ',' -%}
+    {%- for pass in (1..2) -%}
+      {%- for h in comp_list -%}
+        {%- if comp_count >= comp_max -%}{%- break -%}{%- endif -%}
+        {%- assign src = collections[h] -%}
+        {%- if src == blank -%}{%- continue -%}{%- endif -%}
+        {%- assign taken = 0 -%}
+        {%- paginate src.products by 250 -%}
+        {%- for p in src.products -%}
+          {%- if taken > 0 -%}{%- break -%}{%- endif -%}
+          {%- unless p.available -%}{%- continue -%}{%- endunless -%}
+          {%- if pass == 1 -%}
+            {%- unless p.tags contains 'best-seller' -%}{%- continue -%}{%- endunless -%}
+          {%- endif -%}
+          {%- assign seen_key = '|' | append: p.handle | append: '|' -%}
+          {%- if seen contains seen_key -%}{%- continue -%}{%- endif -%}
+          {%- assign seen = seen | append: p.handle | append: '|' -%}
+          {%- assign taken = taken | plus: 1 -%}
+          {%- assign comp_count = comp_count | plus: 1 -%}
+          {%- if comp_count > 1 -%}<!--@list/split-->{%- endif -%}
+          <div class='resource-list__item'>
+            {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: p, product_view_context: 'collection' %}
+          </div>
+        {%- endfor -%}
+        {%- endpaginate -%}
+      {%- endfor -%}
+    {%- endfor -%}
+  {%- endif -%}
+{%- endcapture -%}
+
+{%- for part in (1..2) -%}
+  {%- if part == 1 -%}
+    {%- assign p_items = list_items -%}
+    {%- assign p_count = count -%}
+    {%- assign p_eyebrow = section.settings.eyebrow -%}
+    {%- assign p_heading = section.settings.heading -%}
+    {%- assign p_link = link_url -%}
+    {%- assign p_ref = 'resourceListCarousel' -%}
+  {%- else -%}
+    {%- assign p_items = comp_items -%}
+    {%- assign p_count = comp_count -%}
+    {%- assign p_eyebrow = section.settings.complement_eyebrow -%}
+    {%- assign p_heading = section.settings.complement_heading -%}
+    {%- if request.locale.iso_code == 'en' -%}
+      {%- if p_eyebrow == 'Pour compléter' -%}{%- assign p_eyebrow = 'To complete your routine' -%}{%- endif -%}
+      {%- if p_heading == 'À associer avec <em>ce produit</em>' -%}{%- assign p_heading = 'Pairs well with <em>this product</em>' -%}{%- endif -%}
+    {%- endif -%}
+    {%- assign p_link = '' -%}
+    {%- assign p_ref = 'resourceListComplement' -%}
+  {%- endif -%}
+{%- if p_count > 0 -%}
+  <div class='section-background{% if section.settings.background_color != blank %} color-custom-{{ section.id }}{% endif %}'></div>
+  <div
+    data-testid='gul-picks'
+    class='section section--{{ section.settings.section_width }} {% if section.settings.background_color != blank %}color-custom-{{ section.id }}{% endif %} section-resource-list spacing-style gap-style'
+    style='{% render 'spacing-style', settings: section.settings %} {% render 'gap-style', value: section.settings.gap %}'
+  >
+    <div class='section-resource-list__header'>
+      <div style='display:flex;justify-content:space-between;align-items:flex-end;gap:12px;width:100%;flex-wrap:wrap'>
+        <div>
+          {%- if p_eyebrow != blank -%}
+            <p style='margin:0 0 8px;font-family:var(--font-body--family);font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;color:#7B7665'>{{ p_eyebrow }}</p>
+          {%- endif -%}
+          <h2 class='h2' style='margin:0;font-family:var(--font-heading--family)'>{{ p_heading }}</h2>
+        </div>
+        {%- if p_link != blank and link_label != blank -%}
+          <a href='{{ p_link }}' class='button-unstyled' style='text-decoration:underline;text-underline-offset:4px;font-size:0.875rem;white-space:nowrap'>{{ link_label }}</a>
+        {%- endif -%}
+      </div>
+    </div>
+    {%- assign list_items_array = p_items | strip | split: '<!--@list/split-->' -%}
+    {% render 'resource-list',
+      list_items: p_items,
+      list_items_array: list_items_array,
+      settings: section.settings,
+      slide_count: p_count,
+      content_type: 'products',
+      carousel_ref: p_ref,
+      test_id: 'resource-list-grid'
+    %}
+  </div>
+{%- endif -%}
+{%- endfor -%}
+
+{% schema %}
+{
+  "name": "Sélection Glow Up",
+  "class": "ui-test-product-list",
+  "blocks": [{ "type": "@theme" }, { "type": "@app" }],
+  "disabled_on": { "groups": ["header", "footer"] },
+  "settings": [
+    {
+      "type": "select", "id": "mode", "label": "Source", "default": "manual",
+      "options": [
+        { "value": "manual", "label": "Collection + tag (accueil)" },
+        { "value": "related", "label": "Même rayon que le produit (fiche produit)" }
+      ]
+    },
+    { "type": "text", "id": "eyebrow", "label": "Sur-titre" },
+    { "type": "inline_richtext", "id": "heading", "label": "Titre", "default": "Notre sélection" },
+    { "type": "text", "id": "button_label", "label": "Texte du lien", "default": "Tout voir" },
+    { "type": "url", "id": "link", "label": "Lien (mode collection)" },
+    { "type": "collection", "id": "collection", "label": "Collection (mode collection)" },
+    { "type": "text", "id": "filter_tag", "label": "Tag à garder (ex. cat:maquillage)", "info": "Vide = tous les produits de la collection." },
+    { "type": "range", "id": "max_products", "label": "Nombre de produits", "min": 1, "max": 16, "step": 1, "default": 8 },
+    { "type": "checkbox", "id": "complement_enabled", "label": "Afficher « Pour compléter » (fiche produit)", "default": true },
+    { "type": "text", "id": "complement_eyebrow", "label": "Sur-titre « Pour compléter »", "default": "Pour compléter" },
+    { "type": "inline_richtext", "id": "complement_heading", "label": "Titre « Pour compléter »", "default": "À associer avec <em>ce produit</em>" },
+    { "type": "range", "id": "complement_max", "label": "Nombre de produits « Pour compléter »", "min": 1, "max": 8, "step": 1, "default": 4 },
+    {
+      "type": "select", "id": "layout_type", "label": "Disposition", "default": "carousel",
+      "options": [{ "value": "grid", "label": "Grille" }, { "value": "carousel", "label": "Carrousel" }]
+    },
+    { "type": "checkbox", "id": "carousel_on_mobile", "label": "Carrousel sur mobile", "default": false, "visible_if": "{{ section.settings.layout_type != 'carousel' }}" },
+    { "type": "range", "id": "columns", "label": "Colonnes", "min": 1, "max": 8, "step": 1, "default": 4 },
+    {
+      "type": "select", "id": "mobile_columns", "label": "Colonnes sur mobile (grille)", "default": "2",
+      "options": [{ "value": "1", "label": "1" }, { "value": "2", "label": "2" }]
+    },
+    {
+      "type": "select", "id": "mobile_card_size", "label": "Taille des cartes sur mobile (carrousel)", "default": "44cqw",
+      "options": [{ "value": "60cqw", "label": "1 carte" }, { "value": "44cqw", "label": "2 cartes" }]
+    },
+    { "type": "range", "id": "columns_gap", "label": "Espace horizontal", "min": 0, "max": 100, "step": 1, "unit": "px", "default": 12 },
+    { "type": "range", "id": "rows_gap", "label": "Espace vertical", "min": 0, "max": 100, "step": 1, "unit": "px", "default": 24 },
+    {
+      "type": "select", "id": "icons_style", "label": "Flèches du carrousel", "default": "arrow",
+      "options": [{ "value": "arrow", "label": "Flèches" }, { "value": "chevron", "label": "Chevrons" }, { "value": "none", "label": "Aucune" }]
+    },
+    {
+      "type": "select", "id": "icons_shape", "label": "Fond des flèches", "default": "circle",
+      "options": [{ "value": "none", "label": "Aucun" }, { "value": "circle", "label": "Rond" }, { "value": "square", "label": "Carré" }]
+    },
+    {
+      "type": "select", "id": "section_width", "label": "Largeur", "default": "page-width",
+      "options": [{ "value": "page-width", "label": "Page" }, { "value": "full-width", "label": "Pleine" }]
+    },
+    {
+      "type": "select", "id": "horizontal_alignment", "label": "Alignement", "default": "flex-start",
+      "options": [{ "value": "flex-start", "label": "Début" }, { "value": "center", "label": "Centre" }, { "value": "flex-end", "label": "Fin" }]
+    },
+    { "type": "range", "id": "gap", "label": "Espace titre et produits", "min": 0, "max": 100, "step": 1, "unit": "px", "default": 28 },
+    { "type": "color", "id": "background_color", "label": "Couleur de fond" },
+    { "type": "range", "id": "padding-block-start", "label": "Marge haute", "min": 0, "max": 100, "step": 1, "unit": "px", "default": 64 },
+    { "type": "range", "id": "padding-block-end", "label": "Marge basse", "min": 0, "max": 100, "step": 1, "unit": "px", "default": 64 }
+  ]
+}
+{% endschema %}
