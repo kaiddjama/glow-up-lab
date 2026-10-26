@@ -1,0 +1,1925 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "ban_d": {
+      "type": "slideshow",
+      "blocks": {
+        "s_arencia": {
+          "type": "_slide",
+          "settings": {
+            "media_type_1": "image",
+            "image_1": "shopify://shop_images/banniere-arencia-d-v2.jpg",
+            "content_direction": "column",
+            "horizontal_alignment_flex_direction_column": "flex-start",
+            "vertical_alignment_flex_direction_column": "center",
+            "gap": 18,
+            "padding-block-end": 0,
+            "padding-inline-start": 100,
+            "padding-inline-end": 24,
+            "padding-block-start": 60
+          },
+          "blocks": {
+            "eb": {
+              "type": "text",
+              "settings": {
+                "text": "<p>Arencia</p>",
+                "width": "fit-content",
+                "alignment": "left",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.8125rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#FFFFFF",
+                "padding-block-end": 0
+              }
+            },
+            "ti": {
+              "type": "text",
+              "settings": {
+                "text": "<h2>Peau lumineuse, en un éclat</h2>",
+                "width": "fit-content",
+                "max_width": "narrow",
+                "alignment": "left",
+                "type_preset": "h2",
+                "case": "uppercase",
+                "text_color": "#FFFFFF",
+                "padding-block-end": 0
+              }
+            },
+            "btn": {
+              "type": "button",
+              "settings": {
+                "label": "Découvrir la marque",
+                "link": "shopify://collections/vendors?q=Arencia",
+                "style_class": "button-custom",
+                "custom_button_background": "#FFFFFF",
+                "custom_button_text": "#1E1A17",
+                "custom_button_border": "#FFFFFF"
+              }
+            }
+          },
+          "block_order": [
+            "eb",
+            "ti",
+            "btn"
+          ]
+        },
+        "s_nyx": {
+          "type": "_slide",
+          "settings": {
+            "media_type_1": "image",
+            "image_1": "shopify://shop_images/banniere-nyx-d.jpg",
+            "content_direction": "column",
+            "horizontal_alignment_flex_direction_column": "flex-start",
+            "vertical_alignment_flex_direction_column": "center",
+            "gap": 18,
+            "padding-block-end": 0,
+            "padding-inline-start": 100,
+            "padding-inline-end": 24,
+            "padding-block-start": 60
+          },
+          "blocks": {
+            "eb": {
+              "type": "text",
+              "settings": {
+                "text": "<p>NYX Professional Makeup</p>",
+                "width": "fit-content",
+                "alignment": "left",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.8125rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#1E1A17",
+                "padding-block-end": 0
+              }
+            },
+            "ti": {
+              "type": "text",
+              "settings": {
+                "text": "<h2>Le gloss culte</h2>",
+                "width": "fit-content",
+                "max_width": "narrow",
+                "alignment": "left",
+                "type_preset": "h2",
+                "case": "uppercase",
+                "text_color": "#1E1A17",
+                "padding-block-end": 0
+              }
+            },
+            "btn": {
+              "type": "button",
+              "settings": {
+                "label": "Découvrir",
+                "link": "shopify://products/nyx-butter-gloss-madeleine",
+                "style_class": "button-custom",
+                "custom_button_background": "#1E1A17",
+                "custom_button_text": "#F6F1EB",
+                "custom_button_border": "#1E1A17"
+              }
+            }
+          },
+          "block_order": [
+            "eb",
+            "ti",
+            "btn"
+          ]
+        },
+        "s_marvis": {
+          "type": "_slide",
+          "settings": {
+            "media_type_1": "image",
+            "image_1": "shopify://shop_images/banniere-marvis-d-v2.jpg",
+            "content_direction": "column",
+            "horizontal_alignment_flex_direction_column": "flex-start",
+            "vertical_alignment_flex_direction_column": "center",
+            "gap": 18,
+            "padding-block-end": 0,
+            "padding-inline-start": 100,
+            "padding-inline-end": 24,
+            "padding-block-start": 60
+          },
+          "blocks": {
+            "eb": {
+              "type": "text",
+              "settings": {
+                "text": "<p>Marvis</p>",
+                "width": "fit-content",
+                "alignment": "left",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.8125rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#1E1A17",
+                "padding-block-end": 0
+              }
+            },
+            "ti": {
+              "type": "text",
+              "settings": {
+                "text": "<h2>Un sourire de luxe</h2>",
+                "width": "fit-content",
+                "max_width": "narrow",
+                "alignment": "left",
+                "type_preset": "h2",
+                "case": "uppercase",
+                "text_color": "#1E1A17",
+                "padding-block-end": 0
+              }
+            },
+            "btn": {
+              "type": "button",
+              "settings": {
+                "label": "Découvrir",
+                "link": "shopify://products/marvis-dentifrice",
+                "style_class": "button-custom",
+                "custom_button_background": "#1E1A17",
+                "custom_button_text": "#F6F1EB",
+                "custom_button_border": "#1E1A17"
+              }
+            }
+          },
+          "block_order": [
+            "eb",
+            "ti",
+            "btn"
+          ]
+        },
+        "s_chamberlain": {
+          "type": "_slide",
+          "settings": {
+            "media_type_1": "image",
+            "image_1": "shopify://shop_images/banniere-chamberlain-d-v2.jpg",
+            "content_direction": "column",
+            "horizontal_alignment_flex_direction_column": "flex-start",
+            "vertical_alignment_flex_direction_column": "center",
+            "gap": 18,
+            "padding-block-end": 0,
+            "padding-inline-start": 100,
+            "padding-inline-end": 24,
+            "padding-block-start": 60
+          },
+          "blocks": {
+            "eb": {
+              "type": "text",
+              "settings": {
+                "text": "<p>Chamberlain Coffee</p>",
+                "width": "fit-content",
+                "alignment": "left",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.8125rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#FFFFFF",
+                "padding-block-end": 0
+              }
+            },
+            "ti": {
+              "type": "text",
+              "settings": {
+                "text": "<h2>Le rituel matcha</h2>",
+                "width": "fit-content",
+                "max_width": "narrow",
+                "alignment": "left",
+                "type_preset": "h2",
+                "case": "uppercase",
+                "text_color": "#FFFFFF",
+                "padding-block-end": 0
+              }
+            },
+            "btn": {
+              "type": "button",
+              "settings": {
+                "label": "Découvrir",
+                "link": "shopify://products/chamberlain-coffee-matcha-ceremonial-bio-30-g",
+                "style_class": "button-custom",
+                "custom_button_background": "#FFFFFF",
+                "custom_button_text": "#1E1A17",
+                "custom_button_border": "#FFFFFF"
+              }
+            }
+          },
+          "block_order": [
+            "eb",
+            "ti",
+            "btn"
+          ]
+        },
+        "s_sheababy": {
+          "type": "_slide",
+          "settings": {
+            "media_type_1": "image",
+            "image_1": "shopify://shop_images/banniere-sheababy-d-v2.jpg",
+            "content_direction": "column",
+            "horizontal_alignment_flex_direction_column": "flex-start",
+            "vertical_alignment_flex_direction_column": "center",
+            "gap": 18,
+            "padding-block-end": 0,
+            "padding-inline-start": 100,
+            "padding-inline-end": 24,
+            "padding-block-start": 60
+          },
+          "blocks": {
+            "eb": {
+              "type": "text",
+              "settings": {
+                "text": "<p>SheaMoisture Baby</p>",
+                "width": "fit-content",
+                "alignment": "left",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.8125rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#1E1A17",
+                "padding-block-end": 0
+              }
+            },
+            "ti": {
+              "type": "text",
+              "settings": {
+                "text": "<h2>La douceur de bébé</h2>",
+                "width": "fit-content",
+                "max_width": "narrow",
+                "alignment": "left",
+                "type_preset": "h2",
+                "case": "uppercase",
+                "text_color": "#1E1A17",
+                "padding-block-end": 0
+              }
+            },
+            "btn": {
+              "type": "button",
+              "settings": {
+                "label": "Découvrir",
+                "link": "shopify://products/sheamoisture-baby-gel-lavant-et-shampoing-karite-et-camomille-384-ml",
+                "style_class": "button-custom",
+                "custom_button_background": "#1E1A17",
+                "custom_button_text": "#F6F1EB",
+                "custom_button_border": "#1E1A17"
+              }
+            }
+          },
+          "block_order": [
+            "eb",
+            "ti",
+            "btn"
+          ]
+        },
+        "s_gummies": {
+          "type": "_slide",
+          "settings": {
+            "media_type_1": "image",
+            "image_1": "shopify://shop_images/banniere-gummies-d.jpg",
+            "content_direction": "column",
+            "horizontal_alignment_flex_direction_column": "flex-start",
+            "vertical_alignment_flex_direction_column": "center",
+            "gap": 18,
+            "padding-block-end": 0,
+            "padding-inline-start": 100,
+            "padding-inline-end": 24,
+            "padding-block-start": 60
+          },
+          "blocks": {
+            "eb": {
+              "type": "text",
+              "settings": {
+                "text": "<p>OLLY</p>",
+                "width": "fit-content",
+                "alignment": "left",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.8125rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#1E1A17",
+                "padding-block-end": 0
+              }
+            },
+            "ti": {
+              "type": "text",
+              "settings": {
+                "text": "<h2>Beauté en gummies</h2>",
+                "width": "fit-content",
+                "max_width": "narrow",
+                "alignment": "left",
+                "type_preset": "h2",
+                "case": "uppercase",
+                "text_color": "#1E1A17",
+                "padding-block-end": 0
+              }
+            },
+            "btn": {
+              "type": "button",
+              "settings": {
+                "label": "Découvrir",
+                "link": "shopify://products/olly-undeniable-beauty-cheveux-peau-et-ongles-60-gommes",
+                "style_class": "button-custom",
+                "custom_button_background": "#1E1A17",
+                "custom_button_text": "#F6F1EB",
+                "custom_button_border": "#1E1A17"
+              }
+            }
+          },
+          "block_order": [
+            "eb",
+            "ti",
+            "btn"
+          ]
+        }
+      },
+      "block_order": [
+        "s_arencia",
+        "s_nyx",
+        "s_marvis",
+        "s_chamberlain",
+        "s_sheababy",
+        "s_gummies"
+      ],
+      "settings": {
+        "display_mode": "full_frame",
+        "section_width": "full-width",
+        "slide_height": "large",
+        "content_position": "on-media",
+        "icons_style": "arrows_large",
+        "icons_shape": "circle",
+        "slideshow_controls_style": "dots",
+        "autoplay": true,
+        "autoplay_speed": 5,
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
+    },
+    "ban_m": {
+      "type": "slideshow",
+      "blocks": {
+        "s_arencia": {
+          "type": "_slide",
+          "settings": {
+            "media_type_1": "image",
+            "image_1": "shopify://shop_images/banniere-arencia-m-v2.jpg",
+            "content_direction": "column",
+            "horizontal_alignment_flex_direction_column": "center",
+            "vertical_alignment_flex_direction_column": "flex-end",
+            "gap": 14,
+            "padding-block-end": 56,
+            "padding-inline-start": 24,
+            "padding-inline-end": 24
+          },
+          "blocks": {
+            "eb": {
+              "type": "text",
+              "settings": {
+                "text": "<p>Arencia</p>",
+                "width": "fit-content",
+                "alignment": "center",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.8125rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#FFFFFF",
+                "padding-block-end": 0
+              }
+            },
+            "ti": {
+              "type": "text",
+              "settings": {
+                "text": "<h2>Peau lumineuse, en un éclat</h2>",
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "center",
+                "type_preset": "h2",
+                "case": "uppercase",
+                "text_color": "#FFFFFF",
+                "padding-block-end": 0
+              }
+            },
+            "btn": {
+              "type": "button",
+              "settings": {
+                "label": "Découvrir la marque",
+                "link": "shopify://collections/vendors?q=Arencia",
+                "style_class": "button-custom",
+                "custom_button_background": "#FFFFFF",
+                "custom_button_text": "#1E1A17",
+                "custom_button_border": "#FFFFFF"
+              }
+            }
+          },
+          "block_order": [
+            "eb",
+            "ti",
+            "btn"
+          ]
+        },
+        "s_nyx": {
+          "type": "_slide",
+          "settings": {
+            "media_type_1": "image",
+            "image_1": "shopify://shop_images/banniere-nyx-m.jpg",
+            "content_direction": "column",
+            "horizontal_alignment_flex_direction_column": "center",
+            "vertical_alignment_flex_direction_column": "flex-end",
+            "gap": 14,
+            "padding-block-end": 56,
+            "padding-inline-start": 24,
+            "padding-inline-end": 24
+          },
+          "blocks": {
+            "eb": {
+              "type": "text",
+              "settings": {
+                "text": "<p>NYX Professional Makeup</p>",
+                "width": "fit-content",
+                "alignment": "center",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.8125rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#FFFFFF",
+                "padding-block-end": 0
+              }
+            },
+            "ti": {
+              "type": "text",
+              "settings": {
+                "text": "<h2>Le gloss culte</h2>",
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "center",
+                "type_preset": "h2",
+                "case": "uppercase",
+                "text_color": "#FFFFFF",
+                "padding-block-end": 0
+              }
+            },
+            "btn": {
+              "type": "button",
+              "settings": {
+                "label": "Découvrir",
+                "link": "shopify://products/nyx-butter-gloss-madeleine",
+                "style_class": "button-custom",
+                "custom_button_background": "#FFFFFF",
+                "custom_button_text": "#1E1A17",
+                "custom_button_border": "#FFFFFF"
+              }
+            }
+          },
+          "block_order": [
+            "eb",
+            "ti",
+            "btn"
+          ]
+        },
+        "s_marvis": {
+          "type": "_slide",
+          "settings": {
+            "media_type_1": "image",
+            "image_1": "shopify://shop_images/banniere-marvis-m-v2.jpg",
+            "content_direction": "column",
+            "horizontal_alignment_flex_direction_column": "center",
+            "vertical_alignment_flex_direction_column": "flex-end",
+            "gap": 14,
+            "padding-block-end": 56,
+            "padding-inline-start": 24,
+            "padding-inline-end": 24
+          },
+          "blocks": {
+            "eb": {
+              "type": "text",
+              "settings": {
+                "text": "<p>Marvis</p>",
+                "width": "fit-content",
+                "alignment": "center",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.8125rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#1E1A17",
+                "padding-block-end": 0
+              }
+            },
+            "ti": {
+              "type": "text",
+              "settings": {
+                "text": "<h2>Un sourire de luxe</h2>",
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "center",
+                "type_preset": "h2",
+                "case": "uppercase",
+                "text_color": "#1E1A17",
+                "padding-block-end": 0
+              }
+            },
+            "btn": {
+              "type": "button",
+              "settings": {
+                "label": "Découvrir",
+                "link": "shopify://products/marvis-dentifrice",
+                "style_class": "button-custom",
+                "custom_button_background": "#1E1A17",
+                "custom_button_text": "#F6F1EB",
+                "custom_button_border": "#1E1A17"
+              }
+            }
+          },
+          "block_order": [
+            "eb",
+            "ti",
+            "btn"
+          ]
+        },
+        "s_chamberlain": {
+          "type": "_slide",
+          "settings": {
+            "media_type_1": "image",
+            "image_1": "shopify://shop_images/banniere-chamberlain-m-v2.jpg",
+            "content_direction": "column",
+            "horizontal_alignment_flex_direction_column": "center",
+            "vertical_alignment_flex_direction_column": "flex-end",
+            "gap": 14,
+            "padding-block-end": 56,
+            "padding-inline-start": 24,
+            "padding-inline-end": 24
+          },
+          "blocks": {
+            "eb": {
+              "type": "text",
+              "settings": {
+                "text": "<p>Chamberlain Coffee</p>",
+                "width": "fit-content",
+                "alignment": "center",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.8125rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#FFFFFF",
+                "padding-block-end": 0
+              }
+            },
+            "ti": {
+              "type": "text",
+              "settings": {
+                "text": "<h2>Le rituel matcha</h2>",
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "center",
+                "type_preset": "h2",
+                "case": "uppercase",
+                "text_color": "#FFFFFF",
+                "padding-block-end": 0
+              }
+            },
+            "btn": {
+              "type": "button",
+              "settings": {
+                "label": "Découvrir",
+                "link": "shopify://products/chamberlain-coffee-matcha-ceremonial-bio-30-g",
+                "style_class": "button-custom",
+                "custom_button_background": "#FFFFFF",
+                "custom_button_text": "#1E1A17",
+                "custom_button_border": "#FFFFFF"
+              }
+            }
+          },
+          "block_order": [
+            "eb",
+            "ti",
+            "btn"
+          ]
+        },
+        "s_sheababy": {
+          "type": "_slide",
+          "settings": {
+            "media_type_1": "image",
+            "image_1": "shopify://shop_images/banniere-sheababy-m-v2.jpg",
+            "content_direction": "column",
+            "horizontal_alignment_flex_direction_column": "center",
+            "vertical_alignment_flex_direction_column": "flex-end",
+            "gap": 14,
+            "padding-block-end": 56,
+            "padding-inline-start": 24,
+            "padding-inline-end": 24
+          },
+          "blocks": {
+            "eb": {
+              "type": "text",
+              "settings": {
+                "text": "<p>SheaMoisture Baby</p>",
+                "width": "fit-content",
+                "alignment": "center",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.8125rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#1E1A17",
+                "padding-block-end": 0
+              }
+            },
+            "ti": {
+              "type": "text",
+              "settings": {
+                "text": "<h2>La douceur de bébé</h2>",
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "center",
+                "type_preset": "h2",
+                "case": "uppercase",
+                "text_color": "#1E1A17",
+                "padding-block-end": 0
+              }
+            },
+            "btn": {
+              "type": "button",
+              "settings": {
+                "label": "Découvrir",
+                "link": "shopify://products/sheamoisture-baby-gel-lavant-et-shampoing-karite-et-camomille-384-ml",
+                "style_class": "button-custom",
+                "custom_button_background": "#1E1A17",
+                "custom_button_text": "#F6F1EB",
+                "custom_button_border": "#1E1A17"
+              }
+            }
+          },
+          "block_order": [
+            "eb",
+            "ti",
+            "btn"
+          ]
+        },
+        "s_gummies": {
+          "type": "_slide",
+          "settings": {
+            "media_type_1": "image",
+            "image_1": "shopify://shop_images/banniere-gummies-m.jpg",
+            "content_direction": "column",
+            "horizontal_alignment_flex_direction_column": "center",
+            "vertical_alignment_flex_direction_column": "flex-end",
+            "gap": 14,
+            "padding-block-end": 56,
+            "padding-inline-start": 24,
+            "padding-inline-end": 24
+          },
+          "blocks": {
+            "eb": {
+              "type": "text",
+              "settings": {
+                "text": "<p>OLLY</p>",
+                "width": "fit-content",
+                "alignment": "center",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.8125rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#1E1A17",
+                "padding-block-end": 0
+              }
+            },
+            "ti": {
+              "type": "text",
+              "settings": {
+                "text": "<h2>Beauté en gummies</h2>",
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "center",
+                "type_preset": "h2",
+                "case": "uppercase",
+                "text_color": "#1E1A17",
+                "padding-block-end": 0
+              }
+            },
+            "btn": {
+              "type": "button",
+              "settings": {
+                "label": "Découvrir",
+                "link": "shopify://products/olly-undeniable-beauty-cheveux-peau-et-ongles-60-gommes",
+                "style_class": "button-custom",
+                "custom_button_background": "#1E1A17",
+                "custom_button_text": "#F6F1EB",
+                "custom_button_border": "#1E1A17"
+              }
+            }
+          },
+          "block_order": [
+            "eb",
+            "ti",
+            "btn"
+          ]
+        }
+      },
+      "block_order": [
+        "s_arencia",
+        "s_nyx",
+        "s_marvis",
+        "s_chamberlain",
+        "s_sheababy",
+        "s_gummies"
+      ],
+      "settings": {
+        "display_mode": "full_frame",
+        "section_width": "full-width",
+        "slide_height": "large",
+        "content_position": "on-media",
+        "icons_style": "none",
+        "icons_shape": "none",
+        "slideshow_controls_style": "dots",
+        "autoplay": true,
+        "autoplay_speed": 5,
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
+    },
+    "brands": {
+      "type": "marquee",
+      "blocks": {
+        "b0": {
+          "type": "text",
+          "settings": {
+            "text": "<p><em>Anua</em></p>",
+            "width": "fit-content",
+            "type_preset": "custom",
+            "font": "var(--font-heading--family)",
+            "font_size": "1.5rem",
+            "line_height": "tight",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "nowrap",
+            "text_color": "#F6F1EB"
+          }
+        },
+        "b1": {
+          "type": "text",
+          "settings": {
+            "text": "<p><em>Medicube</em></p>",
+            "width": "fit-content",
+            "type_preset": "custom",
+            "font": "var(--font-heading--family)",
+            "font_size": "1.5rem",
+            "line_height": "tight",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "nowrap",
+            "text_color": "#F6F1EB"
+          }
+        },
+        "b2": {
+          "type": "text",
+          "settings": {
+            "text": "<p><em>Beauty of Joseon</em></p>",
+            "width": "fit-content",
+            "type_preset": "custom",
+            "font": "var(--font-heading--family)",
+            "font_size": "1.5rem",
+            "line_height": "tight",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "nowrap",
+            "text_color": "#F6F1EB"
+          }
+        },
+        "b3": {
+          "type": "text",
+          "settings": {
+            "text": "<p><em>TIRTIR</em></p>",
+            "width": "fit-content",
+            "type_preset": "custom",
+            "font": "var(--font-heading--family)",
+            "font_size": "1.5rem",
+            "line_height": "tight",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "nowrap",
+            "text_color": "#F6F1EB"
+          }
+        },
+        "b4": {
+          "type": "text",
+          "settings": {
+            "text": "<p><em>Maybelline</em></p>",
+            "width": "fit-content",
+            "type_preset": "custom",
+            "font": "var(--font-heading--family)",
+            "font_size": "1.5rem",
+            "line_height": "tight",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "nowrap",
+            "text_color": "#F6F1EB"
+          }
+        },
+        "b5": {
+          "type": "text",
+          "settings": {
+            "text": "<p><em>NYX</em></p>",
+            "width": "fit-content",
+            "type_preset": "custom",
+            "font": "var(--font-heading--family)",
+            "font_size": "1.5rem",
+            "line_height": "tight",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "nowrap",
+            "text_color": "#F6F1EB"
+          }
+        },
+        "b6": {
+          "type": "text",
+          "settings": {
+            "text": "<p><em>e.l.f.</em></p>",
+            "width": "fit-content",
+            "type_preset": "custom",
+            "font": "var(--font-heading--family)",
+            "font_size": "1.5rem",
+            "line_height": "tight",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "nowrap",
+            "text_color": "#F6F1EB"
+          }
+        },
+        "b7": {
+          "type": "text",
+          "settings": {
+            "text": "<p><em>Mielle</em></p>",
+            "width": "fit-content",
+            "type_preset": "custom",
+            "font": "var(--font-heading--family)",
+            "font_size": "1.5rem",
+            "line_height": "tight",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "nowrap",
+            "text_color": "#F6F1EB"
+          }
+        },
+        "b8": {
+          "type": "text",
+          "settings": {
+            "text": "<p><em>Nuxe</em></p>",
+            "width": "fit-content",
+            "type_preset": "custom",
+            "font": "var(--font-heading--family)",
+            "font_size": "1.5rem",
+            "line_height": "tight",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "nowrap",
+            "text_color": "#F6F1EB"
+          }
+        },
+        "b9": {
+          "type": "text",
+          "settings": {
+            "text": "<p><em>Vitabiotics</em></p>",
+            "width": "fit-content",
+            "type_preset": "custom",
+            "font": "var(--font-heading--family)",
+            "font_size": "1.5rem",
+            "line_height": "tight",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "nowrap",
+            "text_color": "#F6F1EB"
+          }
+        },
+        "b10": {
+          "type": "text",
+          "settings": {
+            "text": "<p><em>Optimum Nutrition</em></p>",
+            "width": "fit-content",
+            "type_preset": "custom",
+            "font": "var(--font-heading--family)",
+            "font_size": "1.5rem",
+            "line_height": "tight",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "nowrap",
+            "text_color": "#F6F1EB"
+          }
+        },
+        "b11": {
+          "type": "text",
+          "settings": {
+            "text": "<p><em>Mustela</em></p>",
+            "width": "fit-content",
+            "type_preset": "custom",
+            "font": "var(--font-heading--family)",
+            "font_size": "1.5rem",
+            "line_height": "tight",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "nowrap",
+            "text_color": "#F6F1EB"
+          }
+        }
+      },
+      "block_order": [
+        "b0",
+        "b1",
+        "b2",
+        "b3",
+        "b4",
+        "b5",
+        "b6",
+        "b7",
+        "b8",
+        "b9",
+        "b10",
+        "b11"
+      ],
+      "settings": {
+        "movement_direction": "normal",
+        "background_color": "#1E1A17",
+        "padding-block-start": 18,
+        "padding-block-end": 18,
+        "gap_between_elements": 40
+      }
+    },
+    "univers": {
+      "type": "collection-list",
+      "blocks": {
+        "hdr": {
+          "type": "group",
+          "settings": {
+            "content_direction": "column",
+            "horizontal_alignment_flex_direction_column": "flex-start",
+            "gap": 8,
+            "width": "fill"
+          },
+          "blocks": {
+            "title": {
+              "type": "text",
+              "settings": {
+                "text": "<h2>Nos rubriques</h2>",
+                "width": "100%",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "h2",
+                "font": "var(--font-heading--family)",
+                "padding-block-end": 0
+              }
+            }
+          },
+          "block_order": [
+            "title"
+          ]
+        },
+        "static-collection-card": {
+          "type": "_collection-card",
+          "static": true,
+          "settings": {
+            "placement": "below_image",
+            "horizontal_alignment": "flex-start",
+            "collection_card_gap": 10
+          },
+          "blocks": {
+            "collection-card-image": {
+              "type": "_collection-card-image",
+              "static": true,
+              "settings": {
+                "image_ratio": "square",
+                "border_radius": 0
+              }
+            },
+            "collection-title": {
+              "type": "collection-title",
+              "settings": {
+                "type_preset": "h4",
+                "text_color": "#1E1A17"
+              }
+            }
+          },
+          "block_order": [
+            "collection-title"
+          ]
+        }
+      },
+      "block_order": [
+        "hdr"
+      ],
+      "settings": {
+        "collection_list": [
+          "k-beauty",
+          "maquillage",
+          "cheveux",
+          "bebe",
+          "enfant",
+          "parapharmacie-hygiene",
+          "complements-nutrition",
+          "skincare-europeen"
+        ],
+        "layout_type": "grid",
+        "carousel_on_mobile": false,
+        "columns": 4,
+        "mobile_columns": "2",
+        "mobile_card_size": "60cqw",
+        "columns_gap": 16,
+        "rows_gap": 24,
+        "icons_style": "arrow",
+        "icons_shape": "circle",
+        "section_width": "page-width",
+        "gap": 28,
+        "background_color": "",
+        "padding-block-start": 80,
+        "padding-block-end": 24
+      }
+    },
+    "bestsellers": {
+      "type": "gul-picks",
+      "blocks": {
+        "static-product-card": {
+          "type": "_product-card",
+          "static": true,
+          "settings": {
+            "product_card_gap": 6
+          },
+          "blocks": {
+            "product-card-gallery": {
+              "type": "_product-card-gallery",
+              "settings": {
+                "image_ratio": "portrait",
+                "border_radius": 0
+              }
+            },
+            "vendor": {
+              "type": "text",
+              "settings": {
+                "text": "<p>{{ closest.product.vendor }}</p>",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.75rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#7B7665",
+                "padding-block-start": 6
+              }
+            },
+            "product_title": {
+              "type": "product-title",
+              "settings": {
+                "type_preset": "paragraph",
+                "font": "var(--font-body--family)",
+                "font_size": "0.875rem"
+              }
+            },
+            "price": {
+              "type": "price",
+              "settings": {
+                "show_installments": false,
+                "show_tax_info": false,
+                "type_preset": "paragraph",
+                "font": "var(--font-body--family)",
+                "font_size": "0.875rem"
+              }
+            }
+          },
+          "block_order": [
+            "product-card-gallery",
+            "vendor",
+            "product_title",
+            "price"
+          ]
+        }
+      },
+      "settings": {
+        "mode": "manual",
+        "eyebrow": "",
+        "heading": "Les incontournables",
+        "button_label": "Tout voir",
+        "link": "/collections/best-sellers",
+        "collection": "best-sellers",
+        "filter_tag": "incontournable",
+        "max_products": 8,
+        "layout_type": "carousel",
+        "columns": 4,
+        "mobile_columns": "2",
+        "mobile_card_size": "44cqw",
+        "columns_gap": 16,
+        "rows_gap": 24,
+        "icons_style": "arrow",
+        "icons_shape": "circle",
+        "section_width": "page-width",
+        "gap": 28,
+        "padding-block-start": 72,
+        "padding-block-end": 72
+      }
+    },
+    "kbeauty_list": {
+      "type": "gul-picks",
+      "blocks": {
+        "static-product-card": {
+          "type": "_product-card",
+          "static": true,
+          "settings": {
+            "product_card_gap": 6
+          },
+          "blocks": {
+            "product-card-gallery": {
+              "type": "_product-card-gallery",
+              "settings": {
+                "image_ratio": "portrait",
+                "border_radius": 0
+              }
+            },
+            "vendor": {
+              "type": "text",
+              "settings": {
+                "text": "<p>{{ closest.product.vendor }}</p>",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.75rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#7B7665",
+                "padding-block-start": 6
+              }
+            },
+            "product_title": {
+              "type": "product-title",
+              "settings": {
+                "type_preset": "paragraph",
+                "font": "var(--font-body--family)",
+                "font_size": "0.875rem"
+              }
+            },
+            "price": {
+              "type": "price",
+              "settings": {
+                "show_installments": false,
+                "show_tax_info": false,
+                "type_preset": "paragraph",
+                "font": "var(--font-body--family)",
+                "font_size": "0.875rem"
+              }
+            }
+          },
+          "block_order": [
+            "product-card-gallery",
+            "vendor",
+            "product_title",
+            "price"
+          ]
+        }
+      },
+      "settings": {
+        "mode": "manual",
+        "eyebrow": "",
+        "heading": "K-beauté",
+        "button_label": "Tout voir",
+        "link": "/collections/k-beauty",
+        "collection": "best-sellers",
+        "filter_tag": "cat:k-beauty",
+        "max_products": 8,
+        "layout_type": "carousel",
+        "columns": 4,
+        "mobile_columns": "2",
+        "mobile_card_size": "44cqw",
+        "columns_gap": 16,
+        "rows_gap": 24,
+        "icons_style": "arrow",
+        "icons_shape": "circle",
+        "section_width": "page-width",
+        "gap": 28,
+        "padding-block-start": 72,
+        "padding-block-end": 72
+      }
+    },
+    "edito_makeup": {
+      "type": "media-with-content",
+      "blocks": {
+        "media": {
+          "type": "_media-without-appearance",
+          "static": true,
+          "settings": {
+            "media_type": "image",
+            "image": "shopify://shop_images/brand-cat-maquillage.png",
+            "link": "shopify://collections/maquillage",
+            "image_position": "cover"
+          }
+        },
+        "content": {
+          "type": "_content-without-appearance",
+          "static": true,
+          "settings": {
+            "horizontal_alignment_flex_direction_column": "flex-start",
+            "vertical_alignment_flex_direction_column": "center",
+            "gap": 20
+          },
+          "blocks": {
+            "h": {
+              "type": "text",
+              "settings": {
+                "text": "<h2>Votre teint, <em>vos teintes</em></h2>",
+                "width": "100%",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "h2",
+                "padding-block-end": 0
+              }
+            },
+            "b": {
+              "type": "button",
+              "settings": {
+                "label": "Découvrir",
+                "link": "shopify://collections/maquillage",
+                "style_class": "button"
+              }
+            }
+          },
+          "block_order": [
+            "h",
+            "b"
+          ]
+        }
+      },
+      "settings": {
+        "media_position": "right",
+        "media_width": "medium",
+        "media_height": "80svh",
+        "section_width": "full-width",
+        "extend_media": true,
+        "background_color": "#F6F1EB",
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
+    },
+    "makeup_list": {
+      "type": "gul-picks",
+      "blocks": {
+        "static-product-card": {
+          "type": "_product-card",
+          "static": true,
+          "settings": {
+            "product_card_gap": 6
+          },
+          "blocks": {
+            "product-card-gallery": {
+              "type": "_product-card-gallery",
+              "settings": {
+                "image_ratio": "portrait",
+                "border_radius": 0
+              }
+            },
+            "vendor": {
+              "type": "text",
+              "settings": {
+                "text": "<p>{{ closest.product.vendor }}</p>",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.75rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#7B7665",
+                "padding-block-start": 6
+              }
+            },
+            "product_title": {
+              "type": "product-title",
+              "settings": {
+                "type_preset": "paragraph",
+                "font": "var(--font-body--family)",
+                "font_size": "0.875rem"
+              }
+            },
+            "price": {
+              "type": "price",
+              "settings": {
+                "show_installments": false,
+                "show_tax_info": false,
+                "type_preset": "paragraph",
+                "font": "var(--font-body--family)",
+                "font_size": "0.875rem"
+              }
+            }
+          },
+          "block_order": [
+            "product-card-gallery",
+            "vendor",
+            "product_title",
+            "price"
+          ]
+        }
+      },
+      "settings": {
+        "mode": "manual",
+        "eyebrow": "",
+        "heading": "Maquillage",
+        "button_label": "Tout le maquillage",
+        "link": "/collections/maquillage",
+        "collection": "best-sellers",
+        "filter_tag": "cat:maquillage",
+        "max_products": 8,
+        "layout_type": "carousel",
+        "columns": 4,
+        "mobile_columns": "2",
+        "mobile_card_size": "44cqw",
+        "columns_gap": 16,
+        "rows_gap": 24,
+        "icons_style": "arrow",
+        "icons_shape": "circle",
+        "section_width": "page-width",
+        "gap": 28,
+        "padding-block-start": 72,
+        "padding-block-end": 72
+      }
+    },
+    "edito_hair": {
+      "type": "media-with-content",
+      "blocks": {
+        "media": {
+          "type": "_media-without-appearance",
+          "static": true,
+          "settings": {
+            "media_type": "image",
+            "image": "shopify://shop_images/edito-cheveux-afro-v2.jpg",
+            "link": "shopify://collections/cheveux",
+            "image_position": "cover"
+          }
+        },
+        "content": {
+          "type": "_content-without-appearance",
+          "static": true,
+          "settings": {
+            "horizontal_alignment_flex_direction_column": "flex-start",
+            "vertical_alignment_flex_direction_column": "center",
+            "gap": 20
+          },
+          "blocks": {
+            "h": {
+              "type": "text",
+              "settings": {
+                "text": "<h2>Des cheveux <em>en pleine forme</em></h2>",
+                "width": "100%",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "h2",
+                "padding-block-end": 0
+              }
+            },
+            "b": {
+              "type": "button",
+              "settings": {
+                "label": "Découvrir",
+                "link": "shopify://collections/cheveux",
+                "style_class": "button"
+              }
+            }
+          },
+          "block_order": [
+            "h",
+            "b"
+          ]
+        }
+      },
+      "settings": {
+        "media_position": "left",
+        "media_width": "medium",
+        "media_height": "80svh",
+        "section_width": "full-width",
+        "extend_media": true,
+        "background_color": "#F6F1EB",
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
+    },
+    "hair_list": {
+      "type": "gul-picks",
+      "blocks": {
+        "static-product-card": {
+          "type": "_product-card",
+          "static": true,
+          "settings": {
+            "product_card_gap": 6
+          },
+          "blocks": {
+            "product-card-gallery": {
+              "type": "_product-card-gallery",
+              "settings": {
+                "image_ratio": "portrait",
+                "border_radius": 0
+              }
+            },
+            "vendor": {
+              "type": "text",
+              "settings": {
+                "text": "<p>{{ closest.product.vendor }}</p>",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.75rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#7B7665",
+                "padding-block-start": 6
+              }
+            },
+            "product_title": {
+              "type": "product-title",
+              "settings": {
+                "type_preset": "paragraph",
+                "font": "var(--font-body--family)",
+                "font_size": "0.875rem"
+              }
+            },
+            "price": {
+              "type": "price",
+              "settings": {
+                "show_installments": false,
+                "show_tax_info": false,
+                "type_preset": "paragraph",
+                "font": "var(--font-body--family)",
+                "font_size": "0.875rem"
+              }
+            }
+          },
+          "block_order": [
+            "product-card-gallery",
+            "vendor",
+            "product_title",
+            "price"
+          ]
+        }
+      },
+      "settings": {
+        "mode": "manual",
+        "eyebrow": "",
+        "heading": "Cheveux",
+        "button_label": "Tout voir",
+        "link": "/collections/cheveux",
+        "collection": "best-sellers",
+        "filter_tag": "cat:cheveux",
+        "max_products": 8,
+        "layout_type": "carousel",
+        "columns": 4,
+        "mobile_columns": "2",
+        "mobile_card_size": "44cqw",
+        "columns_gap": 16,
+        "rows_gap": 24,
+        "icons_style": "arrow",
+        "icons_shape": "circle",
+        "section_width": "page-width",
+        "gap": 28,
+        "padding-block-start": 72,
+        "padding-block-end": 72
+      }
+    },
+    "para_list": {
+      "type": "gul-picks",
+      "blocks": {
+        "static-product-card": {
+          "type": "_product-card",
+          "static": true,
+          "settings": {
+            "product_card_gap": 6
+          },
+          "blocks": {
+            "product-card-gallery": {
+              "type": "_product-card-gallery",
+              "settings": {
+                "image_ratio": "portrait",
+                "border_radius": 0
+              }
+            },
+            "vendor": {
+              "type": "text",
+              "settings": {
+                "text": "<p>{{ closest.product.vendor }}</p>",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.75rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#7B7665",
+                "padding-block-start": 6
+              }
+            },
+            "product_title": {
+              "type": "product-title",
+              "settings": {
+                "type_preset": "paragraph",
+                "font": "var(--font-body--family)",
+                "font_size": "0.875rem"
+              }
+            },
+            "price": {
+              "type": "price",
+              "settings": {
+                "show_installments": false,
+                "show_tax_info": false,
+                "type_preset": "paragraph",
+                "font": "var(--font-body--family)",
+                "font_size": "0.875rem"
+              }
+            }
+          },
+          "block_order": [
+            "product-card-gallery",
+            "vendor",
+            "product_title",
+            "price"
+          ]
+        }
+      },
+      "settings": {
+        "mode": "manual",
+        "eyebrow": "",
+        "heading": "Parapharmacie",
+        "button_label": "Tout voir",
+        "link": "/collections/parapharmacie-hygiene",
+        "collection": "best-sellers",
+        "filter_tag": "cat:parapharmacie",
+        "max_products": 8,
+        "layout_type": "carousel",
+        "columns": 4,
+        "mobile_columns": "2",
+        "mobile_card_size": "44cqw",
+        "columns_gap": 16,
+        "rows_gap": 24,
+        "icons_style": "arrow",
+        "icons_shape": "circle",
+        "section_width": "page-width",
+        "gap": 28,
+        "padding-block-start": 72,
+        "padding-block-end": 72
+      }
+    },
+    "wellness_list": {
+      "type": "gul-picks",
+      "blocks": {
+        "static-product-card": {
+          "type": "_product-card",
+          "static": true,
+          "settings": {
+            "product_card_gap": 6
+          },
+          "blocks": {
+            "product-card-gallery": {
+              "type": "_product-card-gallery",
+              "settings": {
+                "image_ratio": "portrait",
+                "border_radius": 0
+              }
+            },
+            "vendor": {
+              "type": "text",
+              "settings": {
+                "text": "<p>{{ closest.product.vendor }}</p>",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.75rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#7B7665",
+                "padding-block-start": 6
+              }
+            },
+            "product_title": {
+              "type": "product-title",
+              "settings": {
+                "type_preset": "paragraph",
+                "font": "var(--font-body--family)",
+                "font_size": "0.875rem"
+              }
+            },
+            "price": {
+              "type": "price",
+              "settings": {
+                "show_installments": false,
+                "show_tax_info": false,
+                "type_preset": "paragraph",
+                "font": "var(--font-body--family)",
+                "font_size": "0.875rem"
+              }
+            }
+          },
+          "block_order": [
+            "product-card-gallery",
+            "vendor",
+            "product_title",
+            "price"
+          ]
+        }
+      },
+      "settings": {
+        "mode": "manual",
+        "eyebrow": "",
+        "heading": "Sport et nutrition",
+        "button_label": "Tout voir",
+        "link": "/collections/complements-nutrition",
+        "collection": "best-sellers",
+        "filter_tag": "cat:complements",
+        "max_products": 8,
+        "layout_type": "carousel",
+        "columns": 4,
+        "mobile_columns": "2",
+        "mobile_card_size": "44cqw",
+        "columns_gap": 16,
+        "rows_gap": 24,
+        "icons_style": "arrow",
+        "icons_shape": "circle",
+        "section_width": "page-width",
+        "gap": 28,
+        "padding-block-start": 72,
+        "padding-block-end": 72
+      }
+    },
+    "bebe_list": {
+      "type": "gul-picks",
+      "blocks": {
+        "static-product-card": {
+          "type": "_product-card",
+          "static": true,
+          "settings": {
+            "product_card_gap": 6
+          },
+          "blocks": {
+            "product-card-gallery": {
+              "type": "_product-card-gallery",
+              "settings": {
+                "image_ratio": "portrait",
+                "border_radius": 0
+              }
+            },
+            "vendor": {
+              "type": "text",
+              "settings": {
+                "text": "<p>{{ closest.product.vendor }}</p>",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.75rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#7B7665",
+                "padding-block-start": 6
+              }
+            },
+            "product_title": {
+              "type": "product-title",
+              "settings": {
+                "type_preset": "paragraph",
+                "font": "var(--font-body--family)",
+                "font_size": "0.875rem"
+              }
+            },
+            "price": {
+              "type": "price",
+              "settings": {
+                "show_installments": false,
+                "show_tax_info": false,
+                "type_preset": "paragraph",
+                "font": "var(--font-body--family)",
+                "font_size": "0.875rem"
+              }
+            }
+          },
+          "block_order": [
+            "product-card-gallery",
+            "vendor",
+            "product_title",
+            "price"
+          ]
+        }
+      },
+      "settings": {
+        "mode": "manual",
+        "eyebrow": "",
+        "heading": "Bébé",
+        "button_label": "Tout voir",
+        "link": "/collections/bebe",
+        "collection": "best-sellers",
+        "filter_tag": "cat:bebe",
+        "max_products": 8,
+        "layout_type": "carousel",
+        "columns": 4,
+        "mobile_columns": "2",
+        "mobile_card_size": "44cqw",
+        "columns_gap": 16,
+        "rows_gap": 24,
+        "icons_style": "arrow",
+        "icons_shape": "circle",
+        "section_width": "page-width",
+        "gap": 28,
+        "padding-block-start": 72,
+        "padding-block-end": 72
+      }
+    },
+    "enfant_list": {
+      "type": "gul-picks",
+      "blocks": {
+        "static-product-card": {
+          "type": "_product-card",
+          "static": true,
+          "settings": {
+            "product_card_gap": 6
+          },
+          "blocks": {
+            "product-card-gallery": {
+              "type": "_product-card-gallery",
+              "settings": {
+                "image_ratio": "portrait",
+                "border_radius": 0
+              }
+            },
+            "vendor": {
+              "type": "text",
+              "settings": {
+                "text": "<p>{{ closest.product.vendor }}</p>",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.75rem",
+                "letter_spacing": "loose",
+                "case": "uppercase",
+                "text_color": "#7B7665",
+                "padding-block-start": 6
+              }
+            },
+            "product_title": {
+              "type": "product-title",
+              "settings": {
+                "type_preset": "paragraph",
+                "font": "var(--font-body--family)",
+                "font_size": "0.875rem"
+              }
+            },
+            "price": {
+              "type": "price",
+              "settings": {
+                "show_installments": false,
+                "show_tax_info": false,
+                "type_preset": "paragraph",
+                "font": "var(--font-body--family)",
+                "font_size": "0.875rem"
+              }
+            }
+          },
+          "block_order": [
+            "product-card-gallery",
+            "vendor",
+            "product_title",
+            "price"
+          ]
+        }
+      },
+      "settings": {
+        "mode": "manual",
+        "eyebrow": "",
+        "heading": "Enfant",
+        "button_label": "Tout voir",
+        "link": "/collections/enfant",
+        "collection": "best-sellers",
+        "filter_tag": "cat:enfant",
+        "max_products": 8,
+        "layout_type": "carousel",
+        "columns": 4,
+        "mobile_columns": "2",
+        "mobile_card_size": "44cqw",
+        "columns_gap": 16,
+        "rows_gap": 24,
+        "icons_style": "arrow",
+        "icons_shape": "circle",
+        "section_width": "page-width",
+        "gap": 28,
+        "padding-block-start": 72,
+        "padding-block-end": 72
+      }
+    },
+    "newsletter": {
+      "type": "section",
+      "blocks": {
+        "h": {
+          "type": "text",
+          "settings": {
+            "text": "<h2>-10 % sur votre première commande</h2>",
+            "width": "100%",
+            "max_width": "normal",
+            "alignment": "center",
+            "type_preset": "h2",
+            "padding-block-end": 0
+          }
+        },
+        "p": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Code <strong>WELCOME10</strong> et nouveautés dans votre boîte mail.</p>",
+            "width": "100%",
+            "max_width": "narrow",
+            "alignment": "center",
+            "type_preset": "paragraph",
+            "text_color": "#7B7665",
+            "padding-block-end": 0
+          }
+        },
+        "f": {
+          "type": "email-signup",
+          "settings": {
+            "width": "custom",
+            "custom_width": 50,
+            "border_style": "all",
+            "style_class": "button",
+            "display_type": "text",
+            "label": "S'inscrire",
+            "integrated_button": true
+          }
+        }
+      },
+      "block_order": [
+        "h",
+        "p",
+        "f"
+      ],
+      "settings": {
+        "content_direction": "column",
+        "horizontal_alignment_flex_direction_column": "center",
+        "gap": 16,
+        "section_width": "page-width",
+        "background_color": "",
+        "padding-block-start": 96,
+        "padding-block-end": 96
+      }
+    },
+    "ban_css": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<link rel=\"stylesheet\" href=\"{{ 'aime-bannieres.css' | asset_url }}\"><style>[data-testid='gul-picks'] .card-gallery slideshow-arrows{display:none !important}[data-testid='gul-picks'] .card-gallery slideshow-slide:not(:first-child){display:none !important}</style>",
+        "section_width": "full-width",
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
+    }
+  },
+  "order": [
+    "ban_d",
+    "ban_m",
+    "brands",
+    "univers",
+    "bestsellers",
+    "kbeauty_list",
+    "edito_makeup",
+    "makeup_list",
+    "edito_hair",
+    "hair_list",
+    "para_list",
+    "wellness_list",
+    "bebe_list",
+    "enfant_list",
+    "newsletter",
+    "ban_css"
+  ]
+}
