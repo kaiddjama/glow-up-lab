@@ -1,0 +1,48 @@
+name: Collection order (brand mix)
+# Keeps the product order of every collection mixed: no blocks of one brand, best-sellers early, new products
+# slotted into the existing order. Only the display order changes. Settings are repository secrets.
+# Run it by hand with "Run workflow": dry_run=true computes and reports only.
+on:
+  schedule:
+    - cron: "20 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Compute and report only, change nothing on Shopify"
+        type: boolean
+        default: true
+      full:
+        description: "Rebuild every collection from scratch instead of slotting in new products"
+        type: boolean
+        default: false
+      only:
+        description: "Only these collection handles, comma separated (empty = all)"
+        type: string
+        default: ""
+permissions:
+  contents: read
+concurrency:
+  group: merchandising
+  cancel-in-progress: false
+jobs:
+  reorder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reorder collections
+        working-directory: merchandising
+        env:
+          SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
+          FULL: ${{ github.event_name == 'workflow_dispatch' && inputs.full && '1' || '0' }}
+          ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.only || '' }}
+        run: python3 -I reorder_collections.py results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: order-report
+          path: merchandising/results/report.json
+          if-no-files-found: ignore
