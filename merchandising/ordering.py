@@ -14,6 +14,8 @@ TYPE_W = [0, 20, 12, 6]
 LINE_W = [0, 25, 12, 6]                  # same product line (first two words after the brand)
 BRAND_URGENCY = 100.0                    # pulls brands with many products left to be spread, not left for the tail
 TYPE_URGENCY = 40.0
+WIDE_BRAND_W = 5.0                       # same brand 7 to 12 places back: still a bit too close
+PAGE = 24                                # the storefront shows 24 products per page: a brand appears once per page 1
 POP_BONUS = 18.0                         # best-sellers come earlier, but never at the cost of a brand block
 
 
@@ -38,6 +40,11 @@ def _back_penalty(p, order, scale_gap=None):
             pen += TYPE_W[k]
         if k < len(LINE_W) and q["line"] and q["line"] == p["line"]:
             pen += LINE_W[k]
+    for k in range(len(BRAND_W), 13):
+        if k <= n and order[n - k]["brand"] == p["brand"]:
+            pen += WIDE_BRAND_W
+    if n < PAGE and any(q["brand"] == p["brand"] for q in order[:n]):
+        pen += 25
     if n >= 1 and order[-1]["band"] == p["band"]:
         pen += 6
         if n >= 2 and order[-2]["band"] == p["band"]:
@@ -108,7 +115,7 @@ def insert(placed, new):
     return order
 
 
-def metrics(order, page=24):
+def metrics(order, page=PAGE):
     """Adjacent same-brand pairs, same brand twice within 4, longest brand run, longest type run, and the
     number of different brands in the first page."""
     adj = within4 = brand_run = type_run = 0
