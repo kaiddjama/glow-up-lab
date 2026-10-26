@@ -3,6 +3,9 @@ name: Collection order (brand mix)
 # slotted into the existing order. Only the display order changes. Settings are repository secrets.
 # Run it by hand with "Run workflow": dry_run=true computes and reports only.
 on:
+  push:
+    branches: ["claude/project-thread-if7gxz"]
+    paths: ["merchandising/request.env"]
   schedule:
     - cron: "20 * * * *"
   workflow_dispatch:
@@ -30,15 +33,18 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+      - name: Settings from request.env (push runs on the work branch only)
+        if: github.event_name == 'push'
+        run: grep -E '^(DRY_RUN|FULL|ONLY)=' merchandising/request.env >> "$GITHUB_ENV"
       - name: Reorder collections
         working-directory: merchandising
         env:
           SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
           SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
           SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
-          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
-          FULL: ${{ github.event_name == 'workflow_dispatch' && inputs.full && '1' || '0' }}
-          ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.only || '' }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || env.DRY_RUN || '0' }}
+          FULL: ${{ github.event_name == 'workflow_dispatch' && inputs.full && '1' || env.FULL || '0' }}
+          ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.only || env.ONLY || '' }}
         run: python3 -I reorder_collections.py results
       - uses: actions/upload-artifact@v4
         if: always()
