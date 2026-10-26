@@ -1095,7 +1095,7 @@
             "product-card-gallery": {
               "type": "_product-card-gallery",
               "settings": {
-                "image_ratio": "portrait",
+                "image_ratio": "square",
                 "border_radius": 0
               }
             },
@@ -1175,7 +1175,7 @@
             "product-card-gallery": {
               "type": "_product-card-gallery",
               "settings": {
-                "image_ratio": "portrait",
+                "image_ratio": "square",
                 "border_radius": 0
               }
             },
@@ -1314,7 +1314,7 @@
             "product-card-gallery": {
               "type": "_product-card-gallery",
               "settings": {
-                "image_ratio": "portrait",
+                "image_ratio": "square",
                 "border_radius": 0
               }
             },
@@ -1453,7 +1453,7 @@
             "product-card-gallery": {
               "type": "_product-card-gallery",
               "settings": {
-                "image_ratio": "portrait",
+                "image_ratio": "square",
                 "border_radius": 0
               }
             },
@@ -1533,7 +1533,7 @@
             "product-card-gallery": {
               "type": "_product-card-gallery",
               "settings": {
-                "image_ratio": "portrait",
+                "image_ratio": "square",
                 "border_radius": 0
               }
             },
@@ -1613,7 +1613,7 @@
             "product-card-gallery": {
               "type": "_product-card-gallery",
               "settings": {
-                "image_ratio": "portrait",
+                "image_ratio": "square",
                 "border_radius": 0
               }
             },
@@ -1693,7 +1693,7 @@
             "product-card-gallery": {
               "type": "_product-card-gallery",
               "settings": {
-                "image_ratio": "portrait",
+                "image_ratio": "square",
                 "border_radius": 0
               }
             },
@@ -1773,7 +1773,7 @@
             "product-card-gallery": {
               "type": "_product-card-gallery",
               "settings": {
-                "image_ratio": "portrait",
+                "image_ratio": "square",
                 "border_radius": 0
               }
             },
