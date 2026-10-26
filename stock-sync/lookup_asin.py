@@ -24,6 +24,8 @@ def get(url):
 def search(text):
     html = get("https://www.amazon.ae/s?k=" + urllib.parse.quote_plus(text) + "&language=en_AE")
     out = []
+    if 's-search-result' not in html:
+        print("  (no result cards; captcha=%s, length=%d)" % ("captcha" in html.lower(), len(html)))
     for block in html.split('data-component-type="s-search-result"')[1:]:
         asin = re.search(r'data-asin="(B0[A-Z0-9]{8})"', block)
         title = re.search(r"<h2[^>]*>(.*?)</h2>", block, re.S)
@@ -53,10 +55,12 @@ def main(path):
         brand, text = [s.strip() for s in line.split("|", 1)]
         print(f"\n=== {brand} : {text}", flush=True)
         results = []
-        for attempt in range(4):
+        for attempt in range(5):
             try:
                 results = search(text)
-                break
+                if results:
+                    break
+                time.sleep(20)
             except Exception as e:  # noqa: BLE001
                 print("search failed:", e)
                 time.sleep(20)
