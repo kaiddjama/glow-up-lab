@@ -103,6 +103,18 @@ def paged(query, variables, path):
         after = data["pageInfo"]["endCursor"]
 
 
+BRAND_SUFFIXES = (" professional makeup", " professional", " cosmetics", " cosmétiques", " paris", " new york",
+                  " beauty", " skincare", " baby")  # "NYX" and "NYX Professional Makeup" are one brand
+
+
+def brand_key(vendor):
+    b = (vendor or "").strip().lower()
+    for suffix in BRAND_SUFFIXES:
+        if b.endswith(suffix) and len(b) > len(suffix) + 1:
+            b = b[:-len(suffix)].strip()
+    return b
+
+
 def num(gid):
     return gid.rsplit("/", 1)[-1]
 
@@ -119,9 +131,11 @@ def load_products():
         tags = p["tags"] or []
         rayon = next((t[6:] for t in tags if t.startswith("rayon:")), None) or \
             next((t[4:] for t in tags if t.startswith("sub:")), None) or (p["productType"] or "").lower()
-        brand = (p["vendor"] or "").strip().lower() or "?" + num(p["id"])
+        brand = brand_key(p["vendor"]) or "?" + num(p["id"])
         title = (p["title"] or "").lower()
-        if title.startswith(brand):
+        if title.startswith((p["vendor"] or "?").strip().lower()):
+            title = title[len((p["vendor"] or "").strip()):]
+        elif title.startswith(brand):
             title = title[len(brand):]
         words = re.findall(r"[a-zà-ÿ0-9]+", title)
         products[p["id"]] = {
