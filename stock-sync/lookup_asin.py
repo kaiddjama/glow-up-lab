@@ -6,6 +6,7 @@ Read-only: nothing is written anywhere except the job log.
 """
 import datetime as dt
 import json
+import os
 import re
 import sys
 import time
@@ -61,7 +62,7 @@ def main(path):
                 time.sleep(20)
         for asin, title, info in results[:10]:
             print("  candidate", asin, title[:110], json.dumps(info))
-        picks = [r for r in results if brand.lower() in r[1].lower() or "matcha" in r[1].lower()][:3]
+        picks = [] if os.environ.get("SKIP_PAGES") else [r for r in results if brand.lower() in r[1].lower() or "matcha" in r[1].lower()][:3]
         for asin, title, _ in picks:
             page = {"error": "no try"}
             for attempt in range(3):

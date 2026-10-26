@@ -14,4 +14,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: Look up listings
         working-directory: stock-sync
+        env:
+          SKIP_PAGES: "1"
         run: python3 lookup_asin.py ../lookup/queries.txt
