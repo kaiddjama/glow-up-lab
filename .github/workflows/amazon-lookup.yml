@@ -1,0 +1,17 @@
+name: Amazon.ae lookup
+# Read-only lookup of the listings named in lookup/queries.txt; the result is printed in the job log.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "lookup/queries.txt"
+permissions:
+  contents: read
+jobs:
+  lookup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Look up listings
+        working-directory: stock-sync
+        run: python3 -I lookup_asin.py ../lookup/queries.txt
