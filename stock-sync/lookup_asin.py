@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """One-off Amazon.ae lookup: finds listings by search text and prints ASIN, price, seller, delivery, weight and images.
 
-Usage: python3 -I lookup_asin.py queries.txt   (one "BRAND | search text" per line)
+Usage: python3 lookup_asin.py queries.txt   (one "BRAND | search text" per line)
 Read-only: nothing is written anywhere except the job log.
 """
 import datetime as dt
