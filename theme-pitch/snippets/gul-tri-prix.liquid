@@ -1,0 +1,123 @@
+{%- doc -%}
+  Aimé Essentials : deux boutons visibles pour trier une collection par prix.
+  Sur ordinateur ils sont dans la barre de filtres, sur mobile sur une ligne sous « Filtrer ».
+  Un second clic sur le bouton actif revient au tri par défaut. Les filtres et la page sont conservés (la page repart à 1).
+
+  @param {string} sort_by - Le tri en cours
+  @param {string} results_url - L'adresse de la collection (sert de lien de secours sans JavaScript)
+  @param {string} position - 'desktop' ou 'mobile'
+{%- enddoc -%}
+
+{%- liquid
+  assign gul_sep = '?'
+  if results_url contains '?'
+    assign gul_sep = '&'
+  endif
+-%}
+<div
+  class="gul-tri gul-tri--{{ position }}"
+  role="group"
+  aria-label="Trier par prix"
+>
+  <a
+    class="gul-tri__bouton{% if sort_by == 'price-ascending' %} gul-tri__bouton--actif{% endif %}"
+    href="{{ results_url }}{{ gul_sep }}sort_by=price-ascending"
+    data-gul-tri="price-ascending"
+    aria-pressed="{% if sort_by == 'price-ascending' %}true{% else %}false{% endif %}"
+    rel="nofollow"
+  >Prix croissant</a>
+  <a
+    class="gul-tri__bouton{% if sort_by == 'price-descending' %} gul-tri__bouton--actif{% endif %}"
+    href="{{ results_url }}{{ gul_sep }}sort_by=price-descending"
+    data-gul-tri="price-descending"
+    aria-pressed="{% if sort_by == 'price-descending' %}true{% else %}false{% endif %}"
+    rel="nofollow"
+  >Prix décroissant</a>
+</div>
+
+<script>
+  (() => {
+    if (window.__gulTriPrix) return;
+    window.__gulTriPrix = true;
+    document.addEventListener('click', (event) => {
+      const bouton = event.target.closest && event.target.closest('[data-gul-tri]');
+      if (!bouton) return;
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      const url = new URL(window.location.href);
+      const tri = bouton.dataset.gulTri;
+      url.searchParams.delete('page');
+      // les épuisés sont masqués : Shopify doit appliquer « En stock » avant de découper en pages
+      url.searchParams.set('filter.v.availability', '1');
+      if (url.searchParams.get('sort_by') === tri) {
+        url.searchParams.delete('sort_by');
+      } else {
+        url.searchParams.set('sort_by', tri);
+      }
+      window.location.assign(url.toString());
+    });
+  })();
+</script>
+
+{% stylesheet %}
+  .gul-tri {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .gul-tri__bouton {
+    display: block;
+    white-space: nowrap;
+    padding: 8px 16px;
+    border: 1px solid #d9c8b4;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    line-height: 1.2;
+    color: #4a3426;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .gul-tri__bouton:hover {
+    background: #f3ede4;
+  }
+
+  .gul-tri__bouton--actif,
+  .gul-tri__bouton--actif:hover {
+    background: #4a3426;
+    border-color: #4a3426;
+    color: #faf6f0;
+  }
+
+  /* Ordinateur : dans la barre de filtres, avant « Trier ». */
+  .gul-tri--desktop {
+    display: none;
+  }
+
+  @media screen and (min-width: 750px) {
+    .gul-tri--desktop {
+      display: flex;
+      flex-shrink: 0;
+      margin-inline-end: var(--margin-md, 16px);
+    }
+  }
+
+  /* Mobile : une ligne sous « Filtrer », deux boutons de même largeur. */
+  .gul-tri--mobile {
+    padding-inline: var(--page-margin, 16px);
+    padding-block: 0 var(--padding-sm, 12px);
+  }
+
+  .gul-tri--mobile .gul-tri__bouton {
+    flex: 1 1 0;
+    text-align: center;
+    padding-block: 10px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .gul-tri--mobile {
+      display: none;
+    }
+  }
+{% endstylesheet %}
