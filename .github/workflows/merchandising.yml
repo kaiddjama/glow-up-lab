@@ -4,7 +4,7 @@ name: Collection order (brand mix)
 # Run it by hand with "Run workflow": dry_run=true computes and reports only.
 on:
   push:
-    branches: ["claude/project-thread-if7gxz"]
+    branches: ["claude/project-thread-if7gxz", "claude/project-thread-hy4phe"]
     paths: ["merchandising/request.env"]
   schedule:
     - cron: "20 * * * *"
