@@ -3,8 +3,7 @@
 
 Usage: python3 -I amazon_sync.py results_dir
 Settings come from environment variables (GitHub Actions secrets and variables): SHOPIFY_STORE and
-SHOPIFY_CLIENT_ID / SHOPIFY_CLIENT_SECRET (or SHOPIFY_TOKEN); PRICE_MULT, SHIPPING_AED_PER_KG and AED_TO_FDJ
-(price formula, kept out of the code). Optional: DRY_RUN=1 (read and report only), LIMIT=n, SHARD=i/n, DELAY.
+SHOPIFY_CLIENT_ID / SHOPIFY_CLIENT_SECRET (or SHOPIFY_TOKEN); PRICE_FORMULA (kept out of the code). Optional: DRY_RUN=1 (read and report only), LIMIT=n, SHARD=i/n, DELAY.
 Without credentials the script does nothing and exits cleanly.
 
 For every active variant that has an ASIN (SKU "B0…" / "AMZ-B0…" or a product metafield) it reads the Amazon.ae
@@ -25,15 +24,16 @@ import urllib.parse
 import urllib.request
 
 API = "2025-07"
-PRICE_FIELDS = ("PRICE_MULT", "SHIPPING_AED_PER_KG", "AED_TO_FDJ")  # price formula, set as GitHub Actions variables
-MARGIN_CUSTOMS = float(os.environ.get("PRICE_MULT") or 0)
-SHIPPING_AED_PER_KG = float(os.environ.get("SHIPPING_AED_PER_KG") or 0)
-AED_TO_FDJ = float(os.environ.get("AED_TO_FDJ") or 0)
+try:  # one secret "a,b,c" holds the price formula, so masking hides it as a whole in the logs
+    MARGIN_CUSTOMS, SHIPPING_AED_PER_KG, AED_TO_FDJ = (float(x) for x in os.environ.get("PRICE_FORMULA", "").split(","))
+except ValueError:
+    MARGIN_CUSTOMS = SHIPPING_AED_PER_KG = AED_TO_FDJ = 0.0
 DEFAULT_WEIGHT_G = 200
 MAX_CHANGE = 1.50  # bigger jumps usually mean a misread page or a wrong listing: held for review
 EXTRA_DAYS = 2
 MAX_DAYS = 7  # Amazon.ae or brand store: delivery to Dubai later than this counts as out of stock
 MAX_DAYS_OTHER = 2  # any other seller: kept only if it delivers within 2 days
+STOCK_GUARD = 0.25  # share of read variants that may newly go Épuisé in one run before stock changes are held
 SELLER_GUARD = 0.25  # share of pages read that may newly go Épuisé because of the seller rule in one run
 SELLER_RULE = os.environ.get("SELLER_RULE", "0") == "1"  # off since 22 Oct (seller rule removed); SELLER_RULE=1 switches it back on
 EXEMPT_TAGS = set(os.environ.get(
@@ -79,16 +79,21 @@ def token():
 
 
 def gql(query, variables):
-    req = urllib.request.Request(
-        f"https://{os.environ['SHOPIFY_STORE']}/admin/api/{API}/graphql.json",
-        data=json.dumps({"query": query, "variables": variables}).encode(),
-        headers={"Content-Type": "application/json",
-                 "X-Shopify-Access-Token": token()})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        res = json.load(r)
-    if res.get("errors"):
-        raise RuntimeError(res["errors"])
-    return res["data"]
+    for attempt in range(1, 11):
+        req = urllib.request.Request(
+            f"https://{os.environ['SHOPIFY_STORE']}/admin/api/{API}/graphql.json",
+            data=json.dumps({"query": query, "variables": variables}).encode(),
+            headers={"Content-Type": "application/json",
+                     "X-Shopify-Access-Token": token()})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            res = json.load(r)
+        throttled = any((e.get("extensions") or {}).get("code") == "THROTTLED" for e in res.get("errors") or [])
+        if throttled and attempt < 10:  # several shards share the store's query budget: wait for it to refill
+            time.sleep(min(60, 3 * attempt) + random.uniform(0, 3))
+            continue
+        if res.get("errors"):
+            raise RuntimeError(res["errors"])
+        return res["data"]
 
 
 def load_variants():
@@ -324,8 +329,8 @@ def main():
     if not (os.environ.get("SHOPIFY_STORE") and (os.environ.get("SHOPIFY_TOKEN") or os.environ.get("SHOPIFY_CLIENT_SECRET"))):
         print("No Shopify credentials set: nothing to do.")
         return
-    if not all(MARGIN_CUSTOMS and SHIPPING_AED_PER_KG and AED_TO_FDJ for _ in [0]):
-        sys.exit("Price formula variables are missing: " + ", ".join(PRICE_FIELDS))
+    if not (MARGIN_CUSTOMS and SHIPPING_AED_PER_KG and AED_TO_FDJ):
+        sys.exit("PRICE_FORMULA secret is missing or malformed.")
     outdir = sys.argv[1]
     os.makedirs(outdir, exist_ok=True)
     dry = os.environ.get("DRY_RUN") == "1"
@@ -335,7 +340,8 @@ def main():
     rows = load_variants()
     asins = sorted({r["asin"] for r in rows})
     if os.environ.get("LIMIT"):
-        asins = asins[:int(os.environ["LIMIT"])]
+        n_max = int(os.environ["LIMIT"])  # an evenly spread sample, not just the first ASINs
+        asins = asins[::max(1, len(asins) // n_max)][:n_max]
     if os.environ.get("SHARD"):  # "i/n": this process reads only every n-th ASIN, starting at i (parallel runs)
         i, n = (int(x) for x in os.environ["SHARD"].split("/"))
         asins = asins[i::n]
@@ -393,6 +399,20 @@ def main():
                 "action": ("exempt (accessoire)" if r["exempt"] else
                            "offre officielle trouvée: " + pg["seller"] if pg.get("buyBoxSeller") else
                            "signalé seulement (garde-fou)" if flagged_rule else "Épuisé")})
+    # Safety nets: a page in stock with no delivery date (location not read, partial page) says nothing about
+    # delivery, so the variant keeps its current setting; and if too many variants would newly go Épuisé in
+    # one run, the page reading is probably off (wrong location, blocking): no stock change is made at all.
+    def no_date(p):
+        return bool(p.get("inStock")) and p.get("sourceDays") is None and not p.get("held")
+
+    live = [r for r in rows if not r["parked"] and pages.get(r["asin"]) and not pages[r["asin"]].get("error")]
+    newly_out = [r for r in live if r["policy"] == "CONTINUE" and not no_date(pages[r["asin"]])
+                 and not sellable(pages[r["asin"]], r)]
+    stock_guard = len(live) >= 20 and len(newly_out) > STOCK_GUARD * len(live)
+    report["stockGuardTripped"] = stock_guard
+    report["noDeliveryDate"] = sum(no_date(pages[r["asin"]]) for r in live)
+    if stock_guard:
+        print(f"Stock guard: {len(newly_out)} of {len(live)} variants would newly go Épuisé, no stock change made.")
     # set-aside (draft) products come back as soon as one of their variants is sellable
     revive = {r["productId"] for r in rows if r["parked"] and pages.get(r["asin"])
               and not pages[r["asin"]].get("error") and sellable(pages[r["asin"]], r)}
@@ -412,7 +432,10 @@ def main():
             report["errors"].append({"asin": r["asin"], "handle": r["handle"], "error": page["error"]})
             continue
         upd = {"id": r["variantId"]}
-        new_policy = "CONTINUE" if sellable(page, r) else "DENY"
+        if stock_guard or no_date(page):
+            new_policy = r["policy"]
+        else:
+            new_policy = "CONTINUE" if sellable(page, r) else "DENY"
         if new_policy != r["policy"]:
             upd["inventoryPolicy"] = new_policy
         if page["aed"] is not None and new_policy == "CONTINUE":
@@ -427,7 +450,7 @@ def main():
             report["changes"].append({"handle": r["handle"], "variant": r["variant"], "asin": r["asin"],
                                       "aed": page["aed"], "oldPrice": r["price"], **upd})
             by_product.setdefault(r["productId"], []).append(upd)
-        if new_policy == "CONTINUE":
+        if new_policy == "CONTINUE" and page.get("sourceDays") is not None:
             rng = delivery_range(page)
             if rng != r["range"]:
                 range_fields.append({"ownerId": r["variantId"], "namespace": "supplier", "key": "delivery_range",
@@ -498,8 +521,27 @@ def main():
     report["republished"] = sorted({r["handle"] for r in rows if r["productId"] in revive})
     path = os.path.join(outdir, f"sync-{now[:13].replace(':', '')}.json")
     json.dump(report, open(path, "w"), indent=1, ensure_ascii=False)
+    reasons = {}
+    for e in report["errors"]:
+        k = str(e.get("error") if isinstance(e, dict) else e)[:40]
+        reasons[k] = reasons.get(k, 0) + 1
+    if reasons:
+        print("Pages not read, by reason:", reasons)
     prices = sum("price" in c for c in report["changes"])
     stock = sum("inventoryPolicy" in c for c in report["changes"])
+    days_seen = {}
+    for r in live:
+        d = pages[r["asin"]].get("sourceDays")
+        days_seen[d] = days_seen.get(d, 0) + 1
+    texts = sorted({str(pages[r["asin"]].get("deliveryText"))[:50] for r in live})[:4]
+    buckets = {"under 5%": 0, "5-20%": 0, "over 20%": 0}
+    for c in report["changes"]:
+        if "price" in c and c.get("oldPrice"):
+            d = abs(float(c["price"]) - c["oldPrice"]) / c["oldPrice"]
+            buckets["under 5%" if d < 0.05 else "5-20%" if d < 0.2 else "over 20%"] += 1
+    print("Delivery days read (None = no date):", days_seen, "| examples:", texts)
+    print("Size of the price changes:", buckets)
+    print(f"{report['noDeliveryDate']} pages in stock without a delivery date (stock left as is).")
     print(f"{'DRY RUN: ' if dry else ''}{prices} prices changed, {stock} stock changes, "
           f"{len(report['skipped'])} big changes held for review, {len(report['errors'])} pages not read, "
           f"{len(report['republished'])} set-aside products back online, {len(report['stillParked'])} still set aside, "

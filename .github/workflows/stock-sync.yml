@@ -1,5 +1,5 @@
 name: Amazon.ae stock and price sync
-# Reads product pages and updates price and stock. All settings are repository secrets and variables.
+# Reads product pages and updates price and stock. All settings are repository secrets.
 # Run it by hand with "Run workflow": dry_run=true reads and reports only.
 on:
   schedule:
@@ -36,9 +36,7 @@ jobs:
           SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
           SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
           SHARD: ${{ matrix.shard }}
-          PRICE_MULT: ${{ vars.PRICE_MULT }}
-          SHIPPING_AED_PER_KG: ${{ vars.SHIPPING_AED_PER_KG }}
-          AED_TO_FDJ: ${{ vars.AED_TO_FDJ }}
+          PRICE_FORMULA: ${{ secrets.PRICE_FORMULA }}
           SELLER_RULE: "0"
           DELAY: "8"
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
