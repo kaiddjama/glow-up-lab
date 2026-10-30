@@ -1,9 +1,14 @@
 name: Amazon.ae stock and price sync
 # Reads product pages and updates price and stock. All settings are repository secrets.
-# Runs every night at about 03:00 Djibouti time (00:07 UTC; not exactly :00, GitHub skips runs scheduled on the hour when busy). Run it by hand with "Run workflow": dry_run=true reads and reports only.
+# Three full checks a day (about 1h15 each), each done before the usual ordering peaks (Djibouti is UTC+3):
+# 03:07 (done ~04:30, before the morning), 10:07 (done ~11:30, before the afternoon), 16:07 (done ~17:30, before the evening).
+# Not exactly on the hour: GitHub skips runs scheduled on the hour when busy.
+# Run it by hand with "Run workflow": dry_run=true reads and reports only.
 on:
   schedule:
-    - cron: "7 0 * * *"  # 00:07 UTC = 03:07 Djibouti, every night
+    - cron: "7 0 * * *"   # 03:07 Djibouti
+    - cron: "7 7 * * *"   # 10:07 Djibouti
+    - cron: "7 13 * * *"  # 16:07 Djibouti
   workflow_dispatch:
     inputs:
       dry_run:
@@ -24,13 +29,31 @@ concurrency:
   group: stock-sync
   cancel-in-progress: false
 jobs:
+  unmapped:
+    # Variants of multi-variant products with no ASIN cannot be read on Amazon.ae: they are set to Épuisé.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Stop selling variants without an ASIN
+        working-directory: stock-sync
+        env:
+          SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
+        run: python3 -I unmapped_guard.py
   sync:
     runs-on: ubuntu-latest
     timeout-minutes: 350
     strategy:
       fail-fast: false
       matrix:
-        shard: ["0/3", "1/3", "2/3"]
+        # each runner has its own IP and reads one page every ~10 s; more runners = faster, same pace per IP
+        shard: ["0/8", "1/8", "2/8", "3/8", "4/8", "5/8", "6/8", "7/8"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
