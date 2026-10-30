@@ -1,0 +1,53 @@
+name: Order availability check
+# Every 10 minutes: new orders get their items checked on Amazon.ae. An item that cannot be bought there goes to Épuisé,
+# the order is tagged amazon-ko and an alert is posted as a comment on pull request #15 (the alerts mailbox).
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Read and report only, change nothing on Shopify, post nothing"
+        type: boolean
+        default: true
+permissions:
+  contents: read
+  pull-requests: write
+concurrency:
+  group: order-check
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+      SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+      SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+      PRICE_FORMULA: ${{ secrets.PRICE_FORMULA || format('{0},{1},{2}', vars.PRICE_MULT, vars.SHIPPING_AED_PER_KG, vars.AED_TO_FDJ) }}
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Orders to check
+        id: orders
+        working-directory: stock-sync
+        run: python3 -I order_check.py list
+      - name: Install the browser
+        if: steps.orders.outputs.count != '0'
+        timeout-minutes: 8
+        run: pip install playwright && playwright install --with-deps chromium
+      - name: Check the items on Amazon.ae
+        if: steps.orders.outputs.count != '0'
+        working-directory: stock-sync
+        env:
+          FETCHER: browser
+          SELLER_RULE: "0"
+        run: python3 -I order_check.py check
+      - name: Post the alert
+        if: ${{ hashFiles('stock-sync/alert.md') != '' && env.DRY_RUN != '1' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr comment 15 --repo "$GITHUB_REPOSITORY" --body-file stock-sync/alert.md
