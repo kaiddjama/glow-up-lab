@@ -1,9 +1,14 @@
 name: Amazon.ae stock and price sync
 # Reads product pages and updates price and stock. All settings are repository secrets.
-# Runs every night at about 03:00 Djibouti time (00:07 UTC; not exactly :00, GitHub skips runs scheduled on the hour when busy). Run it by hand with "Run workflow": dry_run=true reads and reports only.
+# Three full checks a day (about 1h15 each), each done before the usual ordering peaks (Djibouti is UTC+3):
+# 03:07 (done ~04:30, before the morning), 10:07 (done ~11:30, before the afternoon), 16:07 (done ~17:30, before the evening).
+# Not exactly on the hour: GitHub skips runs scheduled on the hour when busy.
+# Run it by hand with "Run workflow": dry_run=true reads and reports only.
 on:
   schedule:
-    - cron: "7 0 * * *"  # 00:07 UTC = 03:07 Djibouti, every night
+    - cron: "7 0 * * *"   # 03:07 Djibouti
+    - cron: "7 7 * * *"   # 10:07 Djibouti
+    - cron: "7 13 * * *"  # 16:07 Djibouti
   workflow_dispatch:
     inputs:
       dry_run:
