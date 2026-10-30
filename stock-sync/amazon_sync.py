@@ -31,10 +31,14 @@ except ValueError:
 DEFAULT_WEIGHT_G = 200
 MAX_CHANGE = 1.50  # bigger jumps usually mean a misread page or a wrong listing: held for review
 EXTRA_DAYS = 2
-MAX_DAYS = 7  # Amazon.ae or brand store: delivery to Dubai later than this counts as out of stock
-MAX_DAYS_OTHER = 2  # any other seller: kept only if it delivers within 2 days
+# Total delivery (Dubai + 2-3 days of forwarding to Djibouti) may not exceed 4 days: delivery to Dubai today or tomorrow
+# is sellable, anything later counts as out of stock. MAX_DAYS can be changed without touching the code.
+MAX_DAYS = int(os.environ.get("MAX_DAYS", "1"))
+MAX_DAYS_OTHER = MAX_DAYS  # same limit for every seller
+STANDARD_DAYS = MAX_DAYS  # up to this many days to Dubai: standard delay; later (if MAX_DAYS is raised): longer delay shown
+FORWARD_DAYS = (2, 3)  # Dubai -> Djibouti
 PRICES_ONLY = os.environ.get("PRICES_ONLY") == "1"  # update prices only: no stock, set-aside or delivery-range change
-STOCK_GUARD = 0.25  # share of read variants that may newly go Épuisé in one run before stock changes are held
+STOCK_GUARD = float(os.environ.get("STOCK_GUARD", "0.25"))  # share of read variants that may newly go Épuisé in one run before stock changes are held
 SELLER_GUARD = 0.25  # share of pages read that may newly go Épuisé because of the seller rule in one run
 SELLER_RULE = os.environ.get("SELLER_RULE", "0") == "1"  # off since 22 Oct (seller rule removed); SELLER_RULE=1 switches it back on
 EXEMPT_TAGS = set(os.environ.get(
@@ -320,7 +324,42 @@ def sellable(page, row):
 
 def delivery_range(page):
     days = page.get("sourceDays")
-    return "standard" if days is not None and days <= MAX_DAYS_OTHER else "3-10"
+    return "standard" if days is not None and days <= STANDARD_DAYS else "3-10"
+
+
+def delivery_eta(page):
+    """Delivery in Djibouti as "a-b" days: days to Dubai + 2 to 3 days of forwarding."""
+    days = page["sourceDays"]
+    return f"{days + FORWARD_DAYS[0]}-{days + FORWARD_DAYS[1]}"
+
+
+HIDE_EVERY = 50  # pages between two "hide what is unavailable now" passes
+
+
+def hide_unavailable(rows, pages, dry):
+    """Épuisé straight away for the variants whose page, read so far, says they cannot be bought, instead of waiting
+    for the end of the run. Only ever hides (prices and put-back-on-sale wait for the end). Same rules and the same
+    guard as the final pass: no change when the page has no delivery date or when too much of what was read looks
+    unavailable (probably a misread)."""
+    if dry or PRICES_ONLY:
+        return
+    live = [r for r in rows if not r["parked"] and pages.get(r["asin"]) and not pages[r["asin"]].get("error")]
+    out = [r for r in live if r["policy"] == "CONTINUE" and not (pages[r["asin"]].get("inStock")
+           and pages[r["asin"]].get("sourceDays") is None and not pages[r["asin"]].get("held"))
+           and not sellable(pages[r["asin"]], r)]
+    if len(live) < 20 or len(out) > STOCK_GUARD * len(live):
+        return
+    by_product = {}
+    for r in out:
+        by_product.setdefault(r["productId"], []).append({"id": r["variantId"], "inventoryPolicy": "DENY"})
+    for pid, ups in by_product.items():
+        errs = gql(PRICES_M, {"p": pid, "v": ups})["productVariantsBulkUpdate"]["userErrors"]
+        if errs:
+            print("hide error:", pid, errs)
+    for r in out:
+        r["policy"] = "DENY"
+    if out:
+        print(f"{len(out)} variants set to Épuisé right away ({time.strftime('%H:%M:%S')})", flush=True)
 
 
 def formula(aed, grams):
@@ -339,13 +378,16 @@ def main():
     os.makedirs(outdir, exist_ok=True)
     dry = os.environ.get("DRY_RUN") == "1"
     delay = float(os.environ.get("DELAY", "8"))
-    today = dt.date.today()
+    today = dt.datetime.now(dt.timezone(dt.timedelta(hours=4))).date()  # Amazon.ae dates are Dubai dates (UTC+4)
     now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     rows = load_variants()
     asins = sorted({r["asin"] for r in rows})
     if os.environ.get("LIMIT"):
         n_max = int(os.environ["LIMIT"])  # an evenly spread sample, not just the first ASINs
         asins = asins[::max(1, len(asins) // n_max)][:n_max]
+    if os.environ.get("ONLY_ASINS"):  # a retry pass: only these ASINs (comma-separated), see coverage.py
+        wanted = set(os.environ["ONLY_ASINS"].split(","))
+        asins = [a for a in asins if a in wanted]
     if os.environ.get("SHARD"):  # "i/n": this process reads only every n-th ASIN, starting at i (parallel runs)
         i, n = (int(x) for x in os.environ["SHARD"].split("/"))
         asins = asins[i::n]
@@ -363,6 +405,8 @@ def main():
     vendor_of = {r["asin"]: r["vendor"] for r in rows}
     exempt_asin = {r["asin"] for r in rows if r["exempt"]}
     pages, blocked_in_a_row = {}, 0
+    if os.environ.get("SHARD"):  # parallel readers do not all start at the same second
+        time.sleep(random.uniform(0, 60))
     for n, asin in enumerate(asins, 1):
         try:
             pages[asin] = parse(fetch(asin), today)
@@ -383,9 +427,13 @@ def main():
                 break
             pages[asin] = {"error": str(e)[:100]}
         blocked_in_a_row = blocked_in_a_row + 1 if pages[asin].get("error") == "captcha" else 0
+        if blocked_in_a_row:  # Amazon asked for a CAPTCHA: back off for a while instead of insisting
+            time.sleep(60 + random.uniform(0, 60))
         if blocked_in_a_row >= 5:
             print(f"Amazon is showing CAPTCHAs: stopping after {n} pages, rest left unchanged")
             break
+        if n % HIDE_EVERY == 0:
+            hide_unavailable(rows, pages, dry)
         if n % 25 == 0:
             bad = sum(1 for p in pages.values() if p.get("error"))
             print(f"{n}/{len(asins)} pages read, {bad} not read ({time.strftime('%H:%M:%S')})", flush=True)
@@ -452,6 +500,8 @@ def main():
         if page.get("error"):
             report["errors"].append({"asin": r["asin"], "handle": r["handle"], "error": page["error"]})
             continue
+        range_fields.append({"ownerId": r["variantId"], "namespace": "supplier", "key": "variant_checked_at",
+                             "type": "date_time", "value": now})  # this variant's page was read: coverage.py checks it
         upd = {"id": r["variantId"]}
         if PRICES_ONLY or stock_guard or no_date(page):
             new_policy = r["policy"]
@@ -472,6 +522,8 @@ def main():
                                       "aed": page["aed"], "oldPrice": r["price"], **upd})
             by_product.setdefault(r["productId"], []).append(upd)
         if new_policy == "CONTINUE" and page.get("sourceDays") is not None and not PRICES_ONLY:
+            range_fields.append({"ownerId": r["variantId"], "namespace": "supplier", "key": "delivery_eta",
+                                 "type": "single_line_text_field", "value": delivery_eta(page)})
             rng = delivery_range(page)
             if rng != r["range"]:
                 range_fields.append({"ownerId": r["variantId"], "namespace": "supplier", "key": "delivery_range",

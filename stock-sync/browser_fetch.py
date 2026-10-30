@@ -55,6 +55,9 @@ class BrowserReader:
         self.page = self.ctx.new_page()
         self.page.set_default_timeout(20000)
         self.set_location()
+        # Only the page text is needed: do not download pictures, video or fonts (less load on Amazon, faster pages).
+        self.page.route("**/*", lambda route: route.abort()
+                        if route.request.resource_type in ("image", "media", "font") else route.continue_())
         return self
 
     def close(self):
