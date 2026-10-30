@@ -17,8 +17,8 @@
         "a3": {
           "type": "_announcement",
           "settings": {
-            "text": "<strong>-10 % sur votre première commande</strong> : code <strong>WELCOME10</strong>",
-            "link": "/discount/WELCOME10?redirect=/collections/best-sellers",
+            "text": "<strong>-10 % sur votre première commande</strong> : recevez votre code par email",
+            "link": "#offre-bienvenue",
             "font": "var(--font-body--family)",
             "font_size": "0.875rem",
             "weight": "",
