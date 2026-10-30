@@ -67,8 +67,8 @@ def main():
                 f.write(f"count={len(orders)}\n")
         return
     dry = os.environ.get("DRY_RUN") == "1"
-    today = dt.date.today()
     now = dt.datetime.now(dt.timezone.utc)
+    today = now.astimezone(dt.timezone(dt.timedelta(hours=4))).date()  # Dubai date, as in amazon_sync.py
     import browser_fetch
     reader = browser_fetch.BrowserReader().start()
     print("Browser reader started, delivery location:", reader.location_text())
