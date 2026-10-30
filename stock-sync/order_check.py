@@ -58,7 +58,19 @@ def main():
     if not (os.environ.get("SHOPIFY_STORE") and (os.environ.get("SHOPIFY_TOKEN") or os.environ.get("SHOPIFY_CLIENT_SECRET"))):
         print("No Shopify credentials set: nothing to do.")
         return
-    orders = recent_orders()
+    try:
+        orders = recent_orders()
+    except RuntimeError as e:
+        if "ACCESS_DENIED" not in str(e):
+            raise
+        # The Shopify app has no read_orders scope yet: say so on the run page instead of failing every 10 minutes.
+        print("::warning title=Order check not active::The Shopify app lacks the read_orders / write_orders access scopes. "
+              "Add them to the app and approve the update; the check starts by itself afterwards.")
+        out = os.environ.get("GITHUB_OUTPUT")
+        if out:
+            with open(out, "a") as f:
+                f.write("count=0\n")
+        return
     if mode == "list":
         print(f"{len(orders)} recent orders to check.")
         out = os.environ.get("GITHUB_OUTPUT")
