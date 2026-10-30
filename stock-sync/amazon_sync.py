@@ -31,9 +31,11 @@ except ValueError:
 DEFAULT_WEIGHT_G = 200
 MAX_CHANGE = 1.50  # bigger jumps usually mean a misread page or a wrong listing: held for review
 EXTRA_DAYS = 2
-MAX_DAYS = 4  # delivery to Dubai later than 4 days counts as out of stock (forwarding to Djibouti takes 2-3 more days)
-MAX_DAYS_OTHER = 4  # same limit for every seller
-STANDARD_DAYS = 1  # delivery to Dubai today or tomorrow = standard delay; 2 to 4 days = longer delay shown on the product
+# Total delivery (Dubai + 2-3 days of forwarding to Djibouti) may not exceed 4 days: delivery to Dubai today or tomorrow
+# is sellable, anything later counts as out of stock. MAX_DAYS can be changed without touching the code.
+MAX_DAYS = int(os.environ.get("MAX_DAYS", "1"))
+MAX_DAYS_OTHER = MAX_DAYS  # same limit for every seller
+STANDARD_DAYS = MAX_DAYS  # up to this many days to Dubai: standard delay; later (if MAX_DAYS is raised): longer delay shown
 FORWARD_DAYS = (2, 3)  # Dubai -> Djibouti
 PRICES_ONLY = os.environ.get("PRICES_ONLY") == "1"  # update prices only: no stock, set-aside or delivery-range change
 STOCK_GUARD = 0.25  # share of read variants that may newly go Épuisé in one run before stock changes are held
