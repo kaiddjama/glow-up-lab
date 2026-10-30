@@ -47,7 +47,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: ["0/3", "1/3", "2/3"]
+        # each runner has its own IP and reads one page every ~10 s; more runners = faster, same pace per IP
+        shard: ["0/8", "1/8", "2/8", "3/8", "4/8", "5/8", "6/8", "7/8"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
