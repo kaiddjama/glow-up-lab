@@ -1,7 +1,7 @@
 name: Amazon.ae stock and price sync
 # Reads product pages and updates price and stock. All settings are repository secrets.
-# Three full checks a day (about 1h15 each), each done before the usual ordering peaks (Djibouti is UTC+3):
-# 03:07 (done ~04:30, before the morning), 10:07 (done ~11:30, before the afternoon), 16:07 (done ~17:30, before the evening).
+# Three full checks a day (about 40 min each on 16 runners), each done before the usual ordering peaks (Djibouti is UTC+3):
+# 03:07 (done ~04:00, before the morning), 10:07 (done ~11:00, before the afternoon), 16:07 (done ~17:00, before the evening).
 # Not exactly on the hour: GitHub skips runs scheduled on the hour when busy.
 # Run it by hand with "Run workflow": dry_run=true reads and reports only.
 on:
@@ -53,7 +53,9 @@ jobs:
       fail-fast: false
       matrix:
         # each runner has its own IP and reads one page every ~10 s; more runners = faster, same pace per IP
-        shard: ["0/8", "1/8", "2/8", "3/8", "4/8", "5/8", "6/8", "7/8"]
+        # (GitHub allows 20 jobs at once on a public repository: 16 readers + the guard job)
+        shard: ["0/16", "1/16", "2/16", "3/16", "4/16", "5/16", "6/16", "7/16",
+                "8/16", "9/16", "10/16", "11/16", "12/16", "13/16", "14/16", "15/16"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
