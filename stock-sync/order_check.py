@@ -64,6 +64,13 @@ def main():
         if "ACCESS_DENIED" not in str(e):
             raise
         # The Shopify app has no read_orders scope yet: say so on the run page instead of failing every 10 minutes.
+        try:  # which access scopes does the app really have? (scope names only, nothing secret)
+            granted = [x["handle"] for x in s.gql("{ currentAppInstallation { accessScopes { handle } } }", {})
+                       ["currentAppInstallation"]["accessScopes"]]
+            print("Granted scopes with 'order' in the name:", [h for h in granted if "order" in h] or "none",
+                  "| total scopes:", len(granted))
+        except Exception as e:
+            print("Could not list the granted scopes:", type(e).__name__)
         print("::warning title=Order check not active::The Shopify app lacks the read_orders / write_orders access scopes. "
               "Add them to the app and approve the update; the check starts by itself afterwards.")
         out = os.environ.get("GITHUB_OUTPUT")
