@@ -346,6 +346,9 @@ def main():
     if os.environ.get("LIMIT"):
         n_max = int(os.environ["LIMIT"])  # an evenly spread sample, not just the first ASINs
         asins = asins[::max(1, len(asins) // n_max)][:n_max]
+    if os.environ.get("ONLY_ASINS"):  # a retry pass: only these ASINs (comma-separated), see coverage.py
+        wanted = set(os.environ["ONLY_ASINS"].split(","))
+        asins = [a for a in asins if a in wanted]
     if os.environ.get("SHARD"):  # "i/n": this process reads only every n-th ASIN, starting at i (parallel runs)
         i, n = (int(x) for x in os.environ["SHARD"].split("/"))
         asins = asins[i::n]
@@ -363,6 +366,8 @@ def main():
     vendor_of = {r["asin"]: r["vendor"] for r in rows}
     exempt_asin = {r["asin"] for r in rows if r["exempt"]}
     pages, blocked_in_a_row = {}, 0
+    if os.environ.get("SHARD"):  # parallel readers do not all start at the same second
+        time.sleep(random.uniform(0, 60))
     for n, asin in enumerate(asins, 1):
         try:
             pages[asin] = parse(fetch(asin), today)
@@ -383,6 +388,8 @@ def main():
                 break
             pages[asin] = {"error": str(e)[:100]}
         blocked_in_a_row = blocked_in_a_row + 1 if pages[asin].get("error") == "captcha" else 0
+        if blocked_in_a_row:  # Amazon asked for a CAPTCHA: back off for a while instead of insisting
+            time.sleep(60 + random.uniform(0, 60))
         if blocked_in_a_row >= 5:
             print(f"Amazon is showing CAPTCHAs: stopping after {n} pages, rest left unchanged")
             break
@@ -452,6 +459,8 @@ def main():
         if page.get("error"):
             report["errors"].append({"asin": r["asin"], "handle": r["handle"], "error": page["error"]})
             continue
+        range_fields.append({"ownerId": r["variantId"], "namespace": "supplier", "key": "variant_checked_at",
+                             "type": "date_time", "value": now})  # this variant's page was read: coverage.py checks it
         upd = {"id": r["variantId"]}
         if PRICES_ONLY or stock_guard or no_date(page):
             new_policy = r["policy"]
