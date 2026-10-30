@@ -333,6 +333,35 @@ def delivery_eta(page):
     return f"{days + FORWARD_DAYS[0]}-{days + FORWARD_DAYS[1]}"
 
 
+HIDE_EVERY = 50  # pages between two "hide what is unavailable now" passes
+
+
+def hide_unavailable(rows, pages, dry):
+    """Épuisé straight away for the variants whose page, read so far, says they cannot be bought, instead of waiting
+    for the end of the run. Only ever hides (prices and put-back-on-sale wait for the end). Same rules and the same
+    guard as the final pass: no change when the page has no delivery date or when too much of what was read looks
+    unavailable (probably a misread)."""
+    if dry or PRICES_ONLY:
+        return
+    live = [r for r in rows if not r["parked"] and pages.get(r["asin"]) and not pages[r["asin"]].get("error")]
+    out = [r for r in live if r["policy"] == "CONTINUE" and not (pages[r["asin"]].get("inStock")
+           and pages[r["asin"]].get("sourceDays") is None and not pages[r["asin"]].get("held"))
+           and not sellable(pages[r["asin"]], r)]
+    if len(live) < 20 or len(out) > STOCK_GUARD * len(live):
+        return
+    by_product = {}
+    for r in out:
+        by_product.setdefault(r["productId"], []).append({"id": r["variantId"], "inventoryPolicy": "DENY"})
+    for pid, ups in by_product.items():
+        errs = gql(PRICES_M, {"p": pid, "v": ups})["productVariantsBulkUpdate"]["userErrors"]
+        if errs:
+            print("hide error:", pid, errs)
+    for r in out:
+        r["policy"] = "DENY"
+    if out:
+        print(f"{len(out)} variants set to Épuisé right away ({time.strftime('%H:%M:%S')})", flush=True)
+
+
 def formula(aed, grams):
     fdj = (aed * MARGIN_CUSTOMS + grams / 1000 * SHIPPING_AED_PER_KG) * AED_TO_FDJ
     return int(math.ceil(fdj / 50) * 50)
@@ -403,6 +432,8 @@ def main():
         if blocked_in_a_row >= 5:
             print(f"Amazon is showing CAPTCHAs: stopping after {n} pages, rest left unchanged")
             break
+        if n % HIDE_EVERY == 0:
+            hide_unavailable(rows, pages, dry)
         if n % 25 == 0:
             bad = sum(1 for p in pages.values() if p.get("error"))
             print(f"{n}/{len(asins)} pages read, {bad} not read ({time.strftime('%H:%M:%S')})", flush=True)
