@@ -38,7 +38,7 @@ MAX_DAYS_OTHER = MAX_DAYS  # same limit for every seller
 STANDARD_DAYS = MAX_DAYS  # up to this many days to Dubai: standard delay; later (if MAX_DAYS is raised): longer delay shown
 FORWARD_DAYS = (2, 3)  # Dubai -> Djibouti
 PRICES_ONLY = os.environ.get("PRICES_ONLY") == "1"  # update prices only: no stock, set-aside or delivery-range change
-STOCK_GUARD = 0.25  # share of read variants that may newly go Épuisé in one run before stock changes are held
+STOCK_GUARD = float(os.environ.get("STOCK_GUARD", "0.25"))  # share of read variants that may newly go Épuisé in one run before stock changes are held
 SELLER_GUARD = 0.25  # share of pages read that may newly go Épuisé because of the seller rule in one run
 SELLER_RULE = os.environ.get("SELLER_RULE", "0") == "1"  # off since 22 Oct (seller rule removed); SELLER_RULE=1 switches it back on
 EXEMPT_TAGS = set(os.environ.get(

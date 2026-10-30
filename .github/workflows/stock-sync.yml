@@ -76,6 +76,7 @@ jobs:
           PRICES_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.prices_only && '1' || '0' }}
           SELLER_RULE: "0"
           DELAY: "8"
+          STOCK_GUARD: "0.40"  # one-off, first run of the "2 to 4 days in total" rule: about a quarter of the catalogue goes Épuisé by design
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
           LIMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.limit || '' }}
         run: python3 -I amazon_sync.py results
@@ -112,6 +113,7 @@ jobs:
           FETCHER: browser
           SELLER_RULE: "0"
           DELAY: "8"
+          STOCK_GUARD: "0.40"
         run: python3 -I amazon_sync.py results
       - name: Variants not verified (pass 2)
         id: p2
@@ -126,6 +128,7 @@ jobs:
           FETCHER: browser
           SELLER_RULE: "0"
           DELAY: "8"
+          STOCK_GUARD: "0.40"
         run: python3 -I amazon_sync.py results
       - name: Hide what is still not verified
         working-directory: stock-sync
