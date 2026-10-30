@@ -24,6 +24,23 @@ concurrency:
   group: stock-sync
   cancel-in-progress: false
 jobs:
+  unmapped:
+    # Variants of multi-variant products with no ASIN cannot be read on Amazon.ae: they are set to Épuisé.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Stop selling variants without an ASIN
+        working-directory: stock-sync
+        env:
+          SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
+        run: python3 -I unmapped_guard.py
   sync:
     runs-on: ubuntu-latest
     timeout-minutes: 350
