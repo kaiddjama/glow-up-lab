@@ -12,50 +12,64 @@
 {%- if request.locale.iso_code contains 'en' -%}{%- assign gul_en = true -%}{%- endif -%}
 {%- unless template contains 'password' or template contains 'customers' -%}
 <template id="gul-offre-band">
-  <section class="gul-offre gul-offre--band" aria-label="{% if gul_en %}Welcome offer{% else %}Offre de bienvenue{% endif %}">
-    <p class="gul-offre__eyebrow">{% if gul_en %}Welcome gift{% else %}Cadeau de bienvenue{% endif %}</p>
-    <p class="gul-offre__title">{% if gul_en %}10% off your first order{% else %}-10 % sur votre première commande{% endif %}</p>
-    <p class="gul-offre__sub">{% if gul_en %}Leave your email and receive your welcome code in your inbox, plus our beauty tips and new arrivals.{% else %}Laissez votre email et recevez votre code de bienvenue dans votre boîte mail, avec nos conseils beauté et nos nouveautés.{% endif %}</p>
-    <div class="gul-offre__actions">
-      <button type="button" class="gul-offre__cta" data-gul-wp-open>{% if gul_en %}Get my code{% else %}Recevoir mon code{% endif %}</button>
+  <section class="gul-offre gul-offre--band" aria-labelledby="gul-offre-band-title">
+    <div class="gul-offre__inner">
+      <p class="gul-offre__figure" aria-hidden="true">-10&#8239;%</p>
+      <div class="gul-offre__copy-block">
+        <h2 class="gul-offre__title" id="gul-offre-band-title">{% if gul_en %}On your first order{% else %}Sur votre première commande{% endif %}</h2>
+        <p class="gul-offre__sub">{% if gul_en %}Leave your email, your welcome code arrives in your inbox.{% else %}Laissez votre email, votre code de bienvenue arrive dans votre boîte mail.{% endif %}</p>
+        <button type="button" class="gul-offre__cta" data-gul-wp-open>{% if gul_en %}Get my code{% else %}Recevoir mon code{% endif %}</button>
+      </div>
     </div>
   </section>
 </template>
 <template id="gul-offre-card">
   <div class="gul-offre gul-offre--card" role="note">
-    <span class="gul-offre__badge" aria-hidden="true">-10%</span>
-    <span class="gul-offre__body">
-      <strong>{% if gul_en %}10% off your first order{% else %}-10 % sur votre première commande{% endif %}</strong>
-      <span>{% if gul_en %}Leave your email to receive your code.{% else %}Laissez votre email pour recevoir votre code.{% endif %}</span>
-    </span>
-    <button type="button" class="gul-offre__copy" data-gul-wp-open>{% if gul_en %}Get my code{% else %}Recevoir mon code{% endif %}</button>
+    <p class="gul-offre__line"><strong>{% if gul_en %}10% off your first order.{% else %}-10&#8239;% sur votre première commande.{% endif %}</strong> {% if gul_en %}Leave your email to receive your code.{% else %}Laissez votre email pour recevoir votre code.{% endif %}</p>
+    <button type="button" class="gul-offre__btn" data-gul-wp-open>{% if gul_en %}Get my code{% else %}Recevoir mon code{% endif %}</button>
   </div>
 </template>
 
 <style>
-  .gul-offre { --gul-bordeaux: #701C32; --gul-bordeaux-fonce: #551425; --gul-creme: #F6F1EB; --gul-sable: #E8DCCF; --gul-cacao: #5A4136; box-sizing: border-box; }
-  .gul-offre__copy { font: inherit; font-size: 13px; cursor: pointer; border-radius: 100px; padding: 9px 16px; min-height: 40px; background: transparent; border: 1px solid currentColor; color: inherit; white-space: nowrap; }
-  .gul-offre__copy:focus-visible, .gul-offre__cta:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+  :root {
+    --gul-offre-field: #701C32;
+    --gul-offre-field-deep: #551425;
+    --gul-offre-paper: #F6F1EB;
+    --gul-offre-paper-2: #E8DCCF;
+    --gul-offre-ink: #1E1A17;
+    --gul-offre-gutter: clamp(20px, 5vw, 64px);
+    --gul-offre-radius: 12px;
+  }
+  .gul-offre button { font: inherit; cursor: pointer; }
+  .gul-offre button:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 
-  .gul-offre--band { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 36px 20px; text-align: center; background: var(--gul-bordeaux); color: var(--gul-creme); }
-  .gul-offre--band p { margin: 0; }
-  .gul-offre--band .gul-offre__eyebrow { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.85; }
-  .gul-offre--band .gul-offre__title { font-size: clamp(24px, 4vw, 36px); line-height: 1.2; font-weight: 400; }
-  .gul-offre--band .gul-offre__sub { font-size: 14px; line-height: 1.5; opacity: 0.92; }
-  .gul-offre--band .gul-offre__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 12px; }
-  .gul-offre__cta { display: inline-flex; border: 0; font-family: inherit; cursor: pointer; align-items: center; justify-content: center; min-height: 40px; padding: 9px 22px; border-radius: 100px; font-size: 14px; font-weight: 500; text-decoration: none; background: var(--gul-creme); color: var(--gul-bordeaux); }
-  .gul-offre__cta:hover { background: var(--gul-sable); }
+  /* Accueil : un aplat bordeaux, le chiffre en grand, une phrase, une action */
+  .gul-offre--band { background: var(--gul-offre-field); color: var(--gul-offre-paper); padding: clamp(40px, 7vw, 88px) var(--gul-offre-gutter); overflow-x: clip; }
+  .gul-offre__inner { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(16px, 3vw, 48px); align-items: end; max-width: 1200px; margin-inline: auto; }
+  .gul-offre__figure { margin: 0; font-size: clamp(5rem, 17vw, 11rem); font-weight: 300; line-height: 0.9; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; overflow-wrap: break-word; min-width: 0; }
+  .gul-offre__copy-block { display: grid; gap: 12px; justify-items: start; min-width: 0; }
+  .gul-offre__title { margin: 0; font-size: clamp(1.5rem, 3.4vw, 2.25rem); font-weight: 400; line-height: 1.15; letter-spacing: -0.02em; text-wrap: balance; max-width: 20ch; }
+  .gul-offre__sub { margin: 0; font-size: 1rem; line-height: 1.55; max-width: 44ch; text-wrap: pretty; opacity: 0.9; }
+  .gul-offre__cta { margin-top: 8px; min-height: 48px; padding: 12px 28px; border: 0; border-radius: 100px; background: var(--gul-offre-paper); color: var(--gul-offre-field); font-size: 1rem; font-weight: 500; transition: background-color 120ms ease-out; }
+  .gul-offre__cta:hover { background: var(--gul-offre-paper-2); }
+  @media (min-width: 750px) {
+    .gul-offre__inner { grid-template-columns: auto minmax(0, 1fr); }
+    .gul-offre__copy-block { padding-bottom: 0.6em; }
+  }
 
-  .gul-offre--card { display: flex; align-items: center; gap: 12px; width: 100%; margin: 0 0 14px; padding: 12px 14px; border: 1px dashed var(--gul-bordeaux); border-radius: 14px; background: var(--gul-sable); color: #1E1A17; font-size: 13px; line-height: 1.35; }
-  .gul-offre--card .gul-offre__badge { flex: none; display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 50%; background: var(--gul-bordeaux); color: var(--gul-creme); font-size: 13px; font-weight: 500; }
-  .gul-offre--card .gul-offre__body { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-  .gul-offre--card .gul-offre__body strong { font-weight: 500; color: var(--gul-bordeaux); }
-  .gul-offre--card .gul-offre__copy { color: var(--gul-bordeaux); border-color: var(--gul-bordeaux); }
-  .gul-offre--cart { width: auto; margin: var(--padding-lg, 16px) var(--cart-drawer-padding, 20px) 0; }
+  /* Fiche produit et panier : un aplat sable discret, une ligne, un bouton */
+  .gul-offre--card { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; margin: 0 0 16px; padding: 14px 16px; border-radius: var(--gul-offre-radius); background: var(--gul-offre-paper-2); color: var(--gul-offre-ink); box-sizing: border-box; }
+  .gul-offre__line { margin: 0; font-size: 0.875rem; line-height: 1.45; text-wrap: pretty; min-width: 0; }
+  .gul-offre__line strong { display: block; font-weight: 500; color: var(--gul-offre-field); }
+  .gul-offre__btn { flex: none; min-height: 40px; padding: 8px 18px; border: 0; border-radius: 100px; background: var(--gul-offre-field); color: var(--gul-offre-paper); font-size: 0.875rem; font-weight: 500; transition: background-color 120ms ease-out; }
+  .gul-offre__btn:hover { background: var(--gul-offre-field-deep); }
+  .gul-offre--cart { width: auto; margin: 16px var(--cart-drawer-padding, 20px) 0; }
+  @media (max-width: 480px) { .gul-offre--card { flex-direction: column; align-items: flex-start; } }
 
-  /* Barre d'annonce : texte lisible sur deux lignes sur mobile */
-  .announcement-bar__slide { --line-height: 1.3 !important; }
-  .announcement-bar__text strong { font-weight: 600; letter-spacing: 0.02em; }
+  /* Barre d'annonce : lisible, sans lettres espacées, sur deux lignes au besoin */
+  .announcement-bar__slide { --line-height: 1.3 !important; --letter-spacing: 0 !important; }
+  .announcement-bar__text strong { font-weight: 500; }
+  @media (prefers-reduced-motion: reduce) { .gul-offre * { transition: none !important; } }
 </style>
 
 <script>
