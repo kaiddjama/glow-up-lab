@@ -31,8 +31,10 @@ except ValueError:
 DEFAULT_WEIGHT_G = 200
 MAX_CHANGE = 1.50  # bigger jumps usually mean a misread page or a wrong listing: held for review
 EXTRA_DAYS = 2
-MAX_DAYS = 7  # Amazon.ae or brand store: delivery to Dubai later than this counts as out of stock
-MAX_DAYS_OTHER = 2  # any other seller: kept only if it delivers within 2 days
+MAX_DAYS = 4  # delivery to Dubai later than 4 days counts as out of stock (forwarding to Djibouti takes 2-3 more days)
+MAX_DAYS_OTHER = 4  # same limit for every seller
+STANDARD_DAYS = 1  # delivery to Dubai today or tomorrow = standard delay; 2 to 4 days = longer delay shown on the product
+FORWARD_DAYS = (2, 3)  # Dubai -> Djibouti
 PRICES_ONLY = os.environ.get("PRICES_ONLY") == "1"  # update prices only: no stock, set-aside or delivery-range change
 STOCK_GUARD = 0.25  # share of read variants that may newly go Épuisé in one run before stock changes are held
 SELLER_GUARD = 0.25  # share of pages read that may newly go Épuisé because of the seller rule in one run
@@ -320,7 +322,13 @@ def sellable(page, row):
 
 def delivery_range(page):
     days = page.get("sourceDays")
-    return "standard" if days is not None and days <= MAX_DAYS_OTHER else "3-10"
+    return "standard" if days is not None and days <= STANDARD_DAYS else "3-10"
+
+
+def delivery_eta(page):
+    """Delivery in Djibouti as "a-b" days: days to Dubai + 2 to 3 days of forwarding."""
+    days = page["sourceDays"]
+    return f"{days + FORWARD_DAYS[0]}-{days + FORWARD_DAYS[1]}"
 
 
 def formula(aed, grams):
@@ -339,7 +347,7 @@ def main():
     os.makedirs(outdir, exist_ok=True)
     dry = os.environ.get("DRY_RUN") == "1"
     delay = float(os.environ.get("DELAY", "8"))
-    today = dt.date.today()
+    today = dt.datetime.now(dt.timezone(dt.timedelta(hours=4))).date()  # Amazon.ae dates are Dubai dates (UTC+4)
     now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     rows = load_variants()
     asins = sorted({r["asin"] for r in rows})
@@ -481,6 +489,8 @@ def main():
                                       "aed": page["aed"], "oldPrice": r["price"], **upd})
             by_product.setdefault(r["productId"], []).append(upd)
         if new_policy == "CONTINUE" and page.get("sourceDays") is not None and not PRICES_ONLY:
+            range_fields.append({"ownerId": r["variantId"], "namespace": "supplier", "key": "delivery_eta",
+                                 "type": "single_line_text_field", "value": delivery_eta(page)})
             rng = delivery_range(page)
             if rng != r["range"]:
                 range_fields.append({"ownerId": r["variantId"], "namespace": "supplier", "key": "delivery_range",
