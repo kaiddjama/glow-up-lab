@@ -15,8 +15,8 @@
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;background:#E8DCCF;border-radius:12px;"><tr><td style="padding:20px 22px;font-size:15px;line-height:1.6;">
 <p style="margin:0 0 12px;font-weight:500;color:#701C32;">Pour valider votre commande, réglez {{ total_price | money }} avant l'expédition.</p>
 <p style="margin:0 0 4px;">Waafi : <strong>[[WAAFI_NUMERO]]</strong></p>
-<p style="margin:0 0 14px;">Dépôt de cash à la banque : compte CAC n° <strong>[[CAC_COMPTE]]</strong></p>
-<p style="margin:0;">Envoyez ensuite la capture d'écran du paiement, ou la photo du reçu de dépôt, sur WhatsApp au <strong>+253 77 22 37 37</strong>, avec votre numéro de commande <strong>{{ name }}</strong>. Nous expédions dès que le paiement est vérifié.</p>
+<p style="margin:0 0 14px;">CAC Pay : <strong>[[CAC_COMPTE]]</strong></p>
+<p style="margin:0;">Envoyez ensuite la capture d'écran du paiement sur WhatsApp au <strong>+253 77 22 37 37</strong>, avec votre numéro de commande <strong>{{ name }}</strong>. Nous expédions dès que le paiement est vérifié.</p>
 </td></tr></table>
 {% endif %}{% if shipping_address %}<p style="margin:24px 0 0;"><strong>Livraison à</strong><br>{{ shipping_address.name }}<br>{{ shipping_address.address1 }}{% if shipping_address.address2 != blank %}<br>{{ shipping_address.address2 }}{% endif %}<br>{{ shipping_address.city }}{% if shipping_address.phone != blank %}<br>{{ shipping_address.phone }}{% endif %}</p>{% endif %}<p style="margin:28px 0 24px;"><a href="{{ order_status_url }}" style="display:inline-block;background:#701C32;color:#F6F1EB;text-decoration:none;padding:14px 28px;border-radius:100px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:500;">Voir ma commande</a></p>
 </td></tr>
