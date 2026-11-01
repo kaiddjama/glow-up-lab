@@ -427,10 +427,15 @@ def main():
                     and seller_class(pg.get("seller"), vendor_of[asin]) == "third_party")):
                 time.sleep(delay)
                 try:  # the buy box is out of stock, too slow or not wanted: another offer may do (any seller)
-                    alt = parse_offers(fetch_offers(asin), vendor_of[asin], today)
+                    offers_html = fetch_offers(asin)
+                    alt = parse_offers(offers_html, vendor_of[asin], today)
+                    if not alt:
+                        print(f"  {asin}: buy box {pg.get('seller') or '-'} / {pg.get('deliveryText')}; offers panel: "
+                              f"{parse_offers.seen} offers read, none fast enough ({len(offers_html)} bytes, "
+                              f"{offers_html.count('aod-offer')} offer markers)")
                 except Exception as e:
                     alt = None
-                    print(f"  {asin}: offers list not read ({type(e).__name__})")
+                    print(f"  {asin}: offers list not read ({type(e).__name__}: {str(e)[:80]})")
                 if alt:
                     print(f"  {asin}: buy box {pg.get('seller') or '-'} / {pg.get('deliveryText')}; other offer "
                           f"{alt['seller']} {alt['aed']} AED {alt['deliveryText']}")
