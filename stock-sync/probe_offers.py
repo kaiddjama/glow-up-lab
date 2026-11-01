@@ -32,18 +32,23 @@ for url in (f"https://www.amazon.ae/gp/offer-listing/{asin}/ref=dp_olp_NEW_mbc?c
               flat(p.inner_text("body"))[:300])
     except Exception as e:
         print("2 offer-listing failed:", type(e).__name__, str(e)[:100])
-# 3. product page with aod=1 and a long wait, then everything that mentions seller/offers
+# 3. what the product page itself says about other offers (Amazon.ae moved to a new "Buying options" design)
 try:
-    p.goto(f"https://www.amazon.ae/dp/{asin}?aod=1&language=en_AE", wait_until="load")
-    p.wait_for_timeout(8000)
+    p.goto(f"https://www.amazon.ae/dp/{asin}?language=en_AE", wait_until="load")
+    p.wait_for_timeout(5000)
     h = p.content()
-    print("3 aod=1 after load+8s:", len(h), "bytes;", h.count("aod-offer"), "aod markers;", h.count("a-offscreen"), "prices")
+    ids = sorted(set(re.findall(r'\bid="([^"]*(?:offer|aod|olp|buying|mbc|odf)[^"]*)"', h, re.I)))
+    print("3 ids:", len(ids), ids[:70])
     body = flat(p.inner_text("body"))
-    for kw in ("Other sellers", "buying choices", "Buying Choices", "Ships from", "Sold by"):
-        k = body.find(kw)
-        if k >= 0:
-            print("   body near", kw, ":", body[max(0, k - 150):k + 250])
-            break
+    for kw in ("Buying options", "Other sellers", "buying choices", "New & Used", "Sold by", "Ships from"):
+        for m in list(re.finditer(re.escape(kw), body))[:2]:
+            print(f"   body near [{kw}]:", body[max(0, m.start() - 120):m.start() + 330])
+    # candidate links/buttons
+    links = p.evaluate("""() => [...document.querySelectorAll('a, button, span.a-button-text')]
+        .map(e => (e.innerText || '').replace(/\\s+/g, ' ').trim() + ' | ' + (e.id || '') + ' | ' + (e.getAttribute('href') || '').slice(0, 60))
+        .filter(t => /offer|buying|seller|new/i.test(t)).slice(0, 25)""")
+    for l in links:
+        print("   link:", l)
 except Exception as e:
     print("3 failed:", type(e).__name__, str(e)[:100])
 r.close()
