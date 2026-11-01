@@ -43,12 +43,15 @@ try:
     for kw in ("Buying options", "Other sellers", "buying choices", "New & Used", "Sold by", "Ships from"):
         for m in list(re.finditer(re.escape(kw), body))[:2]:
             print(f"   body near [{kw}]:", body[max(0, m.start() - 120):m.start() + 330])
-    # candidate links/buttons
-    links = p.evaluate("""() => [...document.querySelectorAll('a, button, span.a-button-text')]
-        .map(e => (e.innerText || '').replace(/\\s+/g, ' ').trim() + ' | ' + (e.id || '') + ' | ' + (e.getAttribute('href') || '').slice(0, 60))
-        .filter(t => /offer|buying|seller|new/i.test(t)).slice(0, 25)""")
-    for l in links:
-        print("   link:", l)
-except Exception as e:
-    print("3 failed:", type(e).__name__, str(e)[:100])
+    for sel in ("#all-offers-display-params", "#all-offers-display-reload-param", "#olpLinkWidget_feature_div",
+                "#buybox-see-all-buying-choices", "#all-offers-display"):
+        try:
+            outer = p.locator(sel).first.evaluate("e => e.outerHTML")
+            print(f"   {sel}:", flat(outer)[:700])
+        except Exception as e:
+            print(f"   {sel}: not readable ({type(e).__name__})")
+    for m in list(re.finditer(r"(?:ajax|aod)[A-Za-z]*(?:Url|URL|Path|Endpoint)[\"']?\s*[:=]\s*[\"'][^\"']{5,160}", h))[:8]:
+        print("   js:", m.group(0)[:200])
+    for m in list(re.finditer(r"/gp/[a-z/-]*aod[^\"'\s<>]{0,120}", h))[:8]:
+        print("   path:", m.group(0)[:160])
 r.close()
