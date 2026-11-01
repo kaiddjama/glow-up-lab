@@ -432,7 +432,7 @@ def main():
                     if not alt:
                         print(f"  {asin}: buy box {pg.get('seller') or '-'} / {pg.get('deliveryText')}; offers panel: "
                               f"{parse_offers.seen} offers read, none fast enough ({len(offers_html)} bytes, "
-                              f"{offers_html.count('aod-offer')} offer markers)")
+                              f"{offers_html.count('aod-offer')} offer markers; {getattr(READER, 'offers_note', '')})")
                 except Exception as e:
                     alt = None
                     print(f"  {asin}: offers list not read ({type(e).__name__}: {str(e)[:80]})")

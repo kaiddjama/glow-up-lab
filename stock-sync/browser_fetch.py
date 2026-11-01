@@ -182,14 +182,33 @@ class BrowserReader:
         return p.content()
 
     def get_offers(self, asin):
-        """HTML of the "All offers" panel of a listing (opened like a visitor would: ?aod=1)."""
-        self.count += 1
+        """HTML of the "All offers" panel of a listing, opened like a visitor would (the "other sellers" link on the
+        product page the browser is already on), or else straight from the panel's own address."""
         p = self.page
-        p.goto(f"https://www.amazon.ae/dp/{asin}?aod=1&language=en_AE", wait_until="domcontentloaded")
-        self._clear_gate()
-        try:
-            p.wait_for_selector("#aod-offer", timeout=12000)
-        except Exception:
-            pass
-        p.wait_for_timeout(int(random.uniform(800, 1500)))
+        self.offers_note = ""
+        if asin not in p.url:
+            p.goto(f"https://www.amazon.ae/dp/{asin}?language=en_AE", wait_until="domcontentloaded")
+            self._clear_gate()
+            try:
+                p.wait_for_selector("#productTitle", timeout=15000)
+            except Exception:
+                pass
+        for sel in ("#aod-ingress-link", "#buybox-see-all-buying-choices a", "#buybox-see-all-buying-choices-announce",
+                    "a[href*='aod=1']", "#olp_feature_div a", "#mir-layout-DELIVERY_BLOCK a:has-text('offers')"):
+            if p.locator(sel).count() == 0:
+                continue
+            try:
+                p.locator(sel).first.click(timeout=4000)
+                p.wait_for_selector("#aod-offer", timeout=10000)
+                p.wait_for_timeout(1000)
+                self.offers_note = f"opened with {sel}"
+                return p.content()
+            except Exception:
+                self.offers_note += f"{sel} did not open the panel; "
+        self.count += 1
+        url = (f"https://www.amazon.ae/gp/product/ajax/ref=dp_aod_NEW_mbc?asin={asin}&m=&qid=&smid=&sourcecja="
+               "&condition=NEW&experienceId=aodAjaxMain&pc=dp&language=en_AE")
+        p.goto(url, wait_until="domcontentloaded")
+        p.wait_for_timeout(1500)
+        self.offers_note += "panel address"
         return p.content()
