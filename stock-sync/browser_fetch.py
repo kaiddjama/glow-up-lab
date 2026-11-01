@@ -186,6 +186,9 @@ class BrowserReader:
         product page the browser is already on), or else straight from the panel's own address."""
         p = self.page
         self.offers_note = ""
+        net = []
+        p.on("response", lambda r: net.append(f"{r.status} {r.request.resource_type} {r.url.split('?')[0][-60:]}")
+             if "aod" in r.url.lower() or "offer" in r.url.lower() else None)
         if asin not in p.url:
             p.goto(f"https://www.amazon.ae/dp/{asin}?language=en_AE", wait_until="domcontentloaded")
             self._clear_gate()
@@ -220,10 +223,17 @@ class BrowserReader:
                 self.offers_note = f"opened with {sel}"
                 return html
             try:
-                txt = re.sub(r"\s+", " ", p.inner_text("#aod-container, #all-offers-display"))[:300]
+                txt = re.sub(r"\s+", " ", p.inner_text("#aod-container, #all-offers-display"))[:200]
             except Exception:
                 txt = "?"
-            self.offers_note += f"{sel}: panel open but no offers, text: {txt}; "
+            try:
+                body = re.sub(r"\s+", " ", p.inner_text("body"))
+                k = body.lower().find("buying choices")
+                body = body[max(0, k - 100):k + 300] if k >= 0 else "no 'buying choices' text"
+            except Exception:
+                body = "?"
+            self.offers_note += (f"{sel}: panel open but no offers, panel text: [{txt}] url {p.url[-60:]} "
+                                 f"net {net[:6]} body: [{body}]; ")
         self.count += 1
         url = (f"https://www.amazon.ae/gp/product/ajax/ref=dp_aod_NEW_mbc?asin={asin}&m=&qid=&smid=&sourcecja="
                "&condition=NEW&experienceId=aodAjaxMain&pc=dp&language=en_AE")
