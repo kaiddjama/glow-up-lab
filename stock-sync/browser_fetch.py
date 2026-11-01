@@ -199,12 +199,31 @@ class BrowserReader:
                 continue
             try:
                 p.locator(sel).first.click(timeout=4000)
-                p.wait_for_selector("#aod-offer", timeout=10000)
-                p.wait_for_timeout(1000)
-                self.offers_note = f"opened with {sel}"
-                return p.content()
+            except Exception as e:
+                self.offers_note += f"{sel}: click failed ({type(e).__name__}); "
+                try:
+                    p.locator(sel).first.evaluate("el => el.click()")
+                except Exception:
+                    continue
+            try:
+                p.wait_for_selector("#aod-container, #all-offers-display, #aod-offer-list, #aod-offer", timeout=10000)
+            except Exception as e:
+                self.offers_note += f"{sel}: panel did not appear; "
+                continue
+            try:
+                p.wait_for_selector("#aod-offer", timeout=8000)
             except Exception:
-                self.offers_note += f"{sel} did not open the panel; "
+                pass
+            p.wait_for_timeout(1000)
+            html = p.content()
+            if 'id="aod-offer"' in html or 'id="aod-pinned-offer"' in html:
+                self.offers_note = f"opened with {sel}"
+                return html
+            try:
+                txt = re.sub(r"\s+", " ", p.inner_text("#aod-container, #all-offers-display"))[:300]
+            except Exception:
+                txt = "?"
+            self.offers_note += f"{sel}: panel open but no offers, text: {txt}; "
         self.count += 1
         url = (f"https://www.amazon.ae/gp/product/ajax/ref=dp_aod_NEW_mbc?asin={asin}&m=&qid=&smid=&sourcecja="
                "&condition=NEW&experienceId=aodAjaxMain&pc=dp&language=en_AE")
