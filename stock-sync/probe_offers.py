@@ -54,4 +54,6 @@ try:
         print("   js:", m.group(0)[:200])
     for m in list(re.finditer(r"/gp/[a-z/-]*aod[^\"'\s<>]{0,120}", h))[:8]:
         print("   path:", m.group(0)[:160])
+except Exception as e:
+    print("3 failed:", type(e).__name__, str(e)[:100])
 r.close()
