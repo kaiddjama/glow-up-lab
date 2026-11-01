@@ -93,10 +93,16 @@ def main():
     print("Browser reader started, delivery location:", reader.location_text())
     pages, alerts = {}, []
 
-    def page_of(asin):
+    s.READER = reader  # fetch_offers() uses the same browser
+
+    def page_of(asin, vendor):
         if asin not in pages:
             try:
-                pages[asin] = s.parse(reader.get(f"https://www.amazon.ae/dp/{asin}?language=en_AE"), today)
+                pg = pages[asin] = s.parse(reader.get(f"https://www.amazon.ae/dp/{asin}?language=en_AE"), today)
+                if not pg.get("error") and not s.sellable(pg, {"vendor": vendor}):  # another offer may be fast enough
+                    alt = s.parse_offers(s.fetch_offers(asin), vendor, today)
+                    if alt:
+                        pg.update(alt)
             except Exception as e:  # LocationLost, timeouts...
                 pages[asin] = {"error": type(e).__name__}
         return pages[asin]
@@ -110,7 +116,7 @@ def main():
                 if not asin:
                     bad.append((it, label, "pas de code ASIN, impossible à vérifier"))
                     continue
-                pg = page_of(asin)
+                pg = page_of(asin, it["variant"]["product"]["vendor"] or "")
                 if pg.get("error"):
                     unknown.append(label)
                 elif not s.sellable(pg, {"vendor": it["variant"]["product"]["vendor"] or ""}):

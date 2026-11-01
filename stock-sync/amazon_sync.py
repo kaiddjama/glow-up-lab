@@ -223,6 +223,8 @@ def parse(html, today):
 
 def fetch_offers(asin):
     """The "all offers" list of a listing (new condition)."""
+    if READER:  # the browser keeps the Dubai delivery address, so the delivery dates are the ones a visitor sees
+        return READER.get_offers(asin)
     url = (f"https://www.amazon.ae/gp/product/ajax/ref=dp_aod_NEW_mbc?asin={asin}&m=&qid=&smid=&sourcecja="
            "&condition=NEW&experienceId=aodAjaxMain&pc=dp&language=en_AE")
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept-Language": "en-AE,en;q=0.9"})
@@ -231,28 +233,37 @@ def fetch_offers(asin):
 
 
 def parse_offers(html, vendor, today):
-    """Fastest verified new offer (Amazon.ae, the brand, an authorised seller) in the offers list, or None."""
-    best = None
-    for block in html.split('id="aod-offer"')[1:]:
+    """Cheapest new offer that reaches Dubai within MAX_DAYS in the offers list, or None.
+
+    Every seller counts (only the delivery time matters since 22 Oct); with SELLER_RULE on, only verified sellers do."""
+    best, seen = None, 0
+    for block in re.split(r'id="aod-(?:pinned-)?offer"', html)[1:]:
         head = re.sub(r"<[^>]+>|\s+", " ", block[:3000])
         if re.search(r"\b(used|renewed|refurbished)\b", head, re.I):
             continue
         m = re.search(r'id="aod-offer-soldBy".*?<a[^>]*>\s*([^<]+?)\s*</a>', block, re.S) or \
             re.search(r'id="aod-offer-soldBy".*?class="a-size-small a-color-base">\s*([^<]+?)\s*<', block, re.S)
         seller = m.group(1).strip(" .") if m else ""
-        if seller_class(seller, vendor) not in VERIFIED:
-            continue
         pm = re.search(r'a-offscreen">\s*(?:AED|د\.إ\.?)\s*(?:&nbsp;)?\s*([\d,]+\.?\d*)', block)
         scored = [(days_until(o, today), o) for o in re.findall(r'data-csa-c-delivery-time="([^"]*)"', block)]
         scored = [x for x in scored if x[0] is not None]
         if not pm or not scored:
             continue
+        seen += 1
+        if SELLER_RULE and seller_class(seller, vendor) not in VERIFIED:
+            continue
         days, text = min(scored)
+        if days > MAX_DAYS:
+            continue
         offer = {"aed": float(pm.group(1).replace(",", "")), "seller": seller, "sourceDays": days,
                  "deliveryText": text, "storeDays": days + EXTRA_DAYS, "inStock": True}
-        if best is None or (offer["sourceDays"], offer["aed"]) < (best["sourceDays"], best["aed"]):
+        if best is None or offer["aed"] < best["aed"]:
             best = offer
+    parse_offers.seen = seen
     return best
+
+
+parse_offers.seen = 0
 
 
 def parse_seller(html):
@@ -411,15 +422,19 @@ def main():
         try:
             pages[asin] = parse(fetch(asin), today)
             pg = pages[asin]
-            if (SELLER_RULE and asin not in exempt_asin and not pg.get("error")
-                    and seller_class(pg.get("seller"), vendor_of[asin]) == "third_party"):
+            if not pg.get("error") and (not sellable(pg, {"vendor": vendor_of[asin]}) or (
+                    SELLER_RULE and asin not in exempt_asin
+                    and seller_class(pg.get("seller"), vendor_of[asin]) == "third_party")):
                 time.sleep(delay)
-                try:  # the buy box is a third party: look for an Amazon.ae / brand / authorised offer instead
+                try:  # the buy box is out of stock, too slow or not wanted: another offer may do (any seller)
                     alt = parse_offers(fetch_offers(asin), vendor_of[asin], today)
-                except Exception:
+                except Exception as e:
                     alt = None
+                    print(f"  {asin}: offers list not read ({type(e).__name__})")
                 if alt:
-                    pg["buyBoxSeller"] = pg["seller"]
+                    print(f"  {asin}: buy box {pg.get('seller') or '-'} / {pg.get('deliveryText')}; other offer "
+                          f"{alt['seller']} {alt['aed']} AED {alt['deliveryText']}")
+                    pg["buyBoxSeller"] = pg.get("seller")
                     pg.update(alt)
         except Exception as e:  # network error, 404 = listing removed
             if READER and type(e).__name__ == "LocationLost":

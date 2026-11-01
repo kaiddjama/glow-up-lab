@@ -180,3 +180,16 @@ class BrowserReader:
         if self.count % CHECK_EVERY == 0 and "/dp/" in url and not self.location_ok():
             raise LocationLost(f"delivery location changed to '{self.location_text()}'")
         return p.content()
+
+    def get_offers(self, asin):
+        """HTML of the "All offers" panel of a listing (opened like a visitor would: ?aod=1)."""
+        self.count += 1
+        p = self.page
+        p.goto(f"https://www.amazon.ae/dp/{asin}?aod=1&language=en_AE", wait_until="domcontentloaded")
+        self._clear_gate()
+        try:
+            p.wait_for_selector("#aod-offer", timeout=12000)
+        except Exception:
+            pass
+        p.wait_for_timeout(int(random.uniform(800, 1500)))
+        return p.content()
