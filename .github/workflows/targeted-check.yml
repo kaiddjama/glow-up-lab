@@ -5,6 +5,10 @@ name: Targeted Amazon.ae check
 on:
   workflow_dispatch:
     inputs:
+      probe:
+        description: "Debug: run probe_offers.py on the first ASIN instead of the sync"
+        type: boolean
+        default: false
       asins:
         description: "Comma-separated ASINs to read now"
         type: string
@@ -35,7 +39,14 @@ jobs:
       - name: Install the browser
         timeout-minutes: 8
         run: pip install playwright && playwright install --with-deps chromium
+      - name: Probe the offers list (debug)
+        if: ${{ inputs.probe }}
+        working-directory: stock-sync
+        run: python3 -I probe_offers.py "$(echo "$ASIN" | cut -d, -f1)"
+        env:
+          ASIN: ${{ inputs.asins }}
       - name: Read the pages and apply the rules
+        if: ${{ !inputs.probe }}
         working-directory: stock-sync
         env:
           ONLY_ASINS: ${{ inputs.asins }}
