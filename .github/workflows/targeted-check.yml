@@ -1,0 +1,49 @@
+name: Targeted Amazon.ae check
+# Reads only the listed ASINs on Amazon.ae (Dubai address) and applies the same rules as the full sync:
+# price, Épuisé when unavailable or too slow, back on sale when sellable again, delivery labels.
+# Run it by hand with "Run workflow", asins = comma-separated ASINs.
+on:
+  workflow_dispatch:
+    inputs:
+      asins:
+        description: "Comma-separated ASINs to read now"
+        type: string
+        required: true
+      dry_run:
+        description: "Read and report only, change nothing on Shopify"
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: targeted-check
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+      SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+      SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+      PRICE_FORMULA: ${{ secrets.PRICE_FORMULA || format('{0},{1},{2}', vars.PRICE_MULT, vars.SHIPPING_AED_PER_KG, vars.AED_TO_FDJ) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install the browser
+        timeout-minutes: 8
+        run: pip install playwright && playwright install --with-deps chromium
+      - name: Read the pages and apply the rules
+        working-directory: stock-sync
+        env:
+          ONLY_ASINS: ${{ inputs.asins }}
+          FETCHER: browser
+          SELLER_RULE: "0"
+          DELAY: "8"
+          DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
+        run: |
+          python3 -I amazon_sync.py results
+          echo "---- report ----"
+          cat results/*.json 2>/dev/null | head -c 6000 || true
