@@ -7,6 +7,10 @@ on:
         description: "ASINs to read, separated by spaces"
         type: string
         default: "B0CR9LFM72 B0DHVLFR2V B0CWS5QP8F B0BGMGWP14 B015PL0HG0 B06XH28C1K B0019LVGPC B07NWMVMT1 B0013G6FSG B001GCU6KA"
+      script:
+        description: "probe_browser.py or probe_dump.py"
+        type: string
+        default: "probe_browser.py"
       district:
         description: "Delivery district in the Deliver-to pop-up (empty = first suggestion)"
         type: string
@@ -29,4 +33,4 @@ jobs:
           DELAY: "8"
           BROWSER_DISTRICT: ${{ inputs.district }}
           ASINS: ${{ inputs.asins || 'B0CR9LFM72 B0DHVLFR2V B0CWS5QP8F B0BGMGWP14 B015PL0HG0 B06XH28C1K B0019LVGPC B07NWMVMT1 B0013G6FSG B001GCU6KA' }}
-        run: python3 probe_browser.py $ASINS
+        run: python3 ${{ inputs.script || 'probe_browser.py' }} $ASINS
