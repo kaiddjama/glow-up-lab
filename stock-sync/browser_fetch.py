@@ -5,7 +5,7 @@ would in the "Deliver to" pop-up, and returns the HTML of product pages. The loc
 reading starts and again every CHECK_EVERY pages: if the page no longer shows the city, reading stops
 (LocationLost) so no delivery date from another location is ever used.
 
-Settings (environment): BROWSER_CITY (default Dubai), BROWSER_HEADLESS=0 for a visible window,
+Settings (environment): BROWSER_CITY (default Dubai), BROWSER_DISTRICT (default Ras Al Khor), BROWSER_HEADLESS=0 for a visible window,
 BROWSER_PROFILE (folder that keeps cookies between runs; default: a fresh profile each run), BROWSER_DEBUG=1.
 """
 import os
@@ -149,7 +149,7 @@ class BrowserReader:
             raise LocationLost(f"no {self.city} suggestion in the Deliver-to pop-up: {texts}")
         items.nth(idx).click()
         p.wait_for_timeout(1500)
-        district = os.environ.get("BROWSER_DISTRICT", "")
+        district = os.environ.get("BROWSER_DISTRICT", "Ras Al Khor")  # Hoodo's delivery area (2 Nov); set BROWSER_DISTRICT to another district to override
         box = p.locator("#GLUXCityWithDistrict_DistrictInput")
         if box.is_visible():
             box.click()
