@@ -7,9 +7,10 @@ on:
         description: "ASINs to read, separated by spaces"
         type: string
         default: "B0CR9LFM72 B0DHVLFR2V B0CWS5QP8F B0BGMGWP14 B015PL0HG0 B06XH28C1K B0019LVGPC B07NWMVMT1 B0013G6FSG B001GCU6KA"
-  push:
-    branches: ["claude/project-thread-9xq2at"]
-    paths: [".github/workflows/browser-probe.yml", "stock-sync/browser_fetch.py", "stock-sync/probe_browser.py"]
+      district:
+        description: "Delivery district in the Deliver-to pop-up (empty = first suggestion)"
+        type: string
+        default: ""
 permissions:
   contents: read
 jobs:
@@ -26,5 +27,6 @@ jobs:
         working-directory: stock-sync
         env:
           DELAY: "8"
+          BROWSER_DISTRICT: ${{ inputs.district }}
           ASINS: ${{ inputs.asins || 'B0CR9LFM72 B0DHVLFR2V B0CWS5QP8F B0BGMGWP14 B015PL0HG0 B06XH28C1K B0019LVGPC B07NWMVMT1 B0013G6FSG B001GCU6KA' }}
         run: python3 probe_browser.py $ASINS
