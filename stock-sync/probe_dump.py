@@ -33,6 +33,9 @@ def main(asins):
                 print("  >>", m.group(0).strip()[:220])
                 if m.start() > 6000:
                     break
+            for key in ("fulfillerInfoFeature_feature_div", "merchantInfoFeature_feature_div", "shipsFromSoldByInsideBuyBox_feature_div", "tabular-buybox", "primeBadge", "a-icon-prime"):
+                j = html.find(key)
+                print(f"  [{key}]", re.sub(r"<[^>]+>|\\s+", " ", html[j:j + 1500])[:260] if j >= 0 else "absent")
             m = re.search(r'otherSellers|aod-ingress-link|Other sellers[^<]{0,80}', html)
             print("other sellers link:", bool(m), "|", re.sub(r"<[^>]+>|\s+", " ", html[m.start():m.start() + 300])[:200] if m else "")
 
