@@ -1,0 +1,35 @@
+name: Firecrawl test
+# Test only: starts a self-hosted Firecrawl (open source, docker compose) on the runner and reads a few Amazon.ae pages
+# with it, to compare with the Playwright reader. No secrets, nothing in the shop is changed.
+on:
+  workflow_dispatch:
+    inputs:
+      asins:
+        description: "ASINs to read, separated by spaces"
+        type: string
+        default: "B00PV15BPW B08B85MWMX B0DHKSF81K B0BQCPJ95D B0DHVLFR2V B0019LVGPC"
+permissions:
+  contents: read
+jobs:
+  firecrawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get Firecrawl (public, open source)
+        run: git clone --depth 1 https://github.com/firecrawl/firecrawl.git "$RUNNER_TEMP/firecrawl"
+      - name: Start Firecrawl
+        working-directory: ${{ runner.temp }}/firecrawl
+        run: |
+          printf 'PORT=3002\nHOST=0.0.0.0\nUSE_DB_AUTHENTICATION=false\nBULL_AUTH_KEY=test\n' > .env
+          docker compose up -d --build
+          docker compose ps
+      - name: Read pages
+        working-directory: stock-sync
+        env:
+          ASINS: ${{ inputs.asins }}
+        run: python3 -I firecrawl_test.py $ASINS
+      - name: Firecrawl log (tail)
+        if: always()
+        working-directory: ${{ runner.temp }}/firecrawl
+        run: docker compose logs --tail 60 api playwright-service 2>&1 | cut -c1-300
