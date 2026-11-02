@@ -31,9 +31,11 @@ except ValueError:
 DEFAULT_WEIGHT_G = 200
 MAX_CHANGE = 1.50  # bigger jumps usually mean a misread page or a wrong listing: held for review
 EXTRA_DAYS = 2
-# Total delivery (Dubai + 2-3 days of forwarding to Djibouti) may not exceed 4 days: delivery to Dubai today or tomorrow
-# is sellable, anything later counts as out of stock. MAX_DAYS can be changed without touching the code.
-MAX_DAYS = int(os.environ.get("MAX_DAYS", "1"))
+# Delivery to Dubai (free standard delivery only, never a paid express option) up to MAX_DAYS days is sellable, which gives
+# the "4 to 5 days" shown in the shop (2 + 2-3 days of forwarding to Djibouti); anything later counts as out of stock.
+# Since 2 Nov: 2 days (a guest sees "FREE delivery <in 2 days> on your first order" on almost every page; the paid
+# "fastest delivery tomorrow" option used to be read as 1 day). MAX_DAYS can be changed without touching the code.
+MAX_DAYS = int(os.environ.get("MAX_DAYS", "2"))
 MAX_DAYS_OTHER = MAX_DAYS  # same limit for every seller
 STANDARD_DAYS = MAX_DAYS  # up to this many days to Dubai: standard delay; later (if MAX_DAYS is raised): longer delay shown
 FORWARD_DAYS = (2, 3)  # Dubai -> Djibouti
@@ -202,6 +204,18 @@ def parse_price(html):
     return float(m.group(1)) if m else None
 
 
+def free_delivery_options(block):
+    """Delivery dates of a buy box without the paid express options (data-csa-c-delivery-price="fastest" or an
+    amount): the free standard date is the one that counts. If only paid options exist, they are all returned."""
+    free, paid = [], []
+    for tag in re.findall(r"<[^>]*data-csa-c-delivery-time=[^>]*>", block):
+        t = re.search(r'data-csa-c-delivery-time="([^"]*)"', tag).group(1)
+        price = re.search(r'data-csa-c-delivery-price="([^"]*)"', tag)
+        price = price.group(1).strip().lower() if price else ""
+        (paid if price not in ("", "free") else free).append(t)
+    return free or paid
+
+
 def parse(html, today):
     if 'id="productTitle"' not in html:  # blocked, empty or partial page: never read it as out of stock
         return {"error": "captcha" if "captcha" in html.lower() else "no product page"}
@@ -213,7 +227,7 @@ def parse(html, today):
     # same-day or express); the fastest counts.
     i = html.find('id="desktop_buybox"')
     zone = html[i:i + 30000] if i >= 0 else html
-    options = re.findall(r'data-csa-c-delivery-time="([^"]*)"', zone)
+    options = free_delivery_options(zone)
     scored = [(days_until(o, today), o) for o in options]
     scored = [x for x in scored if x[0] is not None]
     src, delivery = min(scored) if scored else (None, options[0] if options else None)
@@ -243,7 +257,7 @@ def parse_offers(html, vendor, today):
         if seller_class(seller, vendor) not in VERIFIED:
             continue
         pm = re.search(r'a-offscreen">\s*(?:AED|د\.إ\.?)\s*(?:&nbsp;)?\s*([\d,]+\.?\d*)', block)
-        scored = [(days_until(o, today), o) for o in re.findall(r'data-csa-c-delivery-time="([^"]*)"', block)]
+        scored = [(days_until(o, today), o) for o in free_delivery_options(block)]
         scored = [x for x in scored if x[0] is not None]
         if not pm or not scored:
             continue
