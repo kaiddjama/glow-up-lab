@@ -77,7 +77,7 @@ def gql(query, variables=None):
             with urllib.request.urlopen(req, timeout=60) as r:
                 res = json.load(r)
         except urllib.error.HTTPError as e:
-            if e.code in (429, 502, 503, 504):
+            if e.code in (429, 500, 502, 503, 504):
                 time.sleep(2 + attempt * 3)
                 continue
             raise
