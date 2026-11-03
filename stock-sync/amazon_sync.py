@@ -86,7 +86,7 @@ def token():
 
 
 def gql(query, variables):
-    for attempt in range(1, 11):
+    for attempt in range(1, 31):
         req = urllib.request.Request(
             f"https://{os.environ['SHOPIFY_STORE']}/admin/api/{API}/graphql.json",
             data=json.dumps({"query": query, "variables": variables}).encode(),
@@ -95,8 +95,8 @@ def gql(query, variables):
         with urllib.request.urlopen(req, timeout=60) as r:
             res = json.load(r)
         throttled = any((e.get("extensions") or {}).get("code") == "THROTTLED" for e in res.get("errors") or [])
-        if throttled and attempt < 10:  # several shards share the store's query budget: wait for it to refill
-            time.sleep(min(60, 3 * attempt) + random.uniform(0, 3))
+        if throttled and attempt < 30:  # 16 shards share the store's query budget: wait for it to refill (a shard died on 2 Nov after 10 tries)
+            time.sleep(min(60, 5 * attempt) + random.uniform(0, 5))
             continue
         if res.get("errors"):
             raise RuntimeError(res["errors"])
