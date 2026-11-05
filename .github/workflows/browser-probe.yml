@@ -7,6 +7,10 @@ on:
         description: "ASINs to read, separated by spaces"
         type: string
         default: "B0CR9LFM72 B0DHVLFR2V B0CWS5QP8F B0BGMGWP14 B015PL0HG0 B06XH28C1K B0019LVGPC B07NWMVMT1 B0013G6FSG B001GCU6KA"
+      variants:
+        description: "List the flavours (variations) of each ASIN and read each one (probe_variants.py); ASIN may also be q:keywords to run a search"
+        type: boolean
+        default: false
       district:
         description: "Delivery district in the Deliver-to pop-up (empty = first suggestion)"
         type: string
@@ -29,4 +33,5 @@ jobs:
           DELAY: "8"
           BROWSER_DISTRICT: ${{ inputs.district }}
           ASINS: ${{ inputs.asins || 'B0CR9LFM72 B0DHVLFR2V B0CWS5QP8F B0BGMGWP14 B015PL0HG0 B06XH28C1K B0019LVGPC B07NWMVMT1 B0013G6FSG B001GCU6KA' }}
-        run: python3 probe_browser.py $ASINS
+        run: |
+          if [ "${{ inputs.variants }}" = "true" ]; then python3 probe_variants.py $ASINS; else python3 probe_browser.py $ASINS; fi
