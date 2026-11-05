@@ -1,6 +1,6 @@
 # Protocole inventaire Aimé Essentials (référence unique)
 
-Copie publique (sans formule de prix, identifiants ni adresse complète : voir les secrets du dépôt). Copie de travail : dossier du projet, inventaire/protocole-inventaire.md. Les deux sont tenues identiques.
+Ce fichier GitHub est la SEULE version qui fait foi (le fichier du projet ne fait que pointer ici, donc aucun décalage possible). Dépôt public : ni formule de prix, ni identifiants, ni adresse complète (ils sont dans les secrets du dépôt et les notes privées du projet). À chaque modification du code, la vérification « Protocol matches the code » échoue si ce fichier ne dit plus la même chose que le code (réglages, heures des contrôles).
 
 Créé le 5 nov 2026 à partir des consignes de Hoodo et des erreurs passées. Ce fichier est suivi à la lettre à chaque contrôle.
 On ne le modifie qu'en AJOUTANT ce qu'on apprend d'une erreur, daté, dans le journal en bas (et en mettant la règle à jour au même endroit).
@@ -68,3 +68,4 @@ MAX_DAYS=2 · STOCK_GUARD=0,35 · NO_DATE_KEEPS=0 (1 = l'ancienne règle « page
 - 5 nov : produits entièrement épuisés restés visibles (Tree Hut) → masquage automatique du produit (PR #39), 239 produits masqués.
 - 5 nov : eos commandée (#1019) alors qu'épuisée : mise en ligne sans lecture + page sans date laissée en vente → page sans date = indisponible, produit jamais lu masqué sous 30 min (PR #40) ; relecture des pages ratées, lecture des nouveaux produits, alerte GitHub (PR #41).
 - 5 nov : Chrome du Mac interdit (Hoodo).
+- 5 nov : protocole tenu dans GitHub, vérifié automatiquement contre le code à chaque modification (Hoodo : pas de décalage d'informations).
