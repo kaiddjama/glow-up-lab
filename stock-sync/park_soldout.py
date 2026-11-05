@@ -21,9 +21,12 @@ import amazon_sync as s  # noqa: E402
 GUARD_ONLY = os.environ.get("GUARD_ONLY") == "1"  # frequent run: only hide the never-verified products
 MAX_SHARE = 0.60  # more than this share of the active catalogue at once = something is off: report only
 
-Q = """query($after:String,$q:String!){ products(first:100, after:$after, query:$q){
+PUBLICATION = os.environ.get("ONLINE_STORE_PUBLICATION", "gid://shopify/Publication/338148819125")  # Online Store channel
+PUBLISH_M = """mutation($id:ID!,$p:ID!){publishablePublish(id:$id, input:[{publicationId:$p}]){userErrors{field message}}}"""
+Q = """query($after:String,$q:String!,$pub:ID!){ products(first:100, after:$after, query:$q){
   pageInfo{hasNextPage endCursor}
   nodes{ id handle tags
+    pub: publishedOnPublication(publicationId:$pub)
     chk: metafield(namespace:"supplier", key:"checked_at"){value}
     ref: metafield(namespace:"internal", key:"supplier_ref"){value}
     variants(first:100){ nodes{ sku inventoryPolicy } } } } }"""
@@ -32,7 +35,7 @@ Q = """query($after:String,$q:String!){ products(first:100, after:$after, query:
 def load(search):
     out, after = [], None
     while True:
-        data = s.gql(Q, {"after": after, "q": search})["products"]
+        data = s.gql(Q, {"after": after, "q": search, "pub": PUBLICATION})["products"]
         out += data["nodes"]
         if not data["pageInfo"]["hasNextPage"]:
             return out
@@ -55,6 +58,9 @@ def main():
     unverified = [p for p in active if not p.get("chk") and not all_out(p)]
     to_hide = unverified if GUARD_ONLY else [p for p in active if all_out(p) or p in unverified]
     to_show = [p for p in parked if not all_out(p) and p.get("chk")]
+    # ACTIVE, read on Amazon.ae, sellable, but not published on the Online Store: the page answers 404 (Owala, 5 Nov)
+    to_publish = [p for p in active if p.get("chk") and not all_out(p) and not p.get("pub")]
+    to_publish += [p for p in to_show if not p.get("pub")]
     unmapped = [p for p in to_hide if not any(s.ASIN_RE.search(v.get("sku") or "") for v in p["variants"]["nodes"])
                 and not (len(p["variants"]["nodes"]) == 1 and p.get("ref") and s.ASIN_RE.search(p["ref"]["value"]))]
     print(f"{len(active)} active products: {len(to_hide)} entirely sold out to hide "
@@ -64,6 +70,9 @@ def main():
         print("  hide:", p["handle"], "(no ASIN)" if p in unmapped else "")
     for p in to_show:
         print("  show again:", p["handle"])
+    print(f"{len(to_publish)} sellable products not published on the Online Store (page in 404) to publish")
+    for p in to_publish:
+        print("  publish:", p["handle"])
     if dry:
         return
     if active and len(to_hide) > MAX_SHARE * len(active):
@@ -77,7 +86,12 @@ def main():
             errors += len(errs)
             for e in errs:
                 print("error:", p["handle"], e)
-    print(f"{len(to_hide)} hidden, {len(to_show)} back online, {errors} Shopify errors.")
+    for p in to_publish:
+        errs = s.gql(PUBLISH_M, {"id": p["id"], "p": PUBLICATION})["publishablePublish"]["userErrors"]
+        errors += len(errs)
+        for e in errs:
+            print("publish error:", p["handle"], e)
+    print(f"{len(to_hide)} hidden, {len(to_show)} back online, {len(to_publish)} published, {errors} Shopify errors.")
     if errors:
         sys.exit(1)
 
