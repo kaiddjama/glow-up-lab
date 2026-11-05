@@ -149,3 +149,19 @@ jobs:
           SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
           SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
         run: python3 -I park_soldout.py
+  alert:
+    # Last resort: something failed and was not fixed by the retries: Hoodo is alerted (GitHub issue = e-mail + app).
+    needs: [unmapped, sync, coverage, park]
+    if: ${{ failure() && !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Alert
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          .github/alert.sh "Alerte inventaire : contrôle du stock en échec" "Le contrôle Amazon.ae de $(TZ=Africa/Djibouti date '+%d/%m %Hh%M') (heure de Djibouti) a échoué malgré les nouvelles tentatives : une partie du stock n'a peut-être pas été mise à jour. Les produits non vérifiés depuis 6 h sont masqués automatiquement. Détail : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
