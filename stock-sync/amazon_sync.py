@@ -43,6 +43,7 @@ PRICES_ONLY = os.environ.get("PRICES_ONLY") == "1"  # update prices only: no sto
 # Since 5 Nov: a page in stock with NO delivery date for the Dubai address is not sellable (it usually means Amazon.ae
 # does not deliver it there; eos body butter sold out for Hoodo while the robot read "in stock"). NO_DATE_KEEPS=1 restores
 # the old behaviour (leave such variants as they are).
+RETRY_MAX = int(os.environ.get("RETRY_MAX", "40"))  # pages read a second time at the end of each reader
 NO_DATE_KEEPS = os.environ.get("NO_DATE_KEEPS", "0") == "1"
 STOCK_GUARD = float(os.environ.get("STOCK_GUARD", "0.35"))  # share of read variants that may newly go Épuisé in one run before stock changes are held
 SELLER_GUARD = 0.25  # share of pages read that may newly go Épuisé because of the seller rule in one run
@@ -459,6 +460,36 @@ def main():
             print(f"{n}/{len(asins)} pages read, {bad} not read ({time.strftime('%H:%M:%S')})", flush=True)
         time.sleep(delay + random.uniform(0, delay / 2))
 
+    # Second chance, slowly, for the pages not read (error, CAPTCHA) or read in stock without a delivery date
+    # (often a page that did not finish loading): one more read each; the better result is kept.
+    if not (blocked_in_a_row >= 5):
+        again = [a for a, p in pages.items()
+                 if p.get("error") or (p.get("inStock") and p.get("sourceDays") is None)][:RETRY_MAX]
+        if again:
+            print(f"Reading {len(again)} pages again (not read or no delivery date)", flush=True)
+        fixed, blocked_in_a_row = 0, 0
+        for asin in again:
+            time.sleep(2 * delay + random.uniform(0, delay))
+            try:
+                pg = parse(fetch(asin), today)
+            except Exception as e:
+                if READER and type(e).__name__ == "LocationLost":
+                    break
+                continue
+            if pg.get("error") == "captcha":
+                blocked_in_a_row += 1
+                if blocked_in_a_row >= 3:
+                    break
+                time.sleep(60 + random.uniform(0, 60))
+                continue
+            blocked_in_a_row = 0
+            if not pg.get("error") and (pages[asin].get("error") or pg.get("sourceDays") is not None
+                                        or not pg.get("inStock")):
+                pages[asin] = pg
+                fixed += 1
+        if again:
+            print(f"Second read: {fixed} of {len(again)} pages now read with a clear answer", flush=True)
+
     if READER:
         READER.close()
     hold_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "seller-hold.json")
@@ -641,6 +672,10 @@ def main():
           f"{len(report['skipped'])} big changes held for review, {len(report['errors'])} pages not read, "
           f"{len(report['republished'])} set-aside products back online, {len(report['stillParked'])} still set aside, "
           f"{len(report['parkedNow'])} set aside now, {len(report['sellerFlags'])} non-verified sellers flagged, {errors} Shopify errors. Report: {path}")
+    if stock_guard and not dry:
+        sys.exit("ALERTE: stock guard tripped, no stock change made by this reader (probably a misread).")
+    if errors and not dry:
+        sys.exit(f"ALERTE: {errors} Shopify errors.")
 
 
 if __name__ == "__main__":

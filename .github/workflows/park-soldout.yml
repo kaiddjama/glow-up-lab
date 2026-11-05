@@ -17,7 +17,7 @@ concurrency:
 jobs:
   park:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -32,3 +32,43 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
           GUARD_ONLY: ${{ github.event_name == 'schedule' && '1' || '0' }}
         run: python3 -I park_soldout.py
+      - name: New products to read now
+        id: new
+        working-directory: stock-sync
+        env:
+          SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+        run: python3 -I new_products.py
+      - name: Install the browser
+        if: steps.new.outputs.count != '0' && !inputs.dry_run
+        timeout-minutes: 8
+        run: pip install playwright && playwright install --with-deps chromium
+      - name: Read the new products (online if sellable)
+        if: steps.new.outputs.count != '0' && !inputs.dry_run
+        working-directory: stock-sync
+        env:
+          SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          PRICE_FORMULA: ${{ secrets.PRICE_FORMULA || format('{0},{1},{2}', vars.PRICE_MULT, vars.SHIPPING_AED_PER_KG, vars.AED_TO_FDJ) }}
+          ONLY_ASINS: ${{ steps.new.outputs.asins }}
+          FETCHER: browser
+          SELLER_RULE: "0"
+          DELAY: "8"
+        run: python3 -I amazon_sync.py results
+  alert:
+    needs: [park]
+    if: ${{ failure() && !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Alert
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          .github/alert.sh "Alerte inventaire : masquage / nouveaux produits en échec" "Le contrôle des produits épuisés ou nouveaux de $(TZ=Africa/Djibouti date '+%d/%m %Hh%M') (heure de Djibouti) a échoué. Détail : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
