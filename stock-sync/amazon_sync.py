@@ -417,10 +417,17 @@ def main():
     if os.environ.get("FETCHER") == "browser":  # real headless browser set to a Dubai delivery address
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # python -I does not add the script folder
         import browser_fetch
-        try:
-            READER = browser_fetch.BrowserReader().start()
-        except (browser_fetch.LocationLost, browser_fetch.Captcha) as e:
-            sys.exit(f"Browser could not start on Amazon.ae with a Dubai address ({e}): nothing changed.")
+        for attempt in range(1, 4):  # the Dubai address sometimes does not take on the first try: up to 3 tries
+            reader = browser_fetch.BrowserReader()
+            try:
+                READER = reader.start()
+                break
+            except (browser_fetch.LocationLost, browser_fetch.Captcha) as e:
+                reader.close()
+                if attempt == 3:
+                    sys.exit(f"Browser could not start on Amazon.ae with a Dubai address ({e}), 3 tries: nothing changed.")
+                print(f"Dubai address not set ({e}), try {attempt} of 3: trying again in a minute", flush=True)
+                time.sleep(45 + random.uniform(0, 30))
         print("Browser reader started, delivery location:", READER.location_text())
 
     vendor_of = {r["asin"]: r["vendor"] for r in rows}

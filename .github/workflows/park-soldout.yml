@@ -1,6 +1,9 @@
 name: Hide entirely sold-out products
 # Same step as the last job of the stock sync, runnable on its own. dry_run=true only lists what would change.
 on:
+  workflow_run:  # also after each order check (every ~10 min): GitHub often skips the schedule below
+    workflows: ["Order availability check"]
+    types: [completed]
   schedule:
     - cron: "11,41 * * * *"  # every 30 min: new products are hidden until their stock has been read
   workflow_dispatch:
@@ -30,7 +33,7 @@ jobs:
           SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
           SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
           DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
-          GUARD_ONLY: ${{ github.event_name == 'schedule' && '1' || '0' }}
+          GUARD_ONLY: ${{ github.event_name != 'workflow_dispatch' && '1' || '0' }}
         run: python3 -I park_soldout.py
       - name: New products to read now
         id: new
