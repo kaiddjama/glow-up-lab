@@ -131,3 +131,21 @@ jobs:
       - name: Hide what is still not verified
         working-directory: stock-sync
         run: python3 -I coverage.py enforce
+  park:
+    # Hides the products whose variants are all Épuisé (and brings them back when one is sellable again).
+    needs: [unmapped, sync, coverage]
+    if: ${{ always() && !(github.event_name == 'workflow_dispatch' && (inputs.dry_run || inputs.limit != '' || inputs.prices_only)) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Hide entirely sold-out products
+        working-directory: stock-sync
+        env:
+          SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+        run: python3 -I park_soldout.py

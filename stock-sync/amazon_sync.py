@@ -47,6 +47,7 @@ EXEMPT_TAGS = set(os.environ.get(
     "EXEMPT_TAGS", "sub:ch-accessoires,sub:mk-accessoires,sub:cp-accessoires,sub:bb-repas,sub:en-repas").split(","))
 VERIFIED = ("amazon", "brand", "allowlist")
 PARK_TAG = "livraison-lente"  # draft + this tag = set aside for slow delivery, republished by this script
+OUT_TAG = "epuise-auto"  # draft + this tag = every variant Épuisé, hidden by park_soldout.py, republished when one is sellable again
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 ASIN_RE = re.compile(r"\b(?:AMZ-)?(B0[A-Z0-9]{8})\b")
@@ -105,7 +106,8 @@ def gql(query, variables):
 
 def load_variants():
     rows = []
-    for search, parked in (("status:active", False), (f"status:draft tag:{PARK_TAG}", True)):
+    for search, parked in (("status:active", False),
+                           (f"status:draft (tag:{PARK_TAG} OR tag:{OUT_TAG})", True)):
         rows += load_rows(search, parked)
     return rows
 
@@ -589,7 +591,7 @@ def main():
         fields += range_fields
         for pid in revive:  # back online: ACTIVE, tag removed (after the prices and stock above)
             for q, vars_ in ((STATUS_M, {"p": {"id": pid, "status": "ACTIVE"}}),
-                             (TAGS_REMOVE_M, {"id": pid, "t": [PARK_TAG]})):
+                             (TAGS_REMOVE_M, {"id": pid, "t": [PARK_TAG, OUT_TAG]})):
                 res = gql(q, vars_)
                 errs = next(iter(res.values()))["userErrors"]
                 errors += len(errs)

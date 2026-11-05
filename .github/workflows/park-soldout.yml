@@ -1,0 +1,31 @@
+name: Hide entirely sold-out products
+# Same step as the last job of the stock sync, runnable on its own. dry_run=true only lists what would change.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "List only, change nothing on Shopify"
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: park-soldout
+  cancel-in-progress: false
+jobs:
+  park:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Hide entirely sold-out products
+        working-directory: stock-sync
+        env:
+          SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
+        run: python3 -I park_soldout.py
