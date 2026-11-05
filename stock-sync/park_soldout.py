@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+"""Hides the products that are entirely sold out, and brings them back when one variant can be sold again.
+
+amazon_sync.py only sets single variants to Épuisé (inventoryPolicy DENY). A product whose variants are ALL Épuisé
+stayed published, with every option struck through (e.g. Tree Hut whipped butter). This script runs after the sync:
+  - ACTIVE product, every variant DENY  -> DRAFT + tag OUT_TAG ("epuise-auto");
+  - DRAFT product carrying OUT_TAG with at least one variant sellable (CONTINUE) -> ACTIVE, tag removed.
+Only products carrying OUT_TAG are ever brought back, so products hidden by hand or by another process are not touched.
+Products whose variants have no ASIN stay hidden (nothing can verify them): they are listed so the ASIN can be added.
+
+Usage: python3 -I park_soldout.py   (same environment as amazon_sync.py; DRY_RUN=1 reports only)
+"""
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # python -I does not add the script folder
+import amazon_sync as s  # noqa: E402
+
+MAX_SHARE = 0.60  # more than this share of the active catalogue at once = something is off: report only
+
+Q = """query($after:String,$q:String!){ products(first:100, after:$after, query:$q){
+  pageInfo{hasNextPage endCursor}
+  nodes{ id handle tags
+    ref: metafield(namespace:"internal", key:"supplier_ref"){value}
+    variants(first:100){ nodes{ sku inventoryPolicy } } } } }"""
+
+
+def load(search):
+    out, after = [], None
+    while True:
+        data = s.gql(Q, {"after": after, "q": search})["products"]
+        out += data["nodes"]
+        if not data["pageInfo"]["hasNextPage"]:
+            return out
+        after = data["pageInfo"]["endCursor"]
+
+
+def all_out(p):
+    vs = p["variants"]["nodes"]
+    return bool(vs) and all(v["inventoryPolicy"] == "DENY" for v in vs)
+
+
+def main():
+    if not (os.environ.get("SHOPIFY_STORE") and (os.environ.get("SHOPIFY_TOKEN") or os.environ.get("SHOPIFY_CLIENT_SECRET"))):
+        print("No Shopify credentials set: nothing to do.")
+        return
+    dry = os.environ.get("DRY_RUN") == "1"
+    active = load("status:active")
+    parked = load(f"status:draft tag:{s.OUT_TAG}")
+    to_hide = [p for p in active if all_out(p)]
+    to_show = [p for p in parked if not all_out(p)]
+    unmapped = [p for p in to_hide if not any(s.ASIN_RE.search(v.get("sku") or "") for v in p["variants"]["nodes"])
+                and not (len(p["variants"]["nodes"]) == 1 and p.get("ref") and s.ASIN_RE.search(p["ref"]["value"]))]
+    print(f"{len(active)} active products: {len(to_hide)} entirely sold out to hide "
+          f"({len(unmapped)} of them with no ASIN to verify them); {len(parked)} hidden by this script, "
+          f"{len(to_show)} to bring back.")
+    for p in to_hide:
+        print("  hide:", p["handle"], "(no ASIN)" if p in unmapped else "")
+    for p in to_show:
+        print("  show again:", p["handle"])
+    if dry:
+        return
+    if active and len(to_hide) > MAX_SHARE * len(active):
+        sys.exit(f"{len(to_hide)} of {len(active)} products would be hidden: not changed, to be checked by hand.")
+    errors = 0
+    for p, status in [(p, "DRAFT") for p in to_hide] + [(p, "ACTIVE") for p in to_show]:
+        calls = [(s.STATUS_M, {"p": {"id": p["id"], "status": status}}),
+                 ((s.TAGS_ADD_M if status == "DRAFT" else s.TAGS_REMOVE_M), {"id": p["id"], "t": [s.OUT_TAG]})]
+        for q, vars_ in calls:
+            errs = next(iter(s.gql(q, vars_).values()))["userErrors"]
+            errors += len(errs)
+            for e in errs:
+                print("error:", p["handle"], e)
+    print(f"{len(to_hide)} hidden, {len(to_show)} back online, {errors} Shopify errors.")
+    if errors:
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
