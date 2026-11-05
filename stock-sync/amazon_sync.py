@@ -98,8 +98,15 @@ def gql(query, variables):
             data=json.dumps({"query": query, "variables": variables}).encode(),
             headers={"Content-Type": "application/json",
                      "X-Shopify-Access-Token": token()})
-        with urllib.request.urlopen(req, timeout=60) as r:
-            res = json.load(r)
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                res = json.load(r)
+        except (TimeoutError, OSError, ValueError) as e:  # read timeout / connection reset / cut-off reply (5 Nov):
+            if attempt >= 6:                               # every call here is safe to repeat (it sets values)
+                raise
+            print(f"Shopify did not answer ({type(e).__name__}), try {attempt} of 6", flush=True)
+            time.sleep(10 * attempt + random.uniform(0, 5))
+            continue
         throttled = any((e.get("extensions") or {}).get("code") == "THROTTLED" for e in res.get("errors") or [])
         if throttled and attempt < 30:  # 16 shards share the store's query budget: wait for it to refill (a shard died on 2 Nov after 10 tries)
             time.sleep(min(60, 5 * attempt) + random.uniform(0, 5))
