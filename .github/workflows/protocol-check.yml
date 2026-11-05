@@ -1,0 +1,16 @@
+name: Protocol matches the code
+# Fails when PROTOCOLE-INVENTAIRE.md and the stock-sync code say different things (settings, check times).
+on:
+  push:
+    paths: ["PROTOCOLE-INVENTAIRE.md", "stock-sync/**", ".github/workflows/**"]
+  pull_request:
+    paths: ["PROTOCOLE-INVENTAIRE.md", "stock-sync/**", ".github/workflows/**"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -I stock-sync/protocol_check.py
