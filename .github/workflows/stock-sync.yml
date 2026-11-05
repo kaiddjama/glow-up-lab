@@ -63,8 +63,8 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install the browser
-        timeout-minutes: 8
-        run: pip install playwright && playwright install --with-deps chromium
+        timeout-minutes: 25
+        run: for i in 1 2 3; do timeout 420 bash -c "pip install -q playwright && playwright install --with-deps chromium" && exit 0; echo "browser install failed, try $i of 3"; sleep 20; done; exit 1
       - name: Sync shard ${{ matrix.shard }}
         working-directory: stock-sync
         env:
@@ -103,8 +103,8 @@ jobs:
         run: python3 -I coverage.py list
       - name: Install the browser
         if: steps.p1.outputs.count != '0'
-        timeout-minutes: 8
-        run: pip install playwright && playwright install --with-deps chromium
+        timeout-minutes: 25
+        run: for i in 1 2 3; do timeout 420 bash -c "pip install -q playwright && playwright install --with-deps chromium" && exit 0; echo "browser install failed, try $i of 3"; sleep 20; done; exit 1
       - name: Read them again (pass 1)
         if: steps.p1.outputs.count != '0'
         working-directory: stock-sync
