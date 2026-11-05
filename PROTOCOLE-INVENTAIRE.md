@@ -26,6 +26,7 @@ Délai affiché en boutique : « 4 à 5 jours » (2 jours jusqu'à Dubaï + 2 à
 - Jamais lu sur Amazon.ae (pas de supplier.checked_at) → masqué sous 30 min, lu tout de suite (produits créés depuis moins de 3 jours), remis en ligne seulement si vendable.
 - Les nouveaux produits doivent être créés en brouillon par les fils d'ajout.
 - Un produit masqué (brouillon) disparaît de tous les thèmes, y compris un aperçu de thème.
+- Produit actif, vérifié et vendable mais non publié sur le canal Boutique en ligne (page en 404) → publié automatiquement.
 
 ## 4. Déroulé (GitHub Actions, dépôt glow-up-lab)
 | Quand (Djibouti) | Quoi |
@@ -73,3 +74,4 @@ MAX_DAYS=2 · STOCK_GUARD=0,35 · NO_DATE_KEEPS=0 (1 = l'ancienne règle « page
 - 5 nov : un lecteur sur 16 n'a pas pris l'adresse de Dubaï au démarrage (06:30 UTC) → 3 essais. Le contrôle de 13:07 et le masquage toutes les 30 min n'ont pas été lancés par GitHub → masquage aussi après chaque contrôle des commandes. La formule de prix apparaissait dans les journaux publics (variable non masquée) → à mettre en secret PRICE_FORMULA.
 - 5 nov : le contrôle des commandes (planifié toutes les 10 min à :00) n'a pas été lancé par GitHub de 08:32 à 15:40 UTC → minutes décalées (:04, :14…) ; la tâche de secours le relance s'il manque depuis plus de 2 h (toujours avec dry_run=false).
 - 5 nov : deux contrôles (18:39 et 20:58 Djibouti) en échec partiel : Shopify n'a pas répondu à temps (pas de nouvel essai) et l'installation du navigateur a dépassé 8 min → 6 essais sur les coupures Shopify, installation du navigateur en 3 essais (25 min max).
+- 5 nov : un produit créé par API (productSet) peut être ACTIVE mais non publié sur la Boutique en ligne : sa page répond 404 (Owala) → park_soldout.py publie tout produit actif, vérifié et vendable qui ne l'est pas.
