@@ -3,7 +3,7 @@ name: Order availability check
 # the order is tagged amazon-ko and an alert is posted as a comment on pull request #15 (the alerts mailbox).
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "4,14,24,34,44,54 * * * *"  # not on :00 (GitHub drops the busiest minutes most)
   workflow_dispatch:
     inputs:
       dry_run:
