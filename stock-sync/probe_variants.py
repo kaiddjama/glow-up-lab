@@ -50,10 +50,19 @@ def main():
     delay = float(os.environ.get("DELAY", "8"))
     max_pages = int(os.environ.get("MAX_PAGES", "40"))
     today = dt.date.today()
+    queries = [x[2:] for x in seeds if x.startswith("q:")]
+    seeds = [x for x in seeds if not x.startswith("q:")]
     todo, seen, n = list(seeds), set(), 0
     labels = {}
     with b.BrowserReader() as r:
         print("Location:", r.location_text(), flush=True)
+        for q in queries:  # search page: prints the ASIN and title of each result, nothing else
+            r.page.goto("https://www.amazon.ae/s?language=en_AE&k=" + q.replace(" ", "+"), wait_until="domcontentloaded")
+            r.page.wait_for_timeout(4000)
+            for it in r.page.locator("div[data-component-type='s-search-result'][data-asin]").all()[:24]:
+                t = re.sub(r"\s+", " ", it.inner_text())[:110]
+                print("SEARCH", q, "|", it.get_attribute("data-asin"), "|", t, flush=True)
+            time.sleep(delay)
         while todo and n < max_pages:
             asin = todo.pop(0)
             if asin in seen:
