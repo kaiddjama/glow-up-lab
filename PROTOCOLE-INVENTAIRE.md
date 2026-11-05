@@ -32,7 +32,7 @@ Délai affiché en boutique : « 4 à 5 jours » (2 jours jusqu'à Dubaï + 2 à
 |---|---|
 | 03:07, 08:07, 13:07, 18:07, 22:07 | Contrôle complet (stock-sync.yml) : 16 lecteurs, masquage toutes les 50 pages, relecture lente des pages ratées ou sans date, couverture (relit 2 fois ce qui n'est pas vérifié, puis met en Épuisé ce qui n'a pas été vérifié depuis 6 h), masquage des produits entièrement épuisés |
 | 03:37, 08:37, 13:37, 18:37, 22:37 | Tâche de secours : relance le contrôle et le contrôle des commandes s'ils ne sont pas partis |
-| toutes les 30 min | park-soldout.yml : masque les produits jamais vérifiés, lit les nouveaux produits, remet en ligne ce qui est vendable |
+| toutes les 30 min et après chaque contrôle des commandes | park-soldout.yml : masque les produits jamais vérifiés, lit les nouveaux produits, remet en ligne ce qui est vendable |
 | toutes les 10 min | Contrôle des commandes : étiquettes amazon-ok / amazon-ko / amazon-incertain |
 
 ## 5. Garde-fous contre les mauvaises lectures
@@ -40,6 +40,7 @@ Délai affiché en boutique : « 4 à 5 jours » (2 jours jusqu'à Dubaï + 2 à
 - Plus de 60 % du catalogue serait masqué → rien n'est masqué + alerte.
 - Variation de prix de plus de 150 % → prix retenu pour vérification.
 - Plus de 150 variantes sans ASIN à couper d'un coup → rien n'est changé.
+- Adresse de Dubaï non prise au démarrage → 3 essais, puis le lecteur s'arrête sans rien changer (alerte).
 - Adresse de Dubaï perdue pendant la lecture → le lecteur s'arrête, rien n'est changé pour le reste.
 - CAPTCHA Amazon → pause d'1 à 2 min ; 5 de suite → le lecteur s'arrête (le reste est relu par la couverture).
 
@@ -69,3 +70,4 @@ MAX_DAYS=2 · STOCK_GUARD=0,35 · NO_DATE_KEEPS=0 (1 = l'ancienne règle « page
 - 5 nov : eos commandée (#1019) alors qu'épuisée : mise en ligne sans lecture + page sans date laissée en vente → page sans date = indisponible, produit jamais lu masqué sous 30 min (PR #40) ; relecture des pages ratées, lecture des nouveaux produits, alerte GitHub (PR #41).
 - 5 nov : Chrome du Mac interdit (Hoodo).
 - 5 nov : protocole tenu dans GitHub, vérifié automatiquement contre le code à chaque modification (Hoodo : pas de décalage d'informations).
+- 5 nov : un lecteur sur 16 n'a pas pris l'adresse de Dubaï au démarrage (06:30 UTC) → 3 essais. Le contrôle de 13:07 et le masquage toutes les 30 min n'ont pas été lancés par GitHub → masquage aussi après chaque contrôle des commandes. La formule de prix apparaissait dans les journaux publics (variable non masquée) → à mettre en secret PRICE_FORMULA.
