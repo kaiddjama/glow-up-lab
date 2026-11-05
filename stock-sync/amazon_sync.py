@@ -40,7 +40,11 @@ MAX_DAYS_OTHER = MAX_DAYS  # same limit for every seller
 STANDARD_DAYS = MAX_DAYS  # up to this many days to Dubai: standard delay; later (if MAX_DAYS is raised): longer delay shown
 FORWARD_DAYS = (2, 3)  # Dubai -> Djibouti
 PRICES_ONLY = os.environ.get("PRICES_ONLY") == "1"  # update prices only: no stock, set-aside or delivery-range change
-STOCK_GUARD = float(os.environ.get("STOCK_GUARD", "0.25"))  # share of read variants that may newly go Épuisé in one run before stock changes are held
+# Since 5 Nov: a page in stock with NO delivery date for the Dubai address is not sellable (it usually means Amazon.ae
+# does not deliver it there; eos body butter sold out for Hoodo while the robot read "in stock"). NO_DATE_KEEPS=1 restores
+# the old behaviour (leave such variants as they are).
+NO_DATE_KEEPS = os.environ.get("NO_DATE_KEEPS", "0") == "1"
+STOCK_GUARD = float(os.environ.get("STOCK_GUARD", "0.35"))  # share of read variants that may newly go Épuisé in one run before stock changes are held
 SELLER_GUARD = 0.25  # share of pages read that may newly go Épuisé because of the seller rule in one run
 SELLER_RULE = os.environ.get("SELLER_RULE", "0") == "1"  # off since 22 Oct (seller rule removed); SELLER_RULE=1 switches it back on
 EXEMPT_TAGS = set(os.environ.get(
@@ -360,7 +364,7 @@ def hide_unavailable(rows, pages, dry):
     if dry or PRICES_ONLY:
         return
     live = [r for r in rows if not r["parked"] and pages.get(r["asin"]) and not pages[r["asin"]].get("error")]
-    out = [r for r in live if r["policy"] == "CONTINUE" and not (pages[r["asin"]].get("inStock")
+    out = [r for r in live if r["policy"] == "CONTINUE" and not (NO_DATE_KEEPS and pages[r["asin"]].get("inStock")
            and pages[r["asin"]].get("sourceDays") is None and not pages[r["asin"]].get("held"))
            and not sellable(pages[r["asin"]], r)]
     if len(live) < 20 or len(out) > STOCK_GUARD * len(live):
@@ -488,7 +492,7 @@ def main():
     # delivery, so the variant keeps its current setting; and if too many variants would newly go Épuisé in
     # one run, the page reading is probably off (wrong location, blocking): no stock change is made at all.
     def no_date(p):
-        return bool(p.get("inStock")) and p.get("sourceDays") is None and not p.get("held")
+        return NO_DATE_KEEPS and bool(p.get("inStock")) and p.get("sourceDays") is None and not p.get("held")
 
     live = [r for r in rows if not r["parked"] and pages.get(r["asin"]) and not pages[r["asin"]].get("error")]
     newly_out = [r for r in live if r["policy"] == "CONTINUE" and not no_date(pages[r["asin"]])

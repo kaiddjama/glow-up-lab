@@ -5,7 +5,9 @@ amazon_sync.py only sets single variants to Épuisé (inventoryPolicy DENY). A p
 stayed published, with every option struck through (e.g. Tree Hut whipped butter). This script runs after the sync:
   - ACTIVE product, every variant DENY  -> DRAFT + tag OUT_TAG ("epuise-auto");
   - DRAFT product carrying OUT_TAG with at least one variant sellable (CONTINUE) -> ACTIVE, tag removed.
-Only products carrying OUT_TAG are ever brought back, so products hidden by hand or by another process are not touched.
+Also hidden: ACTIVE products never read on Amazon.ae (no supplier.checked_at) that have a variant on sale, so a new
+product cannot be sold before its stock and delivery date were read; the next sync reads it (it is loaded as a hidden
+product) and puts it online if it is sellable. Only products carrying OUT_TAG are ever brought back, so products hidden by hand or by another process are not touched.
 Products whose variants have no ASIN stay hidden (nothing can verify them): they are listed so the ASIN can be added.
 
 Usage: python3 -I park_soldout.py   (same environment as amazon_sync.py; DRY_RUN=1 reports only)
@@ -16,11 +18,13 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # python -I does not add the script folder
 import amazon_sync as s  # noqa: E402
 
+GUARD_ONLY = os.environ.get("GUARD_ONLY") == "1"  # frequent run: only hide the never-verified products
 MAX_SHARE = 0.60  # more than this share of the active catalogue at once = something is off: report only
 
 Q = """query($after:String,$q:String!){ products(first:100, after:$after, query:$q){
   pageInfo{hasNextPage endCursor}
   nodes{ id handle tags
+    chk: metafield(namespace:"supplier", key:"checked_at"){value}
     ref: metafield(namespace:"internal", key:"supplier_ref"){value}
     variants(first:100){ nodes{ sku inventoryPolicy } } } } }"""
 
@@ -47,8 +51,10 @@ def main():
     dry = os.environ.get("DRY_RUN") == "1"
     active = load("status:active")
     parked = load(f"status:draft tag:{s.OUT_TAG}")
-    to_hide = [p for p in active if all_out(p)]
-    to_show = [p for p in parked if not all_out(p)]
+    # never verified on Amazon.ae (no supplier.checked_at) and on sale = published before its stock was read: hidden
+    unverified = [p for p in active if not p.get("chk") and not all_out(p)]
+    to_hide = unverified if GUARD_ONLY else [p for p in active if all_out(p) or p in unverified]
+    to_show = [p for p in parked if not all_out(p) and p.get("chk")]
     unmapped = [p for p in to_hide if not any(s.ASIN_RE.search(v.get("sku") or "") for v in p["variants"]["nodes"])
                 and not (len(p["variants"]["nodes"]) == 1 and p.get("ref") and s.ASIN_RE.search(p["ref"]["value"]))]
     print(f"{len(active)} active products: {len(to_hide)} entirely sold out to hide "
