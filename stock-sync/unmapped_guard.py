@@ -18,7 +18,7 @@ MAX_FLIPS = 150  # more than this at once = something is off with the data: repo
 
 Q = """query($after:String){ products(first:50, after:$after, query:"status:active"){
   pageInfo{hasNextPage endCursor}
-  nodes{ id handle
+  nodes{ id handle isGiftCard
     ref: metafield(namespace:"internal", key:"supplier_ref"){value}
     spreadr: metafield(namespace:"global", key:"spreadr-asin"){value}
     variants(first:100){ nodes{ id title sku inventoryPolicy } } } } }"""
@@ -33,6 +33,8 @@ def main():
     while True:
         data = s.gql(Q, {"after": after})["products"]
         for p in data["nodes"]:
+            if p.get("isGiftCard"):  # gift card: no ASIN by design
+                continue
             variants = p["variants"]["nodes"]
             product_asin = None
             for src in (p.get("spreadr"), p.get("ref")):
