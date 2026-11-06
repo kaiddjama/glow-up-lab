@@ -25,7 +25,7 @@ PUBLICATION = os.environ.get("ONLINE_STORE_PUBLICATION", "gid://shopify/Publicat
 PUBLISH_M = """mutation($id:ID!,$p:ID!){publishablePublish(id:$id, input:[{publicationId:$p}]){userErrors{field message}}}"""
 Q = """query($after:String,$q:String!,$pub:ID!){ products(first:100, after:$after, query:$q){
   pageInfo{hasNextPage endCursor}
-  nodes{ id handle tags
+  nodes{ id handle tags isGiftCard
     pub: publishedOnPublication(publicationId:$pub)
     chk: metafield(namespace:"supplier", key:"checked_at"){value}
     ref: metafield(namespace:"internal", key:"supplier_ref"){value}
@@ -36,7 +36,7 @@ def load(search):
     out, after = [], None
     while True:
         data = s.gql(Q, {"after": after, "q": search, "pub": PUBLICATION})["products"]
-        out += data["nodes"]
+        out += [p for p in data["nodes"] if not p.get("isGiftCard")]  # gift cards have no Amazon.ae page: never hidden by this script
         if not data["pageInfo"]["hasNextPage"]:
             return out
         after = data["pageInfo"]["endCursor"]
