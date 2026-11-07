@@ -1,11 +1,13 @@
 name: Inventory audit
 # Reads EVERY product and checks what the stock sync must guarantee (stock tracking on, Épuisé really not orderable,
 # every active product read recently, ASIN, published, price). Switches stock tracking on when it is off.
-# Runs after each full stock check, and on demand. dry_run=true only reports.
+# Runs every 30 min, after each full stock check, and on demand. dry_run=true only reports.
 on:
   workflow_run:
     workflows: ["Amazon.ae stock and price sync"]
     types: [completed]
+  schedule:
+    - cron: "23,53 * * * *"  # every 30 min (10 s of work): stock tracking switched on for new products, problems alerted
   workflow_dispatch:
     inputs:
       dry_run:

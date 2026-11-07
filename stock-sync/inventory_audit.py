@@ -25,7 +25,7 @@ STALE_HOURS = float(os.environ.get("STALE_HOURS", "8"))  # five checks a day = o
 PUBLICATION = os.environ.get("ONLINE_STORE_PUBLICATION", "gid://shopify/Publication/338148819125")
 Q = """query($after:String,$pub:ID!){ products(first:40, after:$after, query:"-status:archived"){
   pageInfo{hasNextPage endCursor}
-  nodes{ id handle title status tags createdAt
+  nodes{ id handle title status tags createdAt isGiftCard
     pub: publishedOnPublication(publicationId:$pub)
     chk: metafield(namespace:"supplier", key:"checked_at"){value}
     ref: metafield(namespace:"internal", key:"supplier_ref"){value}
@@ -70,7 +70,7 @@ def main():
         by_status[p["status"]] = by_status.get(p["status"], 0) + 1
     variants = [(p, v) for p in products for v in p["variants"]["nodes"]]
 
-    untracked = [(p, v) for p, v in variants if not v["inventoryItem"]["tracked"]]
+    untracked = [(p, v) for p, v in variants if not v["inventoryItem"]["tracked"] and not p["isGiftCard"]]  # gift cards cannot be tracked
     fixed, failed = 0, []
     if fix:
         for p, v in untracked:
@@ -83,8 +83,8 @@ def main():
 
     active = [p for p in products if p["status"] == "ACTIVE"]
     sellable = lambda p: [v for v in p["variants"]["nodes"] if v["inventoryPolicy"] == "CONTINUE"]  # noqa: E731
-    deny_but_orderable = [(p, v) for p, v in variants if v["inventoryPolicy"] == "DENY" and v["availableForSale"]
-                          and v["inventoryItem"]["tracked"]]  # tracked ones only: the untracked are handled above
+    deny_but_orderable = [(p, v) for p, v in variants if p["status"] == "ACTIVE" and v["inventoryPolicy"] == "DENY"
+                          and v["availableForSale"] and not p["isGiftCard"]]
     never_read = [p for p in active if not p.get("chk") and sellable(p)]
     stale = [p for p in active if p.get("chk") and sellable(p) and age_hours(p["chk"], now) > STALE_HOURS]
     no_asin = [(p, v) for p in active for v in sellable(p) if not has_asin(p, v)]

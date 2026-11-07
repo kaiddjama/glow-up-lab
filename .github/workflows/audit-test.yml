@@ -26,6 +26,7 @@ jobs:
           SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
           SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
           SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
-          DRY_RUN: '1'
+          DRY_RUN: '0'
         run: python3 -I inventory_audit.py
 # retry
+# live fix run
