@@ -1,0 +1,29 @@
+{%- comment -%}
+  Barre « livraison offerte dès 10 000 Fdj » (Djibouti-ville), affichée dans le panier (tiroir et page).
+  Seuil en unités mineures Shopify (x100) : 10 000 Fdj = 1000000.
+{%- endcomment -%}
+{%- unless cart.empty? -%}
+  {%- liquid
+    assign gul_threshold = 1000000
+    assign gul_total = cart.total_price
+    assign gul_remaining = gul_threshold | minus: gul_total
+    assign gul_pct = gul_total | times: 100 | divided_by: gul_threshold
+    if gul_pct > 100
+      assign gul_pct = 100
+    endif
+  -%}
+  <div class="gul-free-ship" role="status">
+    {%- if gul_remaining > 0 -%}
+      <p class="gul-free-ship__text">Plus que <strong>{{ gul_remaining | money }}</strong> pour la livraison offerte à Djibouti-ville</p>
+    {%- else -%}
+      <p class="gul-free-ship__text gul-free-ship__text--ok">Livraison offerte à Djibouti-ville</p>
+    {%- endif -%}
+    <div class="gul-free-ship__track" aria-hidden="true"><span class="gul-free-ship__fill" style="width: {{ gul_pct }}%"></span></div>
+  </div>
+  <style>
+    .gul-free-ship { width: 100%; padding: 12px 14px; margin: 0 0 12px; border-radius: 10px; background: rgb(var(--color-foreground-rgb) / 0.06); }
+    .gul-free-ship__text { margin: 0 0 8px; font-size: 14px; line-height: 1.35; text-align: center; }
+    .gul-free-ship__track { height: 6px; border-radius: 999px; background: rgb(var(--color-foreground-rgb) / 0.15); overflow: hidden; }
+    .gul-free-ship__fill { display: block; height: 100%; border-radius: 999px; background: var(--color-foreground); transition: width .3s ease; }
+  </style>
+{%- endunless -%}
