@@ -1,0 +1,51 @@
+name: Inventory audit
+# Reads EVERY product and checks what the stock sync must guarantee (stock tracking on, Épuisé really not orderable,
+# every active product read recently, ASIN, published, price). Switches stock tracking on when it is off.
+# Runs after each full stock check, and on demand. dry_run=true only reports.
+on:
+  workflow_run:
+    workflows: ["Amazon.ae stock and price sync"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Report only, change nothing on Shopify"
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: inventory-audit
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Audit the whole catalogue
+        working-directory: stock-sync
+        env:
+          SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
+        run: python3 -I inventory_audit.py
+  alert:
+    needs: [audit]
+    if: ${{ failure() && !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Alert
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          .github/alert.sh "Alerte inventaire : l'audit complet a trouvé un problème" "L'audit du stock de $(TZ=Africa/Djibouti date '+%d/%m %Hh%M') (heure de Djibouti) reste en erreur après les corrections automatiques. Détail (résumé du job) : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
