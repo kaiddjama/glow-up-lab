@@ -31,7 +31,7 @@ Q = """query($after:String,$pub:ID!){ products(first:40, after:$after, query:"-s
     ref: metafield(namespace:"internal", key:"supplier_ref"){value}
     variants(first:100){ nodes{ id title sku price inventoryPolicy availableForSale
       inventoryItem{ id tracked }
-      vchk: metafield(namespace:"supplier", key:"variant_checked_at"){value} } } } }"""
+      vchk: metafield(namespace:"supplier", key:"variant_checked_at"){value} } } } } }"""
 TRACK_M = """mutation($id:ID!){ inventoryItemUpdate(id:$id, input:{tracked:true}){ userErrors{field message} } }"""
 
 

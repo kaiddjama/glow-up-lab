@@ -28,3 +28,4 @@ jobs:
           SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
           DRY_RUN: '1'
         run: python3 -I inventory_audit.py
+# retry
