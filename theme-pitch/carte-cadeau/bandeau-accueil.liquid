@@ -1,0 +1,16 @@
+{%- comment -%}
+  Bandeau discret « carte cadeau » (accueil, juste avant le pied de page).
+  À coller dans l'éditeur de thème Pitch : Personnaliser > Accueil > Ajouter une section > « Liquid personnalisé ».
+  Retour arrière : supprimer la section.
+{%- endcomment -%}
+{%- assign gc = collections['cartes-cadeaux'] -%}
+<div style="background:#E8DCCF;padding:28px 20px;">
+  <div style="max-width:1100px;margin:0 auto;display:flex;gap:24px;align-items:center;justify-content:center;flex-wrap:wrap;">
+    <a href="{{ gc.url }}" style="display:block;width:120px;flex:none;"><img src="{{ gc.image | image_url: width: 240 }}" alt="Carte cadeau Aimé Essentials" width="120" height="120" loading="lazy" style="width:100%;height:auto;border-radius:10px;display:block;"></a>
+    <div style="flex:1 1 260px;max-width:520px;">
+      <p style="margin:0 0 4px;font-family:var(--font-heading--family);font-size:1.6rem;font-style:italic;color:#701C32;line-height:1.2;">Un cadeau qui fait toujours plaisir</p>
+      <p style="margin:0 0 10px;color:#5A4136;font-size:.95rem;">Une carte cadeau Aimé Essentials, de 5.000 à 50.000 Fdj, envoyée par e-mail.</p>
+      <a href="{{ gc.url }}" style="color:#701C32;text-decoration:underline;font-size:.95rem;">Offrir une carte cadeau</a>
+    </div>
+  </div>
+</div>

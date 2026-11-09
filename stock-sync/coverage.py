@@ -21,7 +21,7 @@ MAX_RETRY = 300  # ASINs re-read per retry pass (about an hour at one page every
 
 Q = """query($after:String){ products(first:50, after:$after, query:"status:active"){
   pageInfo{hasNextPage endCursor}
-  nodes{ id handle
+  nodes{ id handle isGiftCard
     ref: metafield(namespace:"internal", key:"supplier_ref"){value}
     spreadr: metafield(namespace:"global", key:"spreadr-asin"){value}
     variants(first:100){ nodes{ id title sku inventoryPolicy
@@ -35,6 +35,8 @@ def unverified():
     while True:
         data = s.gql(Q, {"after": after})["products"]
         for p in data["nodes"]:
+            if p.get("isGiftCard"):  # gift card: no Amazon.ae page to verify
+                continue
             variants = p["variants"]["nodes"]
             product_asin = None
             for src in (p.get("spreadr"), p.get("ref")):

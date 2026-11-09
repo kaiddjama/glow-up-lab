@@ -24,7 +24,7 @@ Q = """query($q:String!){ orders(first:25, query:$q, sortKey:CREATED_AT){ nodes{
   id name createdAt tags
   lineItems(first:50){ nodes{ title variantTitle sku quantity
     variant{ id inventoryPolicy
-      product{ id handle vendor
+      product{ id handle vendor isGiftCard
         ref: metafield(namespace:"internal", key:"supplier_ref"){value}
         spreadr: metafield(namespace:"global", key:"spreadr-asin"){value}
         variantsCount{ count } } } } } } } }"""
@@ -105,6 +105,8 @@ def main():
         for o in orders:
             bad, unknown = [], []
             for it in o["lineItems"]["nodes"]:
+                if (it.get("variant") or {}).get("product", {}).get("isGiftCard"):
+                    continue  # gift card: nothing to buy on Amazon.ae
                 label = f"{it['title']}" + (f" ({it['variantTitle']})" if it.get("variantTitle") else "")
                 asin = asin_of(it)
                 if not asin:
