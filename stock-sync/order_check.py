@@ -130,6 +130,8 @@ def main():
                     unknown.append(label)
                 elif not s.sellable(pg, {"vendor": it["variant"]["product"]["vendor"] or ""}):
                     why = ("pas en stock sur Amazon.ae" if not pg["inStock"] else
+                           f"stock très faible sur Amazon.ae ({pg['stockLeft']} restant(s)) : l'offre peut passer à un "
+                           f"vendeur lent, vérifie le délai sur ton compte et achète vite" if s.low_stock(pg) else
                            f"livraison trop lente ({pg.get('deliveryText')})")
                     bad.append((it, label, why))
             age_h = (now - dt.datetime.fromisoformat(o["createdAt"].replace("Z", "+00:00"))).total_seconds() / 3600
