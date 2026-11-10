@@ -33,8 +33,8 @@ for name, val in re.findall(r"\b(MEDX_[A-Z_]{4,})=([0-9]+)", sec10):
         gaps.append(f"{name}: not found in medx.py / medx_create.py")
     elif m.group(1) != val:
         gaps.append(f"{name}: protocol says {val}, code says {m.group(1)}")
-medx_crons = re.search(r'cron: "(\d+),(\d+) \* \* \* \*"', medx_wf)
-if not medx_crons or f"(à :{medx_crons.group(1)} et :{medx_crons.group(2)})" not in sec10:
+medx_crons = re.search(r'cron: "(\d+)-59/(\d+) \* \* \* \*"', medx_wf)
+if not medx_crons or f"toutes les {medx_crons.group(2)} minutes (à partir de :{int(medx_crons.group(1)):02d}" not in sec10:
     gaps.append("MedX check minutes: protocol and medx-sync.yml differ")
 crons = sorted(f"{(int(h) + 3) % 24:02d}:{int(m):02d}" for m, h in re.findall(r'cron: "(\d+) (\d+) \* \* \*"', wf))
 times = re.search(r"\| ([0-9:, ]+) \| Contrôle complet", proto)

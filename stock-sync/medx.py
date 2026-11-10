@@ -26,7 +26,7 @@ SKU_RE = re.compile(r"^MEDX-([a-z0-9][a-z0-9-]*)$")
 UA = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 MIN_QTY = int(os.environ.get("MEDX_MIN_QTY", "8"))  # below this stock the variant is Épuisé
 BACK_QTY = int(os.environ.get("MEDX_BACK_QTY", "12"))  # an Épuisé variant needs this stock to come back
-STALE_HOURS = int(os.environ.get("MEDX_STALE_HOURS", "3"))  # coverage.py: unread for this long = Épuisé
+STALE_HOURS = int(os.environ.get("MEDX_STALE_HOURS", "1"))  # coverage.py: unread for this long = Épuisé
 DUBAI_DAYS = 1  # MedX delivers in Dubai within 12 to 24 hours
 FORWARD_DAYS = (2, 3)  # Dubai -> Djibouti, same as amazon_sync.py
 NEXT_RE = re.compile(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', re.S)

@@ -36,4 +36,19 @@ check(not medx.sellable(medx.parse(page(publish=False)), True), "unpublished is 
 check(not medx.sellable({"gone": True}, True) and not medx.sellable({"error": "HTTP 503"}, True), "gone / error never sellable")
 check(not medx.sellable(medx.parse(page(price="0")), True), "price 0 is not sellable")
 check(medx.eta() == "3-4", "eta")
+# selection.json: every entry is complete and nothing can collide
+HERE = os.path.dirname(os.path.abspath(__file__))
+sel = json.load(open(os.path.join(HERE, "medx", "selection.json"), encoding="utf-8"))
+slugs, handles = [], []
+for p in sel:
+    handles.append(p["handle"])
+    check(p["title"] and p["intro"] and p["points"] and p["note"] and p["weight_g"] > 0, "incomplete entry " + p["handle"])
+    labels = [v["label"] for v in p["variants"]]
+    check(len(labels) == len(set(labels)), "two variants with the same label in " + p["handle"])
+    for v in p["variants"]:
+        slugs.append(v["slug"])
+        check(medx.slug_of("MEDX-" + v["slug"]) == v["slug"], "bad alias " + v["slug"])
+        check(v.get("weight_g", p["weight_g"]) > 0, "no weight for " + v["slug"])
+        check(v["photo"].endswith(".jpg"), "photo name " + v["slug"])
+check(len(handles) == len(set(handles)) and len(slugs) == len(set(slugs)), "duplicate handle or MedX page in the selection")
 print("medx tests OK")
