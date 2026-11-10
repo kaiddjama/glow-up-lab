@@ -1,24 +1,35 @@
-name: TEMP padelshop dry run
+name: Firecrawl test
+# Test only: starts a self-hosted Firecrawl (open source, docker compose) on the runner and reads a few Amazon.ae pages
+# with it, to compare with the Playwright reader. No secrets, nothing in the shop is changed.
 on:
   workflow_dispatch:
+    inputs:
+      asins:
+        description: "ASINs to read, separated by spaces"
+        type: string
+        default: "B00PV15BPW B08B85MWMX B0DHKSF81K B0BQCPJ95D B0DHVLFR2V B0019LVGPC"
 permissions:
   contents: read
-env:
-  SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
-  SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
-  SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
-  PRICE_FORMULA: ${{ secrets.PRICE_FORMULA || format('{0},{1},{2}', vars.PRICE_MULT, vars.SHIPPING_AED_PER_KG, vars.AED_TO_FDJ) }}
 jobs:
-  sync:
+  firecrawl:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Dry run
+      - name: Get Firecrawl (public, open source)
+        run: git clone --depth 1 https://github.com/firecrawl/firecrawl.git "$RUNNER_TEMP/firecrawl"
+      - name: Start Firecrawl
+        working-directory: ${{ runner.temp }}/firecrawl
+        run: |
+          printf 'PORT=3002\nHOST=0.0.0.0\nUSE_DB_AUTHENTICATION=false\nBULL_AUTH_KEY=test\n' > .env
+          docker compose up -d --build
+          docker compose ps
+      - name: Read pages
         working-directory: stock-sync
         env:
-          DRY_RUN: "1"
-        run: python3 -I padelshop_sync.py results && cat results/*.json | head -c 4000
+          ASINS: ${{ inputs.asins }}
+        run: python3 -I firecrawl_test.py $ASINS
+      - name: Firecrawl log (tail)
+        if: always()
+        working-directory: ${{ runner.temp }}/firecrawl
+        run: docker compose logs --tail 60 api playwright-service 2>&1 | cut -c1-300
