@@ -844,5 +844,250 @@
     "photo": "raw-clear-whey-protein-lemon-lime-680g.jpg"
    }
   ]
+ },
+ {
+  "key": "tl-lean",
+  "handle": "transparent-labs-lean-pre-entrainement-poudre-30-doses",
+  "title": "Transparent Labs LEAN pré-entraînement en poudre, 30 doses",
+  "vendor": "Transparent Labs",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-performance",
+   "rayon:complements-performance"
+  ],
+  "weight_g": 550,
+  "option": "Parfum",
+  "intro": "Le pré-entraînement « sèche » de Transparent Labs, pensé pour l'énergie et la concentration pendant une période de définition. Chaque dose apporte 6 g de citrulline malate, 1 g d'acétyl-L-carnitine et 180 mg de caféine d'origine naturelle, sans édulcorants artificiels, colorants ni conservateurs. À mélanger à l'eau, 20 à 30 minutes avant la séance.",
+  "points": [
+   "30 doses par pot (420 g)",
+   "Édulcoré naturellement",
+   "Contient de la caféine : à éviter en fin de soirée"
+  ],
+  "note": "Complément alimentaire. Déconseillé aux enfants, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Ne dépasse pas la dose indiquée sur l'emballage.",
+  "seo_title": "Transparent Labs LEAN | Pré-workout 30 doses",
+  "seo_desc": "Un pré-entraînement sans édulcorants artificiels : citrulline, acétyl-L-carnitine et 180 mg de caféine. Punch aux fruits. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "transparent-labs-lean-pre-workout-fruit-punch-cutting-season-formula-30-servings",
+    "label": "Punch aux fruits",
+    "photo": "transparent-labs-lean-pre-workout-fruit-punch-cutting-season-formula-3.jpg"
+   }
+  ]
+ },
+ {
+  "key": "tl-bbe",
+  "handle": "transparent-labs-bulk-black-elite-pre-entrainement-30-doses",
+  "title": "Transparent Labs BULK Black Elite pré-entraînement en poudre, 30 doses",
+  "vendor": "Transparent Labs",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-performance",
+   "rayon:complements-performance"
+  ],
+  "weight_g": 800,
+  "option": "Parfum",
+  "intro": "Le pré-entraînement le plus puissant de Transparent Labs, pour les séances lourdes. Chaque dose associe 8 g de citrulline malate, 4 g de bêta-alanine, 2,5 g de bétaïne et 325 mg de caféine, avec de l'alpha-GPC. Sans édulcorants artificiels ni colorants. À mélanger à l'eau, environ 20 à 30 minutes avant l'entraînement.",
+  "points": [
+   "30 doses par pot (environ 620 g)",
+   "Édulcoré naturellement",
+   "Contient une forte dose de caféine : à réserver aux sportifs qui la supportent bien"
+  ],
+  "note": "Complément alimentaire. Déconseillé aux enfants, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Ne dépasse pas la dose indiquée sur l'emballage.",
+  "seo_title": "Transparent Labs BULK Black Elite | Pré-workout",
+  "seo_desc": "Un pré-entraînement puissant : citrulline, bêta-alanine, bétaïne, alpha-GPC et 325 mg de caféine. 30 doses. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "transparent-labs-bulk-black-elite-pre-workout-with-citrulline-alpha-gpc-and-caffeine-blueberry-pomegranate-621g",
+    "label": "Myrtille grenade",
+    "photo": "transparent-labs-bulk-black-elite-pre-workout-with-citrulline-alpha-gp.jpg"
+   },
+   {
+    "slug": "transparent-labs-bulk-black-elite-pre-workout-with-citrulline-beta-alanine-alpha-gpc-and-caffeine-blue-raspberry-618g",
+    "label": "Framboise bleue",
+    "photo": "transparent-labs-bulk-black-elite-pre-workout-with-citrulline-beta-ala.jpg"
+   }
+  ]
+ },
+ {
+  "key": "tl-bulk",
+  "handle": "transparent-labs-bulk-pre-entrainement-pasteque-30-doses",
+  "title": "Transparent Labs BULK pré-entraînement pastèque, 30 doses",
+  "vendor": "Transparent Labs",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-performance",
+   "rayon:complements-performance"
+  ],
+  "weight_g": 800,
+  "option": "Parfum",
+  "intro": "Un pré-entraînement dosé pour la performance : 8 g de citrulline malate, 4 g de bêta-alanine, 2,5 g de bétaïne, de la caféine et de l'alpha-GPC. Sans édulcorants artificiels ni colorants. À mélanger à l'eau, environ 20 à 30 minutes avant la séance.",
+  "points": [
+   "30 doses par pot (environ 620 g)",
+   "Édulcoré naturellement",
+   "Contient de la caféine : à éviter en fin de soirée"
+  ],
+  "note": "Complément alimentaire. Déconseillé aux enfants, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Ne dépasse pas la dose indiquée sur l'emballage.",
+  "seo_title": "Transparent Labs BULK | Pré-workout pastèque 30 doses",
+  "seo_desc": "Un pré-entraînement dosé pour la performance : citrulline, bêta-alanine, bétaïne et caféine. Pastèque. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "transparent-labs-bulk-pre-workout-with-8g-citrulline-malate-4g-beta-alanine-and-caffeine-watermelon621g",
+    "label": "Pastèque",
+    "photo": "transparent-labs-bulk-pre-workout-with-8g-citrulline-malate-4g-beta-al.jpg"
+   }
+  ]
+ },
+ {
+  "key": "tl-post",
+  "handle": "transparent-labs-post-advanced-recuperation-30-doses",
+  "title": "Transparent Labs POST Advanced récupération après l'entraînement, 30 doses",
+  "vendor": "Transparent Labs",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-performance",
+   "rayon:complements-performance"
+  ],
+  "weight_g": 700,
+  "option": "Parfum",
+  "intro": "Une poudre de récupération à prendre après la séance. Chaque dose contient 5 g de créatine, 5 g de glutamine et 2 g de Carnipure, avec de la cerise acide et du ginseng. Sans édulcorants artificiels ni colorants. À mélanger à l'eau après l'entraînement.",
+  "points": [
+   "30 doses par pot (environ 530 g)",
+   "Édulcoré naturellement",
+   "Sans caféine"
+  ],
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demandez conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "seo_title": "Transparent Labs POST Advanced | Récupération 30 doses",
+  "seo_desc": "Créatine, glutamine et Carnipure pour la récupération après l'entraînement. Orange ou cerise noire. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "transparent-labs-post-advanced-post-workout-orange-recovery-formula-30-servings",
+    "label": "Orange",
+    "photo": "transparent-labs-post-advanced-post-workout-orange-recovery-formula-30.jpg"
+   },
+   {
+    "slug": "transparent-labs-post-advanced-post-workout-black-cherry-recovery-formula-30-servings",
+    "label": "Cerise noire",
+    "photo": "transparent-labs-post-advanced-post-workout-black-cherry-recovery-form.jpg"
+   }
+  ]
+ },
+ {
+  "key": "tl-hydrate",
+  "handle": "transparent-labs-hydrate-electrolytes-poudre-40-doses",
+  "title": "Transparent Labs Hydrate électrolytes en poudre, 40 doses",
+  "vendor": "Transparent Labs",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-performance",
+   "rayon:complements-performance"
+  ],
+  "weight_g": 450,
+  "option": "Parfum",
+  "intro": "Une boisson d'hydratation en poudre, sans sucre, pour les séances longues ou les journées chaudes. Chaque dose apporte 1 g de taurine, 500 mg d'eau de coco et 885 mg de minéraux. Sans édulcorants artificiels ni colorants. Un dosage à mélanger dans l'eau de la gourde.",
+  "points": [
+   "40 doses par pot (environ 330 g)",
+   "Sans sucre, édulcoré naturellement",
+   "Sans caféine"
+  ],
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demandez conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "seo_title": "Transparent Labs Hydrate | Électrolytes 40 doses",
+  "seo_desc": "Des électrolytes sans sucre : taurine, eau de coco et minéraux. 40 doses, cinq parfums. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "transparent-labs-hydrate-electrolyte-powder-peach-mango-sugar-free-with-taurine-40-servings-320g",
+    "label": "Pêche mangue",
+    "photo": "transparent-labs-hydrate-electrolyte-powder-peach-mango-sugar-free-wit.jpg"
+   },
+   {
+    "slug": "transparent-labs-hydrate-electrolyte-powder-blue-raspberry-sugar-free-with-taurine-40-servings-324g",
+    "label": "Framboise bleue",
+    "photo": "transparent-labs-hydrate-electrolyte-powder-blue-raspberry-sugar-free-.jpg"
+   },
+   {
+    "slug": "transparent-labs-hydrate-electrolyte-powder-orange-cranberry-sugar-free-with-taurine-40-servings-332g",
+    "label": "Orange canneberge",
+    "photo": "transparent-labs-hydrate-electrolyte-powder-orange-cranberry-sugar-fre.jpg"
+   },
+   {
+    "slug": "transparent-labs-hydrate-electrolyte-powder-tropical-punch-sugar-free-with-taurine-40-servings-320g",
+    "label": "Punch tropical",
+    "photo": "transparent-labs-hydrate-electrolyte-powder-tropical-punch-sugar-free-.jpg"
+   },
+   {
+    "slug": "transparent-labs-hydrate-electrolyte-powder-lemon-lime-sugar-free-with-taurine-40-servings-340g",
+    "label": "Citron vert",
+    "photo": "transparent-labs-hydrate-electrolyte-powder-lemon-lime-sugar-free-with.jpg"
+   }
+  ]
+ },
+ {
+  "key": "tl-whey",
+  "handle": "transparent-labs-isolat-de-whey-grass-fed-beurre-de-cacahuete",
+  "title": "Transparent Labs isolat de whey 100 % grass-fed, 28 g de protéines",
+  "vendor": "Transparent Labs",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-proteines",
+   "rayon:complements-proteines"
+  ],
+  "weight_g": 2300,
+  "option": "Parfum et format",
+  "intro": "Un isolat de whey issu de vaches nourries à l'herbe, avec 28 g de protéines par dose, très peu de sucre et sans édulcorants artificiels. Deux saveurs gourmandes au beurre de cacahuète, en deux formats. À mélanger à l'eau ou au lait.",
+  "points": [
+   "28 g de protéines par dose",
+   "Sans édulcorants artificiels",
+   "Contient du lait et des cacahuètes"
+  ],
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demandez conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "seo_title": "Transparent Labs isolat de whey | 28 g de protéines",
+  "seo_desc": "Un isolat de whey grass-fed : 28 g de protéines par dose, sans édulcorants artificiels. Beurre de cacahuète. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "transparent-labs-100-grass-fed-whey-protein-isolate-vanilla-peanut-butter-28g-protein-25lb",
+    "label": "Vanille beurre de cacahuète, 1,1 kg (30 doses)",
+    "photo": "transparent-labs-100-grass-fed-whey-protein-isolate-vanilla-peanut-but.jpg"
+   },
+   {
+    "slug": "transparent-labs-100-grass-fed-whey-protein-isolate-with-28g-protein-and-real-peanut-flour-chocolate-peanut-butter-44lb",
+    "label": "Chocolat beurre de cacahuète, 2 kg (55 doses)",
+    "photo": "transparent-labs-100-grass-fed-whey-protein-isolate-with-28g-protein-a.jpg"
+   }
+  ]
  }
 ]
