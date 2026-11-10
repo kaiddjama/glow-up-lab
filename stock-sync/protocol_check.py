@@ -23,6 +23,19 @@ for name, val in re.findall(r"\b([A-Z_]{4,})=([0-9]+(?:,[0-9]+)?)", proto.split(
         ok = float(val.replace(",", ".")) == float(code_val)
     if not ok:
         gaps.append(f"{name}: protocol says {val}, code says {code_val}")
+medx_code = open(os.path.join(root, "stock-sync", "medx.py"), encoding="utf-8").read()
+medx_create = open(os.path.join(root, "stock-sync", "medx_create.py"), encoding="utf-8").read()
+medx_wf = open(os.path.join(root, ".github", "workflows", "medx-sync.yml"), encoding="utf-8").read()
+sec10 = proto.split("## 10.")[1] if "## 10." in proto else ""
+for name, val in re.findall(r"\b(MEDX_[A-Z_]{4,})=([0-9]+)", sec10):
+    m = re.search(rf'os\.environ\.get\("{name}", "([^"]+)"\)', medx_code + medx_create)
+    if not m:
+        gaps.append(f"{name}: not found in medx.py / medx_create.py")
+    elif m.group(1) != val:
+        gaps.append(f"{name}: protocol says {val}, code says {m.group(1)}")
+medx_crons = re.search(r'cron: "(\d+),(\d+) \* \* \* \*"', medx_wf)
+if not medx_crons or f"(à :{medx_crons.group(1)} et :{medx_crons.group(2)})" not in sec10:
+    gaps.append("MedX check minutes: protocol and medx-sync.yml differ")
 crons = sorted(f"{(int(h) + 3) % 24:02d}:{int(m):02d}" for m, h in re.findall(r'cron: "(\d+) (\d+) \* \* \*"', wf))
 times = re.search(r"\| ([0-9:, ]+) \| Contrôle complet", proto)
 proto_times = sorted(t.strip() for t in times.group(1).split(",")) if times else []

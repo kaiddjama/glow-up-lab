@@ -2,7 +2,8 @@
 """Checks on Amazon.ae, right after an order arrives, that every item ordered can still be bought there.
 
   python3 -I order_check.py list    counts the recent orders not checked yet (also to $GITHUB_OUTPUT: count)
-  python3 -I order_check.py check   reads the Amazon.ae page of every item of those orders (browser set to Dubai):
+  python3 -I order_check.py check   reads the Amazon.ae page of every item of those orders (browser set to Dubai; items with a
+                                    SKU "MEDX-..." are read on medxpharmacy.com instead, stock at least MEDX_MIN_QTY):
                                     - all items sellable: the order gets the tag amazon-ok
                                     - an item not sellable (or with no ASIN): the order gets the tag amazon-ko, the
                                       variant goes to Épuisé, and alert.md describes it for the owner
@@ -16,6 +17,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # python -I does not add the script folder
 import amazon_sync as s  # noqa: E402
+import medx  # noqa: E402
 
 WINDOW_H = 6  # orders newer than this are looked at
 ORDER_MAX_AGE_H = 2  # an order whose pages still cannot be read after this long is tagged amazon-incertain
@@ -91,7 +93,7 @@ def main():
     import browser_fetch
     reader = browser_fetch.BrowserReader().start()
     print("Browser reader started, delivery location:", reader.location_text())
-    pages, alerts = {}, []
+    pages, alerts, medx_pages = {}, [], {}
 
     def page_of(asin):
         if asin not in pages:
@@ -108,6 +110,17 @@ def main():
                 if (it.get("variant") or {}).get("product", {}).get("isGiftCard"):
                     continue  # gift card: nothing to buy on Amazon.ae
                 label = f"{it['title']}" + (f" ({it['variantTitle']})" if it.get("variantTitle") else "")
+                slug = medx.slug_of(it.get("sku"))
+                if slug:  # MedX Pharmacy item: plain page, no browser needed
+                    if slug not in medx_pages:
+                        medx_pages[slug] = medx.fetch(slug)
+                    mp = medx_pages[slug]
+                    if mp.get("error"):
+                        unknown.append(label)
+                    elif not medx.sellable(mp, True):
+                        bad.append((it, label, "fiche retirée chez MedX" if mp.get("gone") else
+                                    f"stock MedX insuffisant ({mp['qty']} restant)" if mp["publish"] else "fiche MedX non publiée"))
+                    continue
                 asin = asin_of(it)
                 if not asin:
                     bad.append((it, label, "pas de code ASIN, impossible à vérifier"))
@@ -153,7 +166,7 @@ def main():
         reader.close()
     if alerts:
         with open("alert.md", "w") as f:
-            f.write("Articles commandés non disponibles sur Amazon.ae :\n\n" + "\n".join(alerts) + "\n")
+            f.write("Articles commandés non disponibles chez le fournisseur (Amazon.ae ou MedX) :\n\n" + "\n".join(alerts) + "\n")
         print("\n".join(alerts))
 
 
