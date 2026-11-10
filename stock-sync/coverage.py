@@ -7,8 +7,8 @@ A variant on sale ("continue selling") counts as verified when its Amazon.ae pag
   python3 -I coverage.py list     prints the ASINs still to read (also to $GITHUB_OUTPUT: count, asins)
   python3 -I coverage.py enforce  sets the variants still unverified to Épuisé (DRY_RUN=1: only reports). If too many
                                   are unverified (page reading probably broke), it changes nothing and exits 1.
-  python3 -I coverage.py medx     same for the MedX variants (SKU "MEDX-..."), which medx_sync.py reads every 30 min: any
-                                  not read for MEDX_STALE_HOURS (3) hours is set to Épuisé, whatever their number, because
+  python3 -I coverage.py medx     same for the MedX variants (SKU "MEDX-..."), which medx_sync.py reads every 10 min: any
+                                  not read for MEDX_STALE_HOURS (1) hour is set to Épuisé, whatever their number, because
                                   stock that cannot be confirmed is never sold. Exits 1 (alert) when some were hidden.
   The Amazon.ae modes ignore the MedX variants.
 """

@@ -4,9 +4,12 @@
   python3 -I medx_create.py create    creates every product not already in the shop, as a DRAFT tagged medx-revue
                                       (waiting for Hoodo's go; medx_sync.py keeps its price and stock up to date).
                                       Every variant is read on MedX first: a page that cannot be read, a product that is
-                                      not published or a stock below MIN_CREATE_QTY (20) is left out, and said so.
+                                      not published or a stock below MIN_CREATE_QTY (20) is left out, and said so, unless the
+                                      product carries "low_ok": true in selection.json (approved by Hoodo: created Épuisé).
   python3 -I medx_create.py publish   puts online (ACTIVE + Online Store channel) the medx-revue products that have at
-                                      least one variant on sale, and removes the review tag. Only run after Hoodo's go.
+                                      least one variant on sale, and removes the review tag; those with nothing on sale are
+                                      parked (tag epuise-auto) and come online by themselves when MedX restocks.
+                                      Only run after Hoodo's go.
 DRY_RUN=1 reports only. Photos are the JPEG files of medx/photos/, served by raw.githubusercontent.com at the commit
 being run (GITHUB_SHA); the photo folder is removed from the repository once the products exist.
 Same Shopify settings as amazon_sync.py; PRICE_FORMULA is needed for the prices.
@@ -29,7 +32,12 @@ PUBLICATION = os.environ.get("ONLINE_STORE_PUBLICATION", "gid://shopify/Publicat
 REPO = os.environ.get("GITHUB_REPOSITORY", "kaiddjama/glow-up-lab")
 REF = os.environ.get("GITHUB_SHA", "main")
 
-FIND_Q = """query($q:String!){ products(first:5, query:$q){ nodes{ id handle } } }"""
+FIND_Q = """query($q:String!){ products(first:5, query:$q){ nodes{ id handle title status variants(first:100){ nodes{ id sku } } } } }"""
+VARIANTS_M = """mutation($p:ID!,$v:[ProductVariantsBulkInput!]!){ productVariantsBulkCreate(productId:$p, variants:$v){
+  productVariants{ id sku } userErrors{ field message code } } }"""
+MEDIA_M = """mutation($p:ID!,$m:[CreateMediaInput!]!){ productCreateMedia(productId:$p, media:$m){
+  media{ id alt status } mediaUserErrors{ field message } } }"""
+UPDATE_M = """mutation($i:ProductUpdateInput!){ productUpdate(product:$i){ product{ id handle } userErrors{ field message } } }"""
 SET_M = """mutation($input:ProductSetInput!){ productSet(synchronous:true, input:$input){
   product{ id handle media(first:50){ nodes{ id alt status } } variants(first:100){ nodes{ id sku } } }
   userErrors{ field message code } } }"""
@@ -49,42 +57,121 @@ def photo_url(name):
     return f"https://raw.githubusercontent.com/{REPO}/{REF}/stock-sync/medx/photos/{urllib.parse.quote(name)}"
 
 
+def variant_input(p, v, pg, now):
+    grams = v.get("weight_g", p["weight_g"])  # shipping weight (product + packaging); a variant may have its own
+    price = s.formula(pg["aed"], grams)
+    return {
+        "optionValues": [{"optionName": p["option"], "name": v["label"]}], "sku": f"MEDX-{v['slug']}", "price": str(price),
+        "inventoryPolicy": "DENY",  # medx_sync.py puts it on sale after reading the stock again
+        "inventoryItem": {"tracked": True, "measurement": {"weight": {"value": grams / 1000, "unit": "KILOGRAMS"}}},
+        "metafields": [
+            {"namespace": "internal", "key": "cost_aed", "type": "number_decimal", "value": f"{pg['aed']:.2f}"},
+            {"namespace": "supplier", "key": "variant_checked_at", "type": "date_time", "value": now},
+            {"namespace": "supplier", "key": "delivery_eta", "type": "single_line_text_field", "value": medx.eta()},
+            {"namespace": "supplier", "key": "delivery_range", "type": "single_line_text_field", "value": "standard"}]}
+
+
+def wait_media(pid, alts):
+    """Waits until Shopify has processed the photos of the product; returns {alt: media}."""
+    by_alt = {}
+    for _ in range(60):
+        nodes = s.gql(MEDIA_Q, {"id": pid})["product"]["media"]["nodes"]
+        by_alt = {m["alt"]: m for m in nodes}
+        if all(a in by_alt and by_alt[a]["status"] in ("READY", "FAILED") for a in alts):
+            break
+        time.sleep(5)
+    return by_alt
+
+
+def link_photos(p, pid, ok, sku_to_id, by_alt):
+    """Links each variant to its own photo; returns the number of errors."""
+    errors, links = 0, []
+    for v, _ in ok:
+        m = by_alt.get(f"{p['title']} - {v['label']}")
+        if not m or m["status"] != "READY":
+            errors += 1
+            print("photo not ready:", p["handle"], v["label"], m and m["status"])
+            continue
+        links.append({"variantId": sku_to_id[f"MEDX-{v['slug']}"], "mediaIds": [m["id"]]})
+    if links:
+        errs = s.gql(APPEND_M, {"p": pid, "m": links})["productVariantAppendMedia"]["userErrors"]
+        if errs:
+            errors += 1
+            print("photo link error:", p["handle"], errs)
+    return errors
+
+
+def readable(p, skipped):
+    """The variants of the selection entry that can be created: page read, published, enough stock (or low_ok)."""
+    ok = []
+    for v in p["variants"]:
+        pg = medx.fetch(v["slug"])
+        time.sleep(0.7)
+        if pg.get("error") or pg.get("gone"):
+            skipped.append((p["handle"], v["label"], pg.get("error") or "page removed"))
+        elif not pg["publish"] or (pg["qty"] < MIN_CREATE_QTY and not p.get("low_ok")):
+            # low_ok: Hoodo approved this product even when MedX is low or at zero; the variant is created Épuisé
+            skipped.append((p["handle"], v["label"], f"stock {pg['qty']} or not published"))
+        else:
+            ok.append((v, pg))
+    return ok
+
+
+def extend(p, prod, now, dry, skipped):
+    """Adds the variants of the selection entry that the product does not have yet (same product, one more flavour or format),
+    and refreshes its title / text when the entry says so. Returns the number of errors."""
+    have = {v["sku"] for v in prod["variants"]["nodes"]}
+    todo = dict(p, variants=[v for v in p["variants"] if f"MEDX-{v['slug']}" not in have])
+    ok = readable(todo, skipped) if todo["variants"] else []
+    errors = 0
+    print(("DRY RUN: would extend " if dry else "extending ") + f"{prod['handle']} with {len(ok)} variants")
+    if dry:
+        return 0
+    if ok:
+        res = s.gql(VARIANTS_M, {"p": prod["id"], "v": [variant_input(p, v, pg, now) for v, pg in ok]})["productVariantsBulkCreate"]
+        if res["userErrors"]:
+            print("error:", p["handle"], res["userErrors"])
+            return 1
+        sku_to_id = {v["sku"]: v["id"] for v in res["productVariants"]}
+        files = [{"originalSource": photo_url(v["photo"]), "alt": f"{p['title']} - {v['label']}", "mediaContentType": "IMAGE"} for v, _ in ok]
+        r = s.gql(MEDIA_M, {"p": prod["id"], "m": files})["productCreateMedia"]
+        if r["mediaUserErrors"]:
+            print("photo error:", p["handle"], r["mediaUserErrors"])
+            errors += 1
+        by_alt = wait_media(prod["id"], [f["alt"] for f in files])
+        errors += link_photos(p, prod["id"], ok, sku_to_id, by_alt)
+    if p.get("old_handle") or p.get("extend"):  # title, text and handle of an entry that now covers several flavours
+        inp = {"id": prod["id"], "title": p["title"], "handle": p["handle"], "descriptionHtml": html(p),
+               "seo": {"title": p["seo_title"], "description": p["seo_desc"]}, "redirectNewHandle": True}
+        errs = s.gql(UPDATE_M, {"i": inp})["productUpdate"]["userErrors"]
+        if errs:
+            print("update error:", p["handle"], errs)
+            errors += 1
+    return errors
+
+
 def create(dry):
     selection = json.load(open(os.path.join(HERE, "medx", "selection.json"), encoding="utf-8"))
     now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     made, skipped, errors = 0, [], 0
     for p in selection:
-        if s.gql(FIND_Q, {"q": f"handle:{p['handle']}"})["products"]["nodes"]:
+        found = s.gql(FIND_Q, {"q": f"handle:{p['handle']}"})["products"]["nodes"]
+        if not found and p.get("old_handle"):
+            found = s.gql(FIND_Q, {"q": f"handle:{p['old_handle']}"})["products"]["nodes"]
+        if found and p.get("extend"):
+            errors += extend(p, found[0], now, dry, skipped)
+            continue
+        if found:
             print("already exists:", p["handle"])
             continue
-        ok = []
-        for v in p["variants"]:
-            pg = medx.fetch(v["slug"])
-            time.sleep(0.7)
-            if pg.get("error") or pg.get("gone"):
-                skipped.append((p["handle"], v["label"], pg.get("error") or "page removed"))
-            elif not pg["publish"] or pg["qty"] < MIN_CREATE_QTY:
-                skipped.append((p["handle"], v["label"], f"stock {pg['qty']} or not published"))
-            else:
-                ok.append((v, pg))
+        ok = readable(p, skipped)
         if not ok:
             print("nothing available, not created:", p["handle"])
             continue
-        grams = p["weight_g"]
         variants, files = [], []
         for v, pg in ok:
-            price = s.formula(pg["aed"], grams)
-            alt = f"{p['title']} - {v['label']}"
-            files.append({"originalSource": photo_url(v["photo"]), "alt": alt, "contentType": "IMAGE"})
-            variants.append({
-                "optionValues": [{"optionName": p["option"], "name": v["label"]}], "sku": f"MEDX-{v['slug']}", "price": str(price),
-                "inventoryPolicy": "DENY",  # medx_sync.py puts it on sale after reading the stock again
-                "inventoryItem": {"tracked": True, "measurement": {"weight": {"value": grams / 1000, "unit": "KILOGRAMS"}}},
-                "metafields": [
-                    {"namespace": "internal", "key": "cost_aed", "type": "number_decimal", "value": f"{pg['aed']:.2f}"},
-                    {"namespace": "supplier", "key": "variant_checked_at", "type": "date_time", "value": now},
-                    {"namespace": "supplier", "key": "delivery_eta", "type": "single_line_text_field", "value": medx.eta()},
-                    {"namespace": "supplier", "key": "delivery_range", "type": "single_line_text_field", "value": "standard"}]})
+            variants.append(variant_input(p, v, pg, now))
+            files.append({"originalSource": photo_url(v["photo"]), "alt": f"{p['title']} - {v['label']}", "contentType": "IMAGE"})
         tags = list(p["tags"]) + [medx_sync.REVIEW_TAG]
         if min(float(v["price"]) for v in variants) <= 3300 and "petit-prix-sport" not in tags:
             tags.append("petit-prix-sport")
@@ -97,9 +184,10 @@ def create(dry):
             "metafields": [
                 {"namespace": "internal", "key": "supplier", "type": "single_line_text_field", "value": "MedX Pharmacy (Dubaï)"},
                 {"namespace": "internal", "key": "supplier_ref", "type": "single_line_text_field", "value": f"MEDX {ok[0][0]['slug']}"},
-                {"namespace": "internal", "key": "weight_g", "type": "number_integer", "value": str(grams)},
+                {"namespace": "internal", "key": "weight_g", "type": "number_integer", "value": str(p["weight_g"])},
                 {"namespace": "supplier", "key": "checked_at", "type": "date_time", "value": now},
-                {"namespace": "supplier", "key": "in_stock", "type": "boolean", "value": "true"},
+                {"namespace": "supplier", "key": "in_stock", "type": "boolean",
+                 "value": "true" if any(pg["qty"] >= medx.BACK_QTY for _, pg in ok) else "false"},
                 {"namespace": "supplier", "key": "delivery_days", "type": "number_integer", "value": str(medx.DUBAI_DAYS)}]}
         print(("DRY RUN: would create " if dry else "creating ") + f"{p['handle']} ({len(ok)} variants, "
               f"{min(float(v['price']) for v in variants):.0f}-{max(float(v['price']) for v in variants):.0f} Fdj)")
@@ -112,28 +200,8 @@ def create(dry):
             continue
         made += 1
         prod = res["product"]
-        # photos: wait until Shopify has processed them, then link each to its variant
-        by_alt = {}
-        for _ in range(60):
-            nodes = s.gql(MEDIA_Q, {"id": prod["id"]})["product"]["media"]["nodes"]
-            by_alt = {m["alt"]: m for m in nodes}
-            if len(nodes) >= len(files) and all(m["status"] in ("READY", "FAILED") for m in nodes):
-                break
-            time.sleep(5)
-        links = []
-        sku_to_id = {v["sku"]: v["id"] for v in prod["variants"]["nodes"]}
-        for v, _ in ok:
-            m = by_alt.get(f"{p['title']} - {v['label']}")
-            if not m or m["status"] != "READY":
-                errors += 1
-                print("photo not ready:", p["handle"], v["label"], m and m["status"])
-                continue
-            links.append({"variantId": sku_to_id[f"MEDX-{v['slug']}"], "mediaIds": [m["id"]]})
-        if links:
-            errs = s.gql(APPEND_M, {"p": prod["id"], "m": links})["productVariantAppendMedia"]["userErrors"]
-            if errs:
-                errors += 1
-                print("photo link error:", p["handle"], errs)
+        by_alt = wait_media(prod["id"], [f["alt"] for f in files])
+        errors += link_photos(p, prod["id"], ok, {v["sku"]: v["id"] for v in prod["variants"]["nodes"]}, by_alt)
     print(f"{made} products created, {len(skipped)} variants left out, {errors} errors.")
     for x in skipped:
         print("  left out:", x)
@@ -153,7 +221,15 @@ def publish(dry):
     for p in products:
         on_sale = [v for v in p["variants"]["nodes"] if v["inventoryPolicy"] == "CONTINUE"]
         if not on_sale:
-            print("no variant on sale yet, left as a draft:", p["handle"])
+            # approved by Hoodo but no stock now: hidden for good (Épuisé), brought online by park_soldout.py after a sync
+            # that finds stock again; medx-revue is replaced by epuise-auto, the tag that script looks at.
+            print(("DRY RUN: would park " if dry else "parking ") + "(no variant on sale, comes back by itself): " + p["handle"])
+            if not dry:
+                for q, vars_ in ((s.TAGS_ADD_M, {"id": p["id"], "t": [s.OUT_TAG]}),
+                                 (s.TAGS_REMOVE_M, {"id": p["id"], "t": [medx_sync.REVIEW_TAG]})):
+                    errs = next(iter(s.gql(q, vars_).values()))["userErrors"]
+                    if errs:
+                        print("error:", p["handle"], errs)
             continue
         print(("DRY RUN: would publish " if dry else "publishing ") + p["handle"])
         if dry:
