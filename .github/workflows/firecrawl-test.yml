@@ -1,35 +1,49 @@
 name: Firecrawl test
-# Test only: starts a self-hosted Firecrawl (open source, docker compose) on the runner and reads a few Amazon.ae pages
-# with it, to compare with the Playwright reader. No secrets, nothing in the shop is changed.
+# TEMPORARY on this branch (restored before the merge): used to run the read-only identity reader
+# (stock-sync/identity_read.py) on 16 runners. Nothing in the shop is changed.
 on:
   workflow_dispatch:
     inputs:
       asins:
-        description: "ASINs to read, separated by spaces"
+        description: "Only these ASINs, comma separated (empty = all)"
         type: string
-        default: "B00PV15BPW B08B85MWMX B0DHKSF81K B0BQCPJ95D B0DHVLFR2V B0019LVGPC"
+        default: ""
 permissions:
   contents: read
 jobs:
-  firecrawl:
+  read:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ["0/16", "1/16", "2/16", "3/16", "4/16", "5/16", "6/16", "7/16",
+                "8/16", "9/16", "10/16", "11/16", "12/16", "13/16", "14/16", "15/16"]
     steps:
       - uses: actions/checkout@v4
-      - name: Get Firecrawl (public, open source)
-        run: git clone --depth 1 https://github.com/firecrawl/firecrawl.git "$RUNNER_TEMP/firecrawl"
-      - name: Start Firecrawl
-        working-directory: ${{ runner.temp }}/firecrawl
-        run: |
-          printf 'PORT=3002\nHOST=0.0.0.0\nUSE_DB_AUTHENTICATION=false\nBULL_AUTH_KEY=test\n' > .env
-          docker compose up -d --build
-          docker compose ps
-      - name: Read pages
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install the browser
+        timeout-minutes: 25
+        run: .github/install-browser.sh
+      - name: Read shard ${{ matrix.shard }}
         working-directory: stock-sync
         env:
-          ASINS: ${{ inputs.asins }}
-        run: python3 -I firecrawl_test.py $ASINS
-      - name: Firecrawl log (tail)
+          SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          PRICE_FORMULA: ${{ secrets.PRICE_FORMULA || format('{0},{1},{2}', vars.PRICE_MULT, vars.SHIPPING_AED_PER_KG, vars.AED_TO_FDJ) }}
+          SHARD: ${{ matrix.shard }}
+          ONLY_ASINS: ${{ inputs.asins }}
+          DELAY: "8"
+          OUT_DIR: out
+        run: python3 identity_read.py
+      - name: Keep the pages
         if: always()
-        working-directory: ${{ runner.temp }}/firecrawl
-        run: docker compose logs --tail 60 api playwright-service 2>&1 | cut -c1-300
+        uses: actions/upload-artifact@v4
+        with:
+          name: identity-${{ strategy.job-index }}
+          path: stock-sync/out/
+          if-no-files-found: ignore
+          retention-days: 3
