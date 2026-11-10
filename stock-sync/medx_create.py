@@ -41,7 +41,8 @@ PUBLISH_M = """mutation($id:ID!,$p:ID!){publishablePublish(id:$id, input:[{publi
 
 def html(p):
     items = "".join(f"<li>{x}</li>" for x in p["points"])
-    return f"<p>{p['intro']}</p><ul>{items}</ul><p>{p['note']}</p>"
+    use = f"<p><strong>Utilisation :</strong> {p['usage']}</p>" if p.get("usage") else ""
+    return f"<p>{p['intro']}</p><ul>{items}</ul>{use}<p>{p['note']}</p>"
 
 
 def photo_url(name):

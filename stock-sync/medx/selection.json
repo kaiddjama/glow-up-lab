@@ -17,13 +17,13 @@
   ],
   "weight_g": 450,
   "option": "Parfum",
-  "intro": "Un pré-entraînement en poudre très populaire, pensé pour donner de l'énergie et de la concentration avant la séance. Chaque dose associe de la caféine, de la bêta-alanine, de la citrulline malate et de la créatine monohydrate. À mélanger à l'eau, environ 20 à 30 minutes avant l'entraînement.",
+  "intro": "L'ABE (All Black Everything) d'Applied Nutrition est l'un des pré-entraînements les plus connus. Une énergie progressive, sans coup de fouet violent, pour les séances de force, de volume ou de HIIT. Les ingrédients clés sont dosés et affichés sur le pot.",
   "points": [
-   "30 doses par pot",
-   "Pour les sportifs adultes",
-   "Contient de la caféine : à éviter en fin de soirée"
+   "Par dose (1 mesure) : 2 g de bêta-alanine, de la citrulline, de la créatine monohydrate, de la caféine et de la TeaCrine, avec de la taurine et les vitamines B3 et B12",
+   "Étiquette du pot : 4 g de citrulline, 3,25 g de créatine, 2 g de bêta-alanine, 100 mg de TeaCrine",
+   "30 doses par pot"
   ],
-  "note": "Complément alimentaire. Déconseillé aux enfants, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Ne dépasse pas la dose indiquée sur l'emballage.",
+  "note": "Complément alimentaire. Déconseillé aux moins de 18 ans, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Demande un avis médical en cas de traitement, de problème cardiaque, de tension ou d'anxiété.",
   "seo_title": "Applied Nutrition ABE | Pré-workout 30 doses",
   "seo_desc": "Le pré-workout ABE : caféine, bêta-alanine, citrulline et créatine. 30 doses, sept parfums. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -62,7 +62,8 @@
     "label": "Tropical",
     "photo": "applied-nutrition-abe-pre-workout-tropical-315gm.jpg"
    }
-  ]
+  ],
+  "usage": "1 mesure dans de l'eau, 20 à 30 minutes avant l'entraînement."
  },
  {
   "key": "curse",
@@ -82,13 +83,13 @@
   ],
   "weight_g": 500,
   "option": "Parfum",
-  "intro": "Un pré-entraînement puissant pour les séances intenses, avec de la caféine et de la bêta-alanine pour l'énergie, la concentration et l'endurance. Le pot contient 50 doses. À réserver aux sportifs qui supportent bien la caféine.",
+  "intro": "The Curse de JNX Sports est un pré-entraînement en poudre pensé pour les séances intenses : énergie, concentration et endurance. La formule associe caféine, bêta-alanine et citrulline. Les dosages exacts sont ceux imprimés sur le pot, ils varient selon la version du produit.",
   "points": [
-   "50 doses par pot",
-   "Pour les sportifs adultes",
+   "Pot de 50 doses (dose d'environ 5 g)",
+   "Parfums pastèque et framboise bleue",
    "Contient de la caféine : à éviter en fin de soirée"
   ],
-  "note": "Complément alimentaire. Déconseillé aux enfants, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Ne dépasse pas la dose indiquée sur l'emballage.",
+  "note": "Complément alimentaire. Déconseillé aux moins de 18 ans, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Demande un avis médical en cas de traitement, de problème cardiaque, de tension ou d'anxiété.",
   "seo_title": "JNX Sports The Curse | Pré-workout 50 doses",
   "seo_desc": "Un pré-workout puissant pour l'énergie et la concentration. 50 doses, pastèque ou framboise bleue. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -102,7 +103,8 @@
     "label": "Framboise bleue",
     "photo": "jnx-sports-the-curse-blue-raspberry-50-servings.jpg"
    }
-  ]
+  ],
+  "usage": "1 dose dans de l'eau, environ 20 à 30 minutes avant l'entraînement. Commence par une demi-dose si tu ne connais pas ce type de produit."
  },
  {
   "key": "abe-shots",
@@ -122,13 +124,14 @@
   ],
   "weight_g": 1000,
   "option": "Parfum",
-  "intro": "Des shots pré-entraînement prêts à boire, sans shaker ni mélange. Chaque shot de 60 ml apporte 200 mg de caféine, 3 g de bêta-alanine, de la citrulline malate et de la taurine, sans sucre. Un shot environ 20 à 30 minutes avant la séance.",
+  "intro": "La version shot de l'ABE : toute la formule dans une petite bouteille de 60 ml, sans shaker, sans poudre et sans eau. Le shot ne contient pas de créatine mais plus de bêta-alanine que la poudre. Pratique dans le sac de sport ou en compétition.",
   "points": [
    "Boîte de 12 shots de 60 ml",
-   "Sans sucre",
-   "Contient de la caféine : un shot par jour au maximum"
+   "Par shot : 200 mg de caféine, 3 g de bêta-alanine, citrulline malate, taurine, TeaCrine et vitamines B3 et B12",
+   "Sans sucre, testé Informed Sport, convient aux végétariens et aux vegans",
+   "Fabriqué dans une usine certifiée ISO 22000, BRC, GMP et halal"
   ],
-  "note": "Complément alimentaire. Déconseillé aux enfants, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Ne dépasse pas la dose indiquée sur l'emballage.",
+  "note": "Complément alimentaire. Déconseillé aux moins de 18 ans, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Demande un avis médical en cas de traitement, de problème cardiaque, de tension ou d'anxiété.",
   "seo_title": "Applied Nutrition ABE shots | Boîte de 12",
   "seo_desc": "Des shots pré-entraînement prêts à boire : caféine, bêta-alanine, citrulline. Boîte de 12. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -137,7 +140,8 @@
     "label": "Énergie",
     "photo": "applied-nutrition-abe-pre-workout-shot-energy-flavor-60ml-pack-of-12.jpg"
    }
-  ]
+  ],
+  "usage": "1 shot, 20 à 30 minutes avant l'entraînement. Un seul shot par séance."
  },
  {
   "key": "cellup-shots",
@@ -157,13 +161,14 @@
   ],
   "weight_g": 1500,
   "option": "Parfum",
-  "intro": "Des shots pré-entraînement prêts à boire à la mangue, sans mélange. Chaque shot de 60 ml associe bêta-alanine, taurine et caféine pour l'énergie et la concentration, sans sucre. Faciles à glisser dans le sac de sport.",
+  "intro": "Les shots Amix CellUp à la mangue sont prêts à boire : une ampoule de 60 ml fortement dosée, qui se prend sans mélange avant la séance. Très concentrés en caféine : un seul shot suffit.",
   "points": [
-   "Boîte de 20 shots de 60 ml",
-   "Sans sucre",
-   "Contient de la caféine : un shot par séance"
+   "Boîte de 20 ampoules de 60 ml, parfum mangue",
+   "Par ampoule : 5 000 mg de bêta-alanine (CarnoSyne), 2 000 mg de taurine, 2 000 mg de L-arginine HCl, 2 000 mg de glycérol (GlyceroMax) et 250 mg de caféine",
+   "100 mg de vitamine C et 10 mg de vitamine B6",
+   "Formule sans sucre"
   ],
-  "note": "Complément alimentaire. Déconseillé aux enfants, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Ne dépasse pas la dose indiquée sur l'emballage.",
+  "note": "Complément alimentaire. Déconseillé aux moins de 18 ans, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Demande un avis médical en cas de traitement, de problème cardiaque, de tension ou d'anxiété.",
   "seo_title": "Amix CellUp shots mangue | Boîte de 20",
   "seo_desc": "Des shots pré-entraînement à la mangue : bêta-alanine, taurine, caféine. Boîte de 20. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -172,7 +177,8 @@
     "label": "Mangue",
     "photo": "amix-cellup-pre-workout-shot-mango-flavor-60ml-x-20pcs.jpg"
    }
-  ]
+  ],
+  "usage": "1 ampoule environ 20 à 30 minutes avant l'entraînement. Ne dépasse pas une ampoule par jour."
  },
  {
   "key": "raw-shake",
@@ -192,13 +198,13 @@
   ],
   "weight_g": 420,
   "option": "Parfum",
-  "intro": "Un milk-shake protéiné prêt à boire, avec environ 30 g de protéines pour 150 à 160 calories. Pratique après l'entraînement ou en collation, sans mélange ni vaisselle. À boire bien frais.",
+  "intro": "Un milk-shake protéiné prêt à boire de RAW Nutrition, pour la récupération après la salle ou une journée chargée. Le goût d'un milk-shake, sans mélange ni vaisselle. Certifié Informed Sport, sans carraghénane, sans colorants.",
   "points": [
-   "Bouteille de 355 ml",
-   "Environ 30 g de protéines",
-   "Faible en sucre"
+   "Bouteille de 355 ml : 30 g de protéines (isolat micro-filtré, protéine de lait et caséinate de calcium), 150 à 160 calories selon le parfum",
+   "2 g de lipides, 3 g de glucides, aucun sucre ajouté (chocolat)",
+   "Contient de l'huile MCT pour une texture plus lisse"
   ],
-  "note": "Ne remplace pas une alimentation variée. Vérifiez la liste des allergènes sur l'emballage.",
+  "note": "Ne remplace pas une alimentation variée. Vérifie la liste des allergènes sur l'emballage. Contient du lait.",
   "seo_title": "Raw Nutrition Milk Shake | Boisson protéinée 355 ml",
   "seo_desc": "Un milk-shake protéiné prêt à boire : environ 30 g de protéines par bouteille. Quatre parfums. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -222,7 +228,8 @@
     "label": "Caramel salé",
     "photo": "raw-protein-milk-shake-salted-caramel-355ml.jpg"
    }
-  ]
+  ],
+  "usage": "Bien agiter avant d'ouvrir. À boire après l'entraînement ou en collation. Garder au frais et consommer rapidement après ouverture."
  },
  {
   "key": "bare-shake",
@@ -242,12 +249,13 @@
   ],
   "weight_g": 380,
   "option": "Parfum",
-  "intro": "Un milk-shake protéiné prêt à boire, riche en protéines, sans lactose et sans sucres ajoutés. Un bon réflexe après la salle ou en collation. À boire bien frais.",
+  "intro": "Le milk-shake de Barebells : crémeux, riche en protéines, sans lactose et sans sucres ajoutés. Une bonne option après la salle ou entre deux repas.",
   "points": [
-   "Bouteille de 330 ml",
-   "Sans lactose, sans sucres ajoutés"
+   "Bouteille de 330 ml : 20 g de protéines",
+   "Peu de sucre, sans lactose, sans sucres ajoutés",
+   "Parfums fraise et vanille"
   ],
-  "note": "Ne remplace pas une alimentation variée. Vérifiez la liste des allergènes sur l'emballage.",
+  "note": "Ne remplace pas une alimentation variée. Vérifie la liste des allergènes sur l'emballage. Contient du lait.",
   "seo_title": "Barebells Milkshake | Boisson protéinée 330 ml",
   "seo_desc": "Un milk-shake protéiné sans lactose et sans sucres ajoutés. Fraise ou vanille. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -261,7 +269,8 @@
     "label": "Vanille",
     "photo": "barbells-protein-milk-shake-vanilla-330ml.jpg"
    }
-  ]
+  ],
+  "usage": "Bien agiter avant d'ouvrir, à boire frais. Garder au frais après ouverture."
  },
  {
   "key": "grenade",
@@ -281,13 +290,14 @@
   ],
   "weight_g": 380,
   "option": "Parfum",
-  "intro": "Un shake protéiné prêt à boire, onctueux, au goût cookies et crème. Environ 25 g de protéines et peu de sucre dans une bouteille de 330 ml. Se boit bien frais, après le sport ou en collation.",
+  "intro": "Grenade est connu pour ses barres au goût de confiserie, et le shake suit la même idée : épais, lisse et gourmand, il se boit comme un milk-shake. Le parfum cookies & crème est le plus gourmand de la gamme.",
   "points": [
-   "Bouteille de 330 ml",
-   "Environ 25 g de protéines",
-   "Contient du lait"
+   "Bouteille de 330 ml : environ 25 g de protéines (caséinate de calcium et whey concentrée), moins de 200 calories, peu de sucre",
+   "Caséine à digestion lente et whey à digestion rapide dans la même bouteille",
+   "Testé pour les substances interdites sur chaque lot, certifié halal et casher",
+   "Édulcorants : sucralose et acésulfame K"
   ],
-  "note": "Ne remplace pas une alimentation variée. Vérifiez la liste des allergènes sur l'emballage.",
+  "note": "Ne remplace pas une alimentation variée. Vérifie la liste des allergènes sur l'emballage. Contient du lait.",
   "seo_title": "Grenade Protein Shake | Cookies & crème 330 ml",
   "seo_desc": "Un shake protéiné prêt à boire au goût cookies et crème : environ 25 g de protéines. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -296,7 +306,8 @@
     "label": "Cookies & crème",
     "photo": "grenade-protein-shake-cookies-and-cream-330ml-high-protein-low-sugar-r.jpg"
    }
-  ]
+  ],
+  "usage": "À boire frais, après le sport ou en collation."
  },
  {
   "key": "lean",
@@ -316,13 +327,13 @@
   ],
   "weight_g": 560,
   "option": "Parfum",
-  "intro": "Un shake protéiné prêt à boire avec 40 g de protéines et zéro sucre. Une vraie collation ou un repas léger après l'entraînement. À secouer avant ouverture et à boire frais.",
+  "intro": "Le LeanBody de Labrada est un shake prêt à boire avec 40 g de protéines et zéro sucre, assez nourrissant pour servir de collation ou de repas léger après l'entraînement.",
   "points": [
-   "Brique de 500 ml",
-   "40 g de protéines, 0 g de sucre",
-   "Sans gluten, sans lactose"
+   "Brique de 500 ml (17 fl oz) : 40 g de protéines, 0 g de sucre",
+   "Environ 280 calories, 9 g de glucides dont 5 g de fibres (varie légèrement selon le parfum)",
+   "Protéines à base de lait, sans gluten, sans lactose"
   ],
-  "note": "Ne remplace pas une alimentation variée. Vérifiez la liste des allergènes sur l'emballage.",
+  "note": "Ne remplace pas une alimentation variée. Vérifie la liste des allergènes sur l'emballage. Contient du lait et du soja.",
   "seo_title": "Labrada LeanBody | Boisson protéinée 500 ml",
   "seo_desc": "40 g de protéines, 0 g de sucre, prêt à boire. Quatre parfums. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -346,7 +357,8 @@
     "label": "Vanille",
     "photo": "labrada-lean-body-rtd-vanilla-40g-500ml.jpg"
    }
-  ]
+  ],
+  "usage": "Bien secouer avant d'ouvrir, à boire frais."
  },
  {
   "key": "qnt-water",
@@ -366,12 +378,14 @@
   ],
   "weight_g": 370,
   "option": "Parfum",
-  "intro": "Une boisson protéinée légère et rafraîchissante, sans sucre et peu calorique, qui change des shakes au lait. Elle se boit à tout moment de la journée, avant ou après le sport.",
+  "intro": "L'eau protéinée QNT Liife est une boisson légère et rafraîchissante, sans produits laitiers. Elle change des shakes épais : on peut la boire à toute heure, avant ou après le sport.",
   "points": [
    "Canette de 330 ml",
-   "Sans sucre, faible en calories"
+   "Sans sucre, faible en calories",
+   "Sans produits laitiers",
+   "Parfums citron gingembre et orange sanguine ginseng"
   ],
-  "note": "Ne remplace pas une alimentation variée. Vérifiez la liste des allergènes sur l'emballage.",
+  "note": "Ne remplace pas une alimentation variée. Vérifie la liste des allergènes sur l'emballage.",
   "seo_title": "QNT Liife | Eau protéinée 330 ml",
   "seo_desc": "Une eau protéinée légère, sans sucre et peu calorique. Deux parfums. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -385,7 +399,8 @@
     "label": "Orange sanguine ginseng",
     "photo": "qnt-liife-protein-water-blood-orange-ginseng-330ml.jpg"
    }
-  ]
+  ],
+  "usage": "À boire bien fraîche."
  },
  {
   "key": "pshot",
@@ -405,13 +420,13 @@
   ],
   "weight_g": 130,
   "option": "Parfum",
-  "intro": "Un petit shot de protéines à boire : 25 g de protéines (15 g d'isolat de whey et 10 g de collagène bovin) dans une bouteille de 100 ml, sans sucre. Sans poudre ni shaker, facile à emporter.",
+  "intro": "Un petit shot de protéines à avaler d'un coup, sans poudre ni shaker : 25 g de protéines dans 100 ml. Il associe de l'isolat de whey (15 g) et du collagène bovin (10 g), avec des fibres de racine de chicorée.",
   "points": [
-   "Bouteille de 100 ml",
-   "25 g de protéines, zéro sucre",
-   "Contient du lait"
+   "Bouteille de 100 ml : 25 g de protéines (15 g d'isolat de whey, 10 g de collagène bovin)",
+   "Zéro sucre, édulcorants sucralose et stéviol",
+   "Parfums orange et framboise bleue"
   ],
-  "note": "Ne remplace pas une alimentation variée. Vérifiez la liste des allergènes sur l'emballage.",
+  "note": "Ne remplace pas une alimentation variée. Vérifie la liste des allergènes sur l'emballage. Contient du lait.",
   "seo_title": "Applied Nutrition Protein Shot | 25 g de protéines",
   "seo_desc": "Un shot de 100 ml avec 25 g de protéines (whey isolat et collagène), sans sucre. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -425,7 +440,8 @@
     "label": "Framboise bleue",
     "photo": "applied-nutrition-protein-shot-blue-raspberry-100ml.jpg"
    }
-  ]
+  ],
+  "usage": "À boire avant ou après l'entraînement, ou au bureau pour un apport rapide en protéines."
  },
  {
   "key": "beefxp",
@@ -445,12 +461,13 @@
   ],
   "weight_g": 540,
   "option": "Parfum",
-  "intro": "Une boisson protéinée gazeuse et claire, à base de collagène bovin hydrolysé : 30 g de protéines dans une canette de 500 ml, sans sucre et sans produits laitiers. Une alternative rafraîchissante aux shakes.",
+  "intro": "Une boisson gazeuse et claire, à base de collagène bovin hydrolysé : l'effet d'une boisson fraîche plutôt que d'un shake au lait. Sans sucre et sans produits laitiers, enrichie en vitamine C.",
   "points": [
-   "Canette de 500 ml",
-   "30 g de protéines, sans sucre, sans produits laitiers"
+   "Canette de 500 ml : 30 g de protéines (collagène bovin hydrolysé)",
+   "Sans sucre, sans produits laitiers",
+   "Eau de coco en poudre, vitamine C, sucralose"
   ],
-  "note": "Ne remplace pas une alimentation variée. Vérifiez la liste des allergènes sur l'emballage.",
+  "note": "Ne remplace pas une alimentation variée. Vérifie la liste des allergènes sur l'emballage.",
   "seo_title": "Applied Nutrition Beef-XP | Boisson protéinée 500 ml",
   "seo_desc": "Une boisson protéinée gazeuse : 30 g de protéines, sans sucre ni produits laitiers. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -464,7 +481,8 @@
     "label": "Fruits rouges",
     "photo": "an-beef-xp-protein-rtd-mixed-berry-500ml.jpg"
    }
-  ]
+  ],
+  "usage": "À boire bien frais, après l'entraînement ou en déplacement."
  },
  {
   "key": "metapure",
@@ -484,12 +502,13 @@
   ],
   "weight_g": 540,
   "option": "Parfum",
-  "intro": "Une boisson protéinée prête à boire à base d'isolat de whey, pauvre en matières grasses et en sucre. Pratique après l'entraînement pour aider à la récupération. Parfum fruits rouges.",
+  "intro": "Une boisson prête à boire à l'isolat de whey, pauvre en graisses et en sucre. Pratique après l'entraînement pour aider à la récupération musculaire. Parfum fruits rouges.",
   "points": [
-   "Bouteille de 500 ml",
+   "Bouteille de 500 ml, environ 20 g de protéines d'isolat de whey",
+   "Pauvre en sucre et en matières grasses",
    "Contient du lait"
   ],
-  "note": "Ne remplace pas une alimentation variée. Vérifiez la liste des allergènes sur l'emballage.",
+  "note": "Ne remplace pas une alimentation variée. Vérifie la liste des allergènes sur l'emballage. Contient du lait.",
   "seo_title": "QNT Iso Whey Metapure | Boisson protéinée 500 ml",
   "seo_desc": "Une boisson à l'isolat de whey, pauvre en matières grasses et en sucre. Fruits rouges. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -498,7 +517,8 @@
     "label": "Fruits rouges",
     "photo": "qnt-iso-whey-metapure-rtd-500ml-wild-berry.jpg"
    }
-  ]
+  ],
+  "usage": "À boire frais après l'entraînement."
  },
  {
   "key": "bare-bar",
@@ -518,13 +538,13 @@
   ],
   "weight_g": 70,
   "option": "Parfum",
-  "intro": "Une barre protéinée gourmande, sans sucres ajoutés, avec environ 16 à 20 g de protéines selon le parfum. Une collation pratique après le sport ou pour calmer une envie sucrée.",
+  "intro": "La barre Barebells est tendre, proche d'une barre chocolatée, mais sans sucres ajoutés. Fabriquée en Suède, certifiée halal. Le Marshmallow rocky road associe un cœur moelleux de guimauve, des morceaux de cacahuètes, du caramel et un enrobage de chocolat au lait.",
   "points": [
-   "Barre de 55 g",
-   "Sans sucres ajoutés",
-   "Contient du lait"
+   "Barre de 55 g : 16 à 20 g de protéines selon le parfum (17 g pour le Marshmallow rocky road, environ 210 à 220 calories)",
+   "Sans sucres ajoutés, sucrée au maltitol et au xylitol",
+   "Protéines de lait (whey, caséine) et collagène hydrolysé"
   ],
-  "note": "Ne remplace pas une alimentation variée. Vérifiez la liste des allergènes sur l'emballage.",
+  "note": "Ne remplace pas une alimentation variée. Vérifie la liste des allergènes sur l'emballage. Contient du lait et des cacahuètes, peut contenir du soja et des fruits à coque.",
   "seo_title": "Barebells barre protéinée | 55 g",
   "seo_desc": "Une barre protéinée sans sucres ajoutés, 16 à 20 g de protéines. Trois parfums. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -543,7 +563,8 @@
     "label": "Banane",
     "photo": "barbells-protein-bar-banana-dream-55g.jpg"
    }
-  ]
+  ],
+  "usage": "En collation après le sport ou pour une envie de sucré."
  },
  {
   "key": "bare-box",
@@ -563,13 +584,13 @@
   ],
   "weight_g": 800,
   "option": "Parfum",
-  "intro": "La boîte de 12 barres protéinées Barebells au caramel et aux cacahuètes salées : environ 16 g de protéines par barre, sans sucres ajoutés. Pratique pour avoir toujours une collation sous la main, à la maison, à la salle ou au bureau.",
+  "intro": "La boîte de 12 barres Barebells au caramel et aux cacahuètes salées, pour avoir toujours une collation sous la main à la maison, à la salle ou au bureau. Un cœur de chocolat, des cacahuètes salées croquantes, du caramel et un enrobage de chocolat.",
   "points": [
    "Boîte de 12 barres de 55 g",
-   "Environ 16 g de protéines par barre",
-   "Contient du lait et des cacahuètes"
+   "Par barre : 16 g de protéines, environ 210 calories, 2 g de sucres",
+   "Mélange de protéines de lait et de collagène hydrolysé, cacahuètes, maltitol"
   ],
-  "note": "Ne remplace pas une alimentation variée. Vérifiez la liste des allergènes sur l'emballage.",
+  "note": "Ne remplace pas une alimentation variée. Vérifie la liste des allergènes sur l'emballage. Contient du lait, des cacahuètes, du soja et du blé. Fabriqué dans un site qui traite aussi les fruits à coque et le sésame.",
   "seo_title": "Barebells caramel cacahuète salé | Boîte de 12",
   "seo_desc": "12 barres protéinées sans sucres ajoutés, environ 16 g de protéines chacune. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -578,7 +599,8 @@
     "label": "Caramel cacahuète salé",
     "photo": "barebells-salted-peanut-caramel-soft-protein-bar-55gm-box-of-12.jpg"
    }
-  ]
+  ],
+  "usage": "Une barre en collation ; la boîte se range au sec."
  },
  {
   "key": "nano-bar",
@@ -598,12 +620,13 @@
   ],
   "weight_g": 70,
   "option": "Parfum",
-  "intro": "Une barre protéinée au goût de dessert, sans sucres ajoutés. Une collation facile à emporter pour soutenir la récupération après l'entraînement ou calmer une petite faim entre les repas.",
+  "intro": "Les barres Nano Supps ont le goût d'un dessert : cookie dough, pancake au sirop d'érable ou brownie. Une collation protéinée à emporter, sans sucres ajoutés.",
   "points": [
-   "Barre de 55 g",
-   "Sans sucres ajoutés"
+   "Barre de 55 g : 14 à 16 g de protéines selon le parfum, moins de 4 g de sucres",
+   "Sans sucres ajoutés",
+   "Le cookie dough contient du soja"
   ],
-  "note": "Ne remplace pas une alimentation variée. Vérifiez la liste des allergènes sur l'emballage.",
+  "note": "Ne remplace pas une alimentation variée. Vérifie la liste des allergènes sur l'emballage.",
   "seo_title": "Nano Supps barre protéinée | 55 g",
   "seo_desc": "Une barre protéinée au goût de dessert, sans sucres ajoutés. Trois parfums. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -622,7 +645,8 @@
     "label": "Brownie fondant",
     "photo": "nano-fudge-brownie-protein-bar-55g.jpg"
    }
-  ]
+  ],
+  "usage": "En collation ou après l'entraînement."
  },
  {
   "key": "wafer",
@@ -642,13 +666,13 @@
   ],
   "weight_g": 50,
   "option": "Parfum",
-  "intro": "Une gaufrette protéinée croustillante enrobée de chocolat : 10 g de protéines pour 39 g, sans sucres ajoutés. Plus légère qu'une barre classique, elle se glisse facilement dans le sac.",
+  "intro": "Une gaufrette croustillante enrobée de chocolat avec un cœur gourmand : plus légère qu'une barre classique. Sucrée avec des édulcorants, sans sucres ajoutés.",
   "points": [
-   "Barre de 39 g",
-   "10 g de protéines",
-   "Contient du lait et du blé"
+   "Barre de 39 g : 10 g de protéines (whey concentrée)",
+   "Gaufrette au cacao, garniture et enrobage de chocolat au lait ou de chocolat blanc",
+   "Parfums caramel, pistache, cacahuète et coco"
   ],
-  "note": "Ne remplace pas une alimentation variée. Vérifiez la liste des allergènes sur l'emballage.",
+  "note": "Ne remplace pas une alimentation variée. Vérifie la liste des allergènes sur l'emballage. Contient du lait, du blé (gluten) et du soja. Peut contenir d'autres fruits à coque et des œufs.",
   "seo_title": "Applied Nutrition Protein Wafer | 39 g",
   "seo_desc": "Une gaufrette protéinée enrobée de chocolat : 10 g de protéines, sans sucres ajoutés. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -672,12 +696,13 @@
     "label": "Chocolat blanc coco",
     "photo": "applied-nutrition-protein-wafer-bar-white-chocolate-coconut-with-10g-p.jpg"
    }
-  ]
+  ],
+  "usage": "En collation, après le sport ou pour une pause sucrée."
  },
  {
   "key": "carnivor",
   "handle": "musclemeds-carnivor-mass-gainer-proteine-de-boeuf",
-  "title": "MuscleMeds Carnivor Mass gainer à la protéine de bœuf, 2,5 kg",
+  "title": "MuscleMeds Carnivor Mass gainer à la protéine de bœuf, 2,6 kg",
   "vendor": "MuscleMeds",
   "tags": [
    "cat:complements",
@@ -692,12 +717,13 @@
   ],
   "weight_g": 2900,
   "option": "Parfum",
-  "intro": "Un gainer (prise de masse) à base d'isolat de protéine de bœuf hydrolysé, avec des glucides à action rapide, des BCAA et de la créatine. Pour les sportifs qui veulent augmenter leur apport en calories. À mélanger à l'eau ou au lait.",
+  "intro": "Un gainer (prise de masse) à base d'isolat de protéine de bœuf hydrolysé, avec des glucides à assimilation rapide, des BCAA et de la créatine. Pour les sportifs qui veulent augmenter leur apport en calories. Sans produits laitiers.",
   "points": [
-   "Pot d'environ 2,5 kg, 50 doses",
-   "Pour les sportifs adultes"
+   "Pot d'environ 2,6 kg, 13 à 14 doses (1 dose = 4 mesures, environ 190 g)",
+   "Par dose : environ 50 g de protéines, de 700 à 800 calories, 100 à 130 g de glucides et 5 g de créatine selon le parfum",
+   "Parfums vanille caramel et cookies & crème"
   ],
-  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demandez conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
   "seo_title": "MuscleMeds Carnivor Mass | Gainer 2,5 kg",
   "seo_desc": "Un gainer à l'isolat de protéine de bœuf, avec BCAA et créatine. 50 doses, deux parfums. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -711,7 +737,8 @@
     "label": "Cookies & crème",
     "photo": "musclemeds-carnivor-mass-cookies-cream-58-lbs.jpg"
    }
-  ]
+  ],
+  "usage": "Mélanger 4 mesures dans 470 ml d'eau (16 fl oz) avec un shaker ou un blender."
  },
  {
   "key": "nxt",
@@ -731,12 +758,14 @@
   ],
   "weight_g": 2100,
   "option": "Parfum",
-  "intro": "Un isolat de protéine de bœuf sans produits laitiers, sans sucre et sans lipides : 27 g de protéines par dose de 30 g. Une alternative au whey pour ceux qui digèrent mal le lactose. Se mélange à l'eau.",
+  "intro": "Un isolat de protéine de bœuf, une alternative à la whey pour ceux qui digèrent mal le lactose. Il se mélange à l'eau pour un shake léger au goût de boisson fruitée, sans lait.",
   "points": [
-   "Pot de 1,8 kg, 60 doses",
-   "Sans produits laitiers, sans sucre"
+   "Pot de 1,8 kg, 60 doses de 30 g",
+   "27 g de protéines par dose (environ 90 g pour 100 g de poudre), 0 g de lipides, 0,25 g de glucides",
+   "Riche en leucine et en glutamine, avec des BCAA",
+   "Sans produits laitiers, sans lactose, sans soja, sans gluten, sans sucre"
   ],
-  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demandez conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
   "seo_title": "NXT Nutrition isolat de bœuf | 1,8 kg",
   "seo_desc": "Un isolat de protéine de bœuf : 27 g de protéines par dose, sans produits laitiers ni sucre. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -760,7 +789,8 @@
     "label": "Cherry cola",
     "photo": "nxt-beef-protein-isolate-cherry-cola-18kg.jpg"
    }
-  ]
+  ],
+  "usage": "1 dose (30 g) dans de l'eau, après l'entraînement ou entre les repas."
  },
  {
   "key": "raw-iso",
@@ -780,12 +810,13 @@
   ],
   "weight_g": 1100,
   "option": "Parfum",
-  "intro": "Un isolat de whey de vaches nourries à l'herbe, à absorption rapide, pour aider à la récupération musculaire après l'entraînement. Environ 25 g de protéines par dose. Se mélange à l'eau ou au lait.",
+  "intro": "Un isolat de whey de RAW Nutrition, à absorption rapide, pour aider à la récupération musculaire après l'entraînement. Peu de glucides, de sucre et de matières grasses.",
   "points": [
-   "Pot de 894 g",
-   "Contient du lait"
+   "Pot de 894 g (1,97 lb)",
+   "25 g de protéines par dose (100 % isolat de whey)",
+   "Sans gluten, facile à digérer"
   ],
-  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demandez conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement. Contient du lait.",
   "seo_title": "Raw Nutrition isolat de whey | 894 g",
   "seo_desc": "Un isolat de whey de vaches nourries à l'herbe, environ 25 g de protéines par dose. Chocolat noir ou vanille. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -799,7 +830,8 @@
     "label": "Vanille",
     "photo": "raw-protein-whey-isolate-vanilla-197lb.jpg"
    }
-  ]
+  ],
+  "usage": "1 mesure dans 180 à 240 ml d'eau froide ou de lait, après l'entraînement ou à tout moment."
  },
  {
   "key": "raw-clear",
@@ -819,12 +851,13 @@
   ],
   "weight_g": 850,
   "option": "Parfum",
-  "intro": "Un isolat de whey « clair » : une boisson légère et fruitée, qui a le goût d'un jus plutôt que d'un shake crémeux. 20 g de protéines par dose, à mélanger à l'eau. Idéal quand il fait chaud.",
+  "intro": "Un isolat de whey « clair » : une boisson légère et fruitée qui a le goût d'un jus plutôt que d'un shake crémeux. Idéal quand il fait chaud ou si les shakes au lait te lassent.",
   "points": [
-   "Pot d'environ 680 à 695 g, 25 doses",
-   "Contient du lait"
+   "Pot d'environ 690 g, 25 doses",
+   "20 g de protéines, 0 g de sucre, environ 90 calories par dose",
+   "Parfums punch aux fruits, framboise bleue et citron vert"
   ],
-  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demandez conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement. Contient du lait.",
   "seo_title": "Raw Nutrition Clear Whey | Isolat clair",
   "seo_desc": "Un isolat de whey clair, léger et fruité : 20 g de protéines par dose. Trois parfums. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -843,7 +876,8 @@
     "label": "Citron vert",
     "photo": "raw-clear-whey-protein-lemon-lime-680g.jpg"
    }
-  ]
+  ],
+  "usage": "1 mesure dans de l'eau froide, avant ou après l'entraînement."
  },
  {
   "key": "tl-lean",
@@ -863,13 +897,13 @@
   ],
   "weight_g": 550,
   "option": "Parfum",
-  "intro": "Le pré-entraînement « sèche » de Transparent Labs, pensé pour l'énergie et la concentration pendant une période de définition. Chaque dose apporte 6 g de citrulline malate, 1 g d'acétyl-L-carnitine et 180 mg de caféine d'origine naturelle, sans édulcorants artificiels, colorants ni conservateurs. À mélanger à l'eau, 20 à 30 minutes avant la séance.",
+  "intro": "Le pré-entraînement « sèche » de Transparent Labs, pour l'énergie et la concentration pendant une période de définition.",
   "points": [
    "30 doses par pot (420 g)",
-   "Édulcoré naturellement",
-   "Contient de la caféine : à éviter en fin de soirée"
+   "Par dose : 6 g de citrulline malate, 1 g d'acétyl-L-carnitine et 180 mg de caféine d'origine naturelle (PurCaf)",
+   "Édulcoré naturellement. Testé par un laboratoire indépendant (Informed Choice), sans édulcorants artificiels, colorants ni conservateurs."
   ],
-  "note": "Complément alimentaire. Déconseillé aux enfants, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Ne dépasse pas la dose indiquée sur l'emballage.",
+  "note": "Complément alimentaire. Déconseillé aux moins de 18 ans, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Demande un avis médical en cas de traitement, de problème cardiaque, de tension ou d'anxiété.",
   "seo_title": "Transparent Labs LEAN | Pré-workout 30 doses",
   "seo_desc": "Un pré-entraînement sans édulcorants artificiels : citrulline, acétyl-L-carnitine et 180 mg de caféine. Punch aux fruits. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -878,7 +912,8 @@
     "label": "Punch aux fruits",
     "photo": "transparent-labs-lean-pre-workout-fruit-punch-cutting-season-formula-3.jpg"
    }
-  ]
+  ],
+  "usage": "1 dose dans de l'eau, 20 à 30 minutes avant la séance. Commence par une demi-dose si tu débutes."
  },
  {
   "key": "tl-bbe",
@@ -898,13 +933,13 @@
   ],
   "weight_g": 800,
   "option": "Parfum",
-  "intro": "Le pré-entraînement le plus puissant de Transparent Labs, pour les séances lourdes. Chaque dose associe 8 g de citrulline malate, 4 g de bêta-alanine, 2,5 g de bétaïne et 325 mg de caféine, avec de l'alpha-GPC. Sans édulcorants artificiels ni colorants. À mélanger à l'eau, environ 20 à 30 minutes avant l'entraînement.",
+  "intro": "Le pré-entraînement le plus puissant de Transparent Labs, pour les séances lourdes : une forte dose de citrulline, de la bêta-alanine, de la bétaïne et 325 mg de caféine, avec de l'alpha-GPC.",
   "points": [
    "30 doses par pot (environ 620 g)",
-   "Édulcoré naturellement",
-   "Contient une forte dose de caféine : à réserver aux sportifs qui la supportent bien"
+   "Par dose : 8 g de citrulline malate, 4 g de bêta-alanine, 2,5 g de bétaïne anhydre (BetaPure), 325 mg de caféine, alpha-GPC",
+   "Édulcoré naturellement. Testé par un laboratoire indépendant (Informed Choice), sans édulcorants artificiels, colorants ni conservateurs."
   ],
-  "note": "Complément alimentaire. Déconseillé aux enfants, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Ne dépasse pas la dose indiquée sur l'emballage.",
+  "note": "Complément alimentaire. Déconseillé aux moins de 18 ans, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Demande un avis médical en cas de traitement, de problème cardiaque, de tension ou d'anxiété.",
   "seo_title": "Transparent Labs BULK Black Elite | Pré-workout",
   "seo_desc": "Un pré-entraînement puissant : citrulline, bêta-alanine, bétaïne, alpha-GPC et 325 mg de caféine. 30 doses. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -918,7 +953,8 @@
     "label": "Framboise bleue",
     "photo": "transparent-labs-bulk-black-elite-pre-workout-with-citrulline-beta-ala.jpg"
    }
-  ]
+  ],
+  "usage": "1 dose dans de l'eau, 20 à 30 minutes avant l'entraînement. Commence par une demi-dose si tu débutes."
  },
  {
   "key": "tl-bulk",
@@ -938,13 +974,13 @@
   ],
   "weight_g": 800,
   "option": "Parfum",
-  "intro": "Un pré-entraînement dosé pour la performance : 8 g de citrulline malate, 4 g de bêta-alanine, 2,5 g de bétaïne, de la caféine et de l'alpha-GPC. Sans édulcorants artificiels ni colorants. À mélanger à l'eau, environ 20 à 30 minutes avant la séance.",
+  "intro": "Un pré-entraînement dosé pour la performance : même base que le Black Elite, avec de l'alpha-GPC (AlphaSize, 300 mg) pour la concentration.",
   "points": [
    "30 doses par pot (environ 620 g)",
-   "Édulcoré naturellement",
-   "Contient de la caféine : à éviter en fin de soirée"
+   "Par dose : 8 g de citrulline malate, 4 g de bêta-alanine, 2,5 g de bétaïne anhydre, caféine et 300 mg d'alpha-GPC",
+   "Édulcoré naturellement. Testé par un laboratoire indépendant (Informed Choice), sans édulcorants artificiels, colorants ni conservateurs."
   ],
-  "note": "Complément alimentaire. Déconseillé aux enfants, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Ne dépasse pas la dose indiquée sur l'emballage.",
+  "note": "Complément alimentaire. Déconseillé aux moins de 18 ans, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Demande un avis médical en cas de traitement, de problème cardiaque, de tension ou d'anxiété.",
   "seo_title": "Transparent Labs BULK | Pré-workout pastèque 30 doses",
   "seo_desc": "Un pré-entraînement dosé pour la performance : citrulline, bêta-alanine, bétaïne et caféine. Pastèque. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -953,7 +989,8 @@
     "label": "Pastèque",
     "photo": "transparent-labs-bulk-pre-workout-with-8g-citrulline-malate-4g-beta-al.jpg"
    }
-  ]
+  ],
+  "usage": "1 dose dans de l'eau, 20 à 30 minutes avant la séance. Commence par une demi-dose si tu débutes."
  },
  {
   "key": "tl-post",
@@ -973,13 +1010,13 @@
   ],
   "weight_g": 700,
   "option": "Parfum",
-  "intro": "Une poudre de récupération à prendre après la séance. Chaque dose contient 5 g de créatine, 5 g de glutamine et 2 g de Carnipure, avec de la cerise acide et du ginseng. Sans édulcorants artificiels ni colorants. À mélanger à l'eau après l'entraînement.",
+  "intro": "Une poudre de récupération à prendre après la séance, sans caféine.",
   "points": [
    "30 doses par pot (environ 530 g)",
-   "Édulcoré naturellement",
-   "Sans caféine"
+   "Par dose : 5 g de créatine, 5 g de glutamine, 2 g de Carnipure (L-carnitine L-tartrate), extrait de cerise acide et de ginseng",
+   "Édulcoré naturellement. Testé par un laboratoire indépendant (Informed Choice), sans édulcorants artificiels, colorants ni conservateurs."
   ],
-  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demandez conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
   "seo_title": "Transparent Labs POST Advanced | Récupération 30 doses",
   "seo_desc": "Créatine, glutamine et Carnipure pour la récupération après l'entraînement. Orange ou cerise noire. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -993,7 +1030,8 @@
     "label": "Cerise noire",
     "photo": "transparent-labs-post-advanced-post-workout-black-cherry-recovery-form.jpg"
    }
-  ]
+  ],
+  "usage": "1 dose dans de l'eau après l'entraînement."
  },
  {
   "key": "tl-hydrate",
@@ -1013,13 +1051,13 @@
   ],
   "weight_g": 450,
   "option": "Parfum",
-  "intro": "Une boisson d'hydratation en poudre, sans sucre, pour les séances longues ou les journées chaudes. Chaque dose apporte 1 g de taurine, 500 mg d'eau de coco et 885 mg de minéraux. Sans édulcorants artificiels ni colorants. Un dosage à mélanger dans l'eau de la gourde.",
+  "intro": "Une boisson d'hydratation en poudre, sans sucre, pour les séances longues ou les journées chaudes.",
   "points": [
    "40 doses par pot (environ 330 g)",
-   "Sans sucre, édulcoré naturellement",
-   "Sans caféine"
+   "Par dose : 1 g de taurine, 500 mg d'eau de coco, 885 mg de minéraux",
+   "Sans sucre, sans caféine, édulcoré naturellement. Testé par un laboratoire indépendant (Informed Choice), sans édulcorants artificiels, colorants ni conservateurs."
   ],
-  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demandez conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
   "seo_title": "Transparent Labs Hydrate | Électrolytes 40 doses",
   "seo_desc": "Des électrolytes sans sucre : taurine, eau de coco et minéraux. 40 doses, cinq parfums. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -1048,7 +1086,8 @@
     "label": "Citron vert",
     "photo": "transparent-labs-hydrate-electrolyte-powder-lemon-lime-sugar-free-with.jpg"
    }
-  ]
+  ],
+  "usage": "1 dose dans l'eau de la gourde, pendant ou après l'effort."
  },
  {
   "key": "tl-whey",
@@ -1068,13 +1107,13 @@
   ],
   "weight_g": 2300,
   "option": "Parfum et format",
-  "intro": "Un isolat de whey issu de vaches nourries à l'herbe, avec 28 g de protéines par dose, très peu de sucre et sans édulcorants artificiels. Deux saveurs gourmandes au beurre de cacahuète, en deux formats. À mélanger à l'eau ou au lait.",
+  "intro": "Un isolat de whey issu de vaches nourries à l'herbe (grass-fed), avec 28 g de protéines par dose et très peu de sucre. Deux saveurs au beurre de cacahuète, en deux formats.",
   "points": [
-   "28 g de protéines par dose",
-   "Sans édulcorants artificiels",
-   "Contient du lait et des cacahuètes"
+   "Vanille beurre de cacahuète : pot de 1,1 kg (2,5 lb), 30 doses",
+   "Chocolat beurre de cacahuète : pot de 2 kg (4,4 lb), 55 doses",
+   "28 g de protéines et 1 g de sucre par dose. Testé par un laboratoire indépendant (Informed Choice), sans édulcorants artificiels, colorants ni conservateurs."
   ],
-  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demandez conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement. Contient du lait et des cacahuètes.",
   "seo_title": "Transparent Labs isolat de whey | 28 g de protéines",
   "seo_desc": "Un isolat de whey grass-fed : 28 g de protéines par dose, sans édulcorants artificiels. Beurre de cacahuète. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
@@ -1088,6 +1127,7 @@
     "label": "Chocolat beurre de cacahuète, 2 kg (55 doses)",
     "photo": "transparent-labs-100-grass-fed-whey-protein-isolate-with-28g-protein-a.jpg"
    }
-  ]
+  ],
+  "usage": "1 mesure dans de l'eau ou du lait, après l'entraînement ou entre les repas."
  }
 ]
