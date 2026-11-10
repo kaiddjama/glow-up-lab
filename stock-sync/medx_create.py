@@ -35,9 +35,8 @@ REF = os.environ.get("GITHUB_SHA", "main")
 FIND_Q = """query($q:String!){ products(first:5, query:$q){ nodes{ id handle title status variants(first:100){ nodes{ id sku } } } } }"""
 VARIANTS_M = """mutation($p:ID!,$v:[ProductVariantsBulkInput!]!){ productVariantsBulkCreate(productId:$p, variants:$v){
   productVariants{ id sku } userErrors{ field message code } } }"""
-MEDIA_M = """mutation($p:ID!,$m:[CreateMediaInput!]!){ productCreateMedia(productId:$p, media:$m){
-  media{ id alt status } mediaUserErrors{ field message } } }"""
-UPDATE_M = """mutation($i:ProductUpdateInput!){ productUpdate(product:$i){ product{ id handle } userErrors{ field message } } }"""
+UPDATE_M = """mutation($i:ProductUpdateInput!,$m:[CreateMediaInput!]){ productUpdate(product:$i, media:$m){
+  product{ id handle } userErrors{ field message } } }"""
 SET_M = """mutation($input:ProductSetInput!){ productSet(synchronous:true, input:$input){
   product{ id handle media(first:50){ nodes{ id alt status } } variants(first:100){ nodes{ id sku } } }
   userErrors{ field message code } } }"""
@@ -57,10 +56,10 @@ def photo_url(name):
     return f"https://raw.githubusercontent.com/{REPO}/{REF}/stock-sync/medx/photos/{urllib.parse.quote(name)}"
 
 
-def variant_input(p, v, pg, now):
+def variant_input(p, v, pg, now, bulk=False):
     grams = v.get("weight_g", p["weight_g"])  # shipping weight (product + packaging); a variant may have its own
     price = s.formula(pg["aed"], grams)
-    return {
+    out = {
         "optionValues": [{"optionName": p["option"], "name": v["label"]}], "sku": f"MEDX-{v['slug']}", "price": str(price),
         "inventoryPolicy": "DENY",  # medx_sync.py puts it on sale after reading the stock again
         "inventoryItem": {"tracked": True, "measurement": {"weight": {"value": grams / 1000, "unit": "KILOGRAMS"}}},
@@ -69,6 +68,9 @@ def variant_input(p, v, pg, now):
             {"namespace": "supplier", "key": "variant_checked_at", "type": "date_time", "value": now},
             {"namespace": "supplier", "key": "delivery_eta", "type": "single_line_text_field", "value": medx.eta()},
             {"namespace": "supplier", "key": "delivery_range", "type": "single_line_text_field", "value": "standard"}]}
+    if bulk:  # productVariantsBulkCreate carries the SKU on the inventory item
+        out["inventoryItem"]["sku"] = out.pop("sku")
+    return out
 
 
 def wait_media(pid, alts):
@@ -128,25 +130,24 @@ def extend(p, prod, now, dry, skipped):
     if dry:
         return 0
     if ok:
-        res = s.gql(VARIANTS_M, {"p": prod["id"], "v": [variant_input(p, v, pg, now) for v, pg in ok]})["productVariantsBulkCreate"]
+        res = s.gql(VARIANTS_M, {"p": prod["id"], "v": [variant_input(p, v, pg, now, bulk=True) for v, pg in ok]})["productVariantsBulkCreate"]
         if res["userErrors"]:
             print("error:", p["handle"], res["userErrors"])
             return 1
         sku_to_id = {v["sku"]: v["id"] for v in res["productVariants"]}
         files = [{"originalSource": photo_url(v["photo"]), "alt": f"{p['title']} - {v['label']}", "mediaContentType": "IMAGE"} for v, _ in ok]
-        r = s.gql(MEDIA_M, {"p": prod["id"], "m": files})["productCreateMedia"]
-        if r["mediaUserErrors"]:
-            print("photo error:", p["handle"], r["mediaUserErrors"])
-            errors += 1
+    else:
+        sku_to_id, files = {}, []
+    # title, text and handle of an entry that now covers several flavours, and the new photos, in one call
+    inp = {"id": prod["id"], "title": p["title"], "handle": p["handle"], "descriptionHtml": html(p),
+           "seo": {"title": p["seo_title"], "description": p["seo_desc"]}, "redirectNewHandle": True}
+    errs = s.gql(UPDATE_M, {"i": inp, "m": files or None})["productUpdate"]["userErrors"]
+    if errs:
+        print("update error:", p["handle"], errs)
+        errors += 1
+    if files:
         by_alt = wait_media(prod["id"], [f["alt"] for f in files])
         errors += link_photos(p, prod["id"], ok, sku_to_id, by_alt)
-    if p.get("old_handle") or p.get("extend"):  # title, text and handle of an entry that now covers several flavours
-        inp = {"id": prod["id"], "title": p["title"], "handle": p["handle"], "descriptionHtml": html(p),
-               "seo": {"title": p["seo_title"], "description": p["seo_desc"]}, "redirectNewHandle": True}
-        errs = s.gql(UPDATE_M, {"i": inp})["productUpdate"]["userErrors"]
-        if errs:
-            print("update error:", p["handle"], errs)
-            errors += 1
     return errors
 
 
