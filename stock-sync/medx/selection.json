@@ -763,7 +763,7 @@
   ],
   "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
   "seo_title": "MuscleMeds Carnivor Mass | Gainer 2,5 kg",
-  "seo_desc": "Un gainer à l'isolat de protéine de bœuf, avec BCAA et créatine. 50 doses, deux parfums. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "seo_desc": "Un gainer à l'isolat de protéine de bœuf, avec BCAA et créatine. 13 à 14 doses, deux parfums. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
    {
     "slug": "musclemeds-carnivor-mass-vanilla-caramel-56lb",
@@ -1193,7 +1193,8 @@
    {
     "slug": "transparent-labs-100-grass-fed-whey-protein-isolate-vanilla-peanut-butter-28g-protein-25lb",
     "label": "Vanille beurre de cacahuète, 1,1 kg (30 doses)",
-    "photo": "transparent-labs-100-grass-fed-whey-protein-isolate-vanilla-peanut-but.jpg"
+    "photo": "transparent-labs-100-grass-fed-whey-protein-isolate-vanilla-peanut-but.jpg",
+    "weight_g": 1300
    },
    {
     "slug": "transparent-labs-100-grass-fed-whey-protein-isolate-with-28g-protein-and-real-peanut-flour-chocolate-peanut-butter-44lb",
