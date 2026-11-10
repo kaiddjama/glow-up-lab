@@ -1,0 +1,91 @@
+name: MedX stock and price sync
+# Second supplier (medxpharmacy.com, Dubai). The pages are plain HTML: no browser, no CAPTCHA, about one minute a run.
+# Every 30 minutes (not on the hour: GitHub skips runs scheduled on the hour when busy).
+# Run it by hand with "Run workflow": dry_run=true reads and reports only.
+on:
+  schedule:
+    - cron: "17,47 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Read and report only, change nothing on Shopify"
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: medx-sync
+  cancel-in-progress: false
+env:
+  SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+  SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+  SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+  PRICE_FORMULA: ${{ secrets.PRICE_FORMULA || format('{0},{1},{2}', vars.PRICE_MULT, vars.SHIPPING_AED_PER_KG, vars.AED_TO_FDJ) }}
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Read the MedX pages, set stock and prices
+        working-directory: stock-sync
+        env:
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
+        run: python3 -I medx_sync.py results
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: medx-report
+          path: stock-sync/results/
+          if-no-files-found: ignore
+          retention-days: 7
+  coverage:
+    # Safeguard: a MedX variant on sale that was not read for 3 hours is set to Épuisé (stock that cannot be confirmed is never sold).
+    needs: [sync]
+    if: ${{ always() && !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Hide the MedX variants not read recently
+        working-directory: stock-sync
+        run: python3 -I coverage.py medx
+  park:
+    # Hides the products whose variants are all Épuisé and brings them back when one is sellable again (same script as for Amazon.ae).
+    needs: [sync, coverage]
+    if: ${{ always() && !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: park-soldout
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Hide entirely sold-out products
+        working-directory: stock-sync
+        run: python3 -I park_soldout.py
+  alert:
+    needs: [sync, coverage, park]
+    if: ${{ failure() && !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Alert
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          .github/alert.sh "Alerte inventaire : contrôle MedX en échec" "Le contrôle MedX de $(TZ=Africa/Djibouti date '+%d/%m %Hh%M') (heure de Djibouti) a échoué : le stock de certains produits MedX n'a peut-être pas été vérifié (ceux non lus depuis 3 h sont masqués automatiquement). Détail : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

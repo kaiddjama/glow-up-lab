@@ -1,0 +1,43 @@
+name: MedX products (create / publish)
+# create: adds the products of stock-sync/medx/selection.json as hidden drafts tagged medx-revue (nothing goes online).
+# publish: puts online the medx-revue products that have a variant on sale. Only run after Hoodo's go.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "create or publish"
+        type: choice
+        options: [create, publish]
+        default: create
+      dry_run:
+        description: "List only, change nothing on Shopify"
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: medx-create
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+      SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+      SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+      PRICE_FORMULA: ${{ secrets.PRICE_FORMULA || format('{0},{1},{2}', vars.PRICE_MULT, vars.SHIPPING_AED_PER_KG, vars.AED_TO_FDJ) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: ${{ inputs.mode }} MedX products
+        working-directory: stock-sync
+        env:
+          DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
+        run: python3 -I medx_create.py ${{ inputs.mode }}
+      - name: Read the stock and set the prices of the new products
+        if: ${{ !inputs.dry_run && inputs.mode == 'create' }}
+        working-directory: stock-sync
+        run: python3 -I medx_sync.py results
