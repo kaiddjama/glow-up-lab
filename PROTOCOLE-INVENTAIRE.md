@@ -94,3 +94,14 @@ Compléments sport (pré-workout, shots, whey, isolats, boissons protéinées, b
 - Achat : la commande se passe à la main sur medxpharmacy.com, livrée à l'adresse de Dubaï (adresse hors du dépôt public), puis acheminée vers Djibouti comme pour l'Amazon.
 - Réglages (variables, sans toucher au code) : MEDX_MIN_QTY=8 · MEDX_BACK_QTY=12 · MEDX_STALE_HOURS=1 · MEDX_MIN_CREATE_QTY=20.
 - 10 nov : premier ajout, 20 gammes / 51 variantes. Photos : seulement des emballages propres ; écartées les photos avec le shaker « MedX » offert ou tronquées, et une photo dont le parfum ne correspondait pas à la fiche (Kevin Levrone Gold Iso, vanille affichée pour un chocolat).
+
+## 11. Troisième fournisseur : PadelShop.ae (padelshop.ae, Dubaï), ajouté le 10 nov 2026
+Raquettes de padel adultes et balles, en complément d'Amazon.ae (Amazon reste prioritaire ; une raquette PadelShop.ae sert à combler un niveau ou un style que la sélection Amazon.ae ne couvre pas). Une variante PadelShop.ae se reconnaît à son SKU `PSAE-<handle de la fiche padelshop.ae>`. Le code est dans `stock-sync/padelshop.py` et `padelshop_sync.py`.
+- Lecture : `https://padelshop.ae/products/<handle>.js`, JSON public (pas de navigateur, pas de CAPTCHA) : prix en AED (TVA comprise, en fils) et indicateur « disponible ». Le site n'affiche AUCUN chiffre de stock : « disponible » est le seul signal.
+- Vendable : page lue ET disponible ET prix > 0. Page illisible : rien ne change (puis Épuisé après PADELSHOP_STALE_HOURS=3 h sans lecture, par `coverage.py padelshop`). Fiche supprimée (404) : Épuisé.
+- Délai : préparation de 1 à 2 jours ouvrés chez PadelShop.ae puis livraison à Dubaï, comptée 2 jours (PADELSHOP_DAYS=2) ; avec l'acheminement vers Djibouti, étiquette de 4 à 5 jours comme le reste de la boutique.
+- Rythme : `padelshop-sync.yml` toutes les 30 minutes (à :27 et :57), puis `coverage.py padelshop` et `park_soldout.py` (même mécanisme `epuise-auto` que pour Amazon.ae et MedX : brouillon + tag tant que non lu, publié automatiquement quand une lecture réussie dit « disponible »).
+- Contrôle des commandes : une ligne PadelShop.ae est vérifiée sur sa page (doit être disponible), sans navigateur ; sinon la commande passe en amazon-ko avec le motif « plus disponible chez PadelShop.ae ».
+- Achat : la commande se passe à la main sur padelshop.ae, livrée à l'adresse de Dubaï (adresse hors du dépôt public), puis acheminée vers Djibouti.
+- Limite connue : sans chiffre de stock, un article presque épuisé reste « disponible » jusqu'à l'épuisement réel ; le contrôle de chaque commande réduit ce risque.
+- 10 nov : premier ajout, 6 raquettes (Volt 700 Power et Balance, adidas Metalbone Team Light, Siux Tsunami 5.0, Bullpadel Icon 27 et Flow 27) et 1 tube de balles Heroes.
