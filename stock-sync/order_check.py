@@ -3,7 +3,8 @@
 
   python3 -I order_check.py list    counts the recent orders not checked yet (also to $GITHUB_OUTPUT: count)
   python3 -I order_check.py check   reads the Amazon.ae page of every item of those orders (browser set to Dubai; items with a
-                                    SKU "MEDX-..." are read on medxpharmacy.com instead, stock at least MEDX_MIN_QTY):
+                                    SKU "MEDX-..." are read on medxpharmacy.com instead, stock at least MEDX_MIN_QTY, and
+                                    items with a SKU "PSAE-..." on padelshop.ae, which must say available):
                                     - all items sellable: the order gets the tag amazon-ok
                                     - an item not sellable (or with no ASIN): the order gets the tag amazon-ko, the
                                       variant goes to Épuisé, and alert.md describes it for the owner
@@ -18,6 +19,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # python -I does not add the script folder
 import amazon_sync as s  # noqa: E402
 import medx  # noqa: E402
+import padelshop  # noqa: E402
 
 WINDOW_H = 6  # orders newer than this are looked at
 ORDER_MAX_AGE_H = 2  # an order whose pages still cannot be read after this long is tagged amazon-incertain
@@ -93,7 +95,7 @@ def main():
     import browser_fetch
     reader = browser_fetch.BrowserReader().start()
     print("Browser reader started, delivery location:", reader.location_text())
-    pages, alerts, medx_pages = {}, [], {}
+    pages, alerts, medx_pages, shop_pages = {}, [], {}, {}
 
     def page_of(asin):
         if asin not in pages:
@@ -120,6 +122,16 @@ def main():
                     elif not medx.sellable(mp, True):
                         bad.append((it, label, "fiche retirée chez MedX" if mp.get("gone") else
                                     f"stock MedX insuffisant ({mp['qty']} restant)" if mp["publish"] else "fiche MedX non publiée"))
+                    continue
+                shop = padelshop.slug_of(it.get("sku"))
+                if shop:  # PadelShop.ae item: plain JSON page, no browser needed
+                    if shop not in shop_pages:
+                        shop_pages[shop] = padelshop.fetch(shop)
+                    sp = shop_pages[shop]
+                    if sp.get("error"):
+                        unknown.append(label)
+                    elif not padelshop.sellable(sp, True):
+                        bad.append((it, label, "fiche retirée chez PadelShop.ae" if sp.get("gone") else "plus disponible chez PadelShop.ae"))
                     continue
                 asin = asin_of(it)
                 if not asin:
@@ -166,7 +178,7 @@ def main():
         reader.close()
     if alerts:
         with open("alert.md", "w") as f:
-            f.write("Articles commandés non disponibles chez le fournisseur (Amazon.ae ou MedX) :\n\n" + "\n".join(alerts) + "\n")
+            f.write("Articles commandés non disponibles chez le fournisseur (Amazon.ae, MedX ou PadelShop.ae) :\n\n" + "\n".join(alerts) + "\n")
         print("\n".join(alerts))
 
 

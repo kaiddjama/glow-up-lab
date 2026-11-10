@@ -14,6 +14,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # python -I does not add the script folder
 import amazon_sync as s  # noqa: E402
 import medx  # noqa: E402
+import padelshop  # noqa: E402
 
 MAX_FLIPS = 150  # more than this at once = something is off with the data: report only
 
@@ -44,7 +45,7 @@ def main():
                     product_asin = m.group(1)
                     break
             for v in variants:
-                if s.ASIN_RE.search(v.get("sku") or "") or medx.slug_of(v.get("sku")):  # MedX variants: medx_sync.py reads them
+                if s.ASIN_RE.search(v.get("sku") or "") or medx.slug_of(v.get("sku")) or padelshop.slug_of(v.get("sku")):  # MedX / PadelShop.ae variants: their own syncs read them
                     continue
                 if len(variants) == 1:
                     if not product_asin:
