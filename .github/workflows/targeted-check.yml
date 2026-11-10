@@ -1,26 +1,27 @@
 name: Targeted Amazon.ae check
-# create: adds the products of stock-sync/medx/selection.json as hidden drafts tagged medx-revue (nothing goes online).
-# publish: puts online the medx-revue products that have a variant on sale. Only run after Hoodo's go.
+# Reads only the listed ASINs on Amazon.ae (Dubai address) and applies the same rules as the full sync:
+# price, Épuisé when unavailable or too slow, back on sale when sellable again, delivery labels.
+# Run it by hand with "Run workflow", asins = comma-separated ASINs.
 on:
   workflow_dispatch:
     inputs:
       asins:
-        description: "TEMPORARY: used as the mode (create or publish)"
+        description: "Comma-separated ASINs to read now"
         type: string
         required: true
       dry_run:
-        description: "List only, change nothing on Shopify"
+        description: "Read and report only, change nothing on Shopify"
         type: boolean
-        default: true
+        default: false
 permissions:
   contents: read
 concurrency:
-  group: medx-create
+  group: targeted-check
   cancel-in-progress: false
 jobs:
-  run:
+  check:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
     env:
       SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
       SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
@@ -31,12 +32,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: ${{ inputs.asins }} MedX products
+      - name: Install the browser
+        timeout-minutes: 25
+        run: .github/install-browser.sh
+      - name: Read the pages and apply the rules
         working-directory: stock-sync
         env:
+          ONLY_ASINS: ${{ inputs.asins }}
+          FETCHER: browser
+          SELLER_RULE: "0"
+          DELAY: "8"
           DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
-        run: python3 -I medx_create.py ${{ inputs.asins }}
-      - name: Read the stock and set the prices of the new products
-        if: ${{ !inputs.dry_run && inputs.asins == 'create' }}
-        working-directory: stock-sync
-        run: python3 -I medx_sync.py results
+        run: |
+          python3 -I amazon_sync.py results
+          echo "---- report ----"
+          cat results/*.json 2>/dev/null | head -c 6000 || true
