@@ -13,6 +13,8 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  issues: write   # the alert of last resort
+  actions: write  # checks that the clock (heartbeat.yml) is alive
 concurrency:
   group: order-check
   cancel-in-progress: false
@@ -44,10 +46,25 @@ jobs:
         working-directory: stock-sync
         env:
           FETCHER: browser
-          SELLER_RULE: "0"
         run: python3 -I order_check.py check
       - name: Post the alert
-        if: ${{ hashFiles('stock-sync/alert.md') != '' && env.DRY_RUN != '1' }}
+        if: ${{ !cancelled() && hashFiles('stock-sync/alert.md') != '' && env.DRY_RUN != '1' }}
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh pr comment 15 --repo "$GITHUB_REPOSITORY" --body-file stock-sync/alert.md
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh pr comment 15 --body-file stock-sync/alert.md || \
+            .github/alert.sh "Alerte commande : article à regarder" "$(cat stock-sync/alert.md)"
+      - name: Keep the clock alive
+        if: ${{ !cancelled() && github.ref_name == 'main' }}
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 -I stock-sync/heartbeat.py ensure
+      - name: Alert when the check itself failed
+        if: ${{ failure() && env.DRY_RUN != '1' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          .github/alert.sh "Alerte inventaire : contrôle des commandes en échec" "Le contrôle des commandes de $(TZ=Africa/Djibouti date '+%d/%m %Hh%M') (heure de Djibouti) a échoué : les nouvelles commandes ne sont peut-être pas vérifiées chez le fournisseur. Détail : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

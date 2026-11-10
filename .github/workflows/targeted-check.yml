@@ -40,7 +40,6 @@ jobs:
         env:
           ONLY_ASINS: ${{ inputs.asins }}
           FETCHER: browser
-          SELLER_RULE: "0"
           DELAY: "8"
           DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
         run: |

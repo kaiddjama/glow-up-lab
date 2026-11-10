@@ -246,8 +246,7 @@ def publish(dry):
 
 
 def main():
-    if not (os.environ.get("SHOPIFY_STORE") and (os.environ.get("SHOPIFY_TOKEN") or os.environ.get("SHOPIFY_CLIENT_SECRET"))):
-        print("No Shopify credentials set: nothing to do.")
+    if not s.have_credentials():
         return
     if not s.AED_TO_FDJ:
         sys.exit("ALERTE: PRICE_FORMULA is not set.")

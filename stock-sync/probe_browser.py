@@ -106,7 +106,7 @@ def main():
             html = ""
             try:
                 html = r.get(f"https://www.amazon.ae/dp/{asin}?language=en_AE")
-                pg = a.parse(html, today)
+                pg = a.choose_offer(a.parse(html, today, asin))
             except Exception as e:
                 pg = {"error": f"{type(e).__name__}: {e}"[:100]}
             if pg.get("error") == "captcha":

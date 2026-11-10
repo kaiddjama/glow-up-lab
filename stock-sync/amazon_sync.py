@@ -3,13 +3,17 @@
 
 Usage: python3 -I amazon_sync.py results_dir
 Settings come from environment variables (GitHub Actions secrets and variables): SHOPIFY_STORE and
-SHOPIFY_CLIENT_ID / SHOPIFY_CLIENT_SECRET (or SHOPIFY_TOKEN); PRICE_FORMULA (kept out of the code). Optional: DRY_RUN=1 (read and report only), LIMIT=n, SHARD=i/n, DELAY, FETCHER=browser (headless Chromium set to Dubai, see browser_fetch.py).
-Without credentials the script does nothing and exits cleanly.
+SHOPIFY_CLIENT_ID / SHOPIFY_CLIENT_SECRET (or SHOPIFY_TOKEN); PRICE_FORMULA (kept out of the code). Optional: DRY_RUN=1 (read and report only), LIMIT=n, SHARD=i/n, ONLY_ASINS, DELAY, FETCHER=browser (headless Chromium set to Dubai, see browser_fetch.py).
+In GitHub Actions missing credentials are a failure (an alert); elsewhere the script does nothing and exits cleanly.
 
-For every active variant that has an ASIN (SKU "B0…" / "AMZ-B0…" or a product metafield) it reads the Amazon.ae
-page (price, stock, delivery date) and updates the price, the "continue selling" setting and the
-supplier.* metafields. A page Amazon blocks leaves the variant unchanged. Price changes above 150 % are only
-reported. Draft products tagged "livraison-lente" are republished when their delivery time allows it.
+For every variant that has an ASIN (SKU "B0…" / "AMZ-B0…", or the product metafield when the product has one variant) it
+reads the Amazon.ae page (amazon_page.py: price, stock, delivery date of every offer of the buy box, which item the page
+is about) and updates the price, the "continue selling" setting and the supplier.* metafields.
+
+What never changes a variant: a page that could not be read (blocked, partial, wrong delivery city). What hides it: out of
+stock, too slow, a tiny stock, a listing that was removed, a page that now shows ANOTHER item (another ASIN). What never
+hides it: another seller, a changed title, description or shade label on the same ASIN (Hoodo, 10 Nov).
+The decisions are taken by plan(), a function without side effects that the tests run offline.
 """
 import datetime as dt
 import json
@@ -20,8 +24,15 @@ import re
 import sys
 import time
 import unicodedata
+import urllib.error
 import urllib.parse
 import urllib.request
+import zlib
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # python -I does not add the script folder
+import amazon_page  # noqa: E402,F401  (reading of the Amazon.ae pages, tested offline)
+from amazon_page import ASIN_RE, EXTRA_DAYS, MONTHS, days_until, dubai_today, parse, parse_price, parse_seller  # noqa: E402,F401
+import suppliers  # noqa: E402  (the other sources: MedX, PadelShop.ae)
 
 API = "2025-07"
 try:  # one secret "a,b,c" holds the price formula, so masking hides it as a whole in the logs
@@ -29,14 +40,20 @@ try:  # one secret "a,b,c" holds the price formula, so masking hides it as a who
 except ValueError:
     MARGIN_CUSTOMS = SHIPPING_AED_PER_KG = AED_TO_FDJ = 0.0
 DEFAULT_WEIGHT_G = 200
-MAX_CHANGE = 1.50  # bigger jumps usually mean a misread page or a wrong listing: held for review
-EXTRA_DAYS = 2
-# Delivery to Dubai (free standard delivery only, never a paid express option) up to MAX_DAYS days is sellable, which gives
+MAX_CHANGE = 1.50  # a price that would rise by more than this share (+150 %) is held until a later reading confirms it
+# Since 10 Nov: a price that would FALL by more than this share is held too (a misread price, a pack or a size that is not ours
+# would sell below cost); the old price stays meanwhile. Both kinds are applied once a reading at least PRICE_CONFIRM_HOURS
+# later gives the same amount (about 5 % tolerance). A held rise puts the variant to Épuisé meanwhile: its real cost is unknown.
+PRICE_DROP_MAX = float(os.environ.get("PRICE_DROP_MAX", "0.4"))
+PRICE_CONFIRM_HOURS = float(os.environ.get("PRICE_CONFIRM_HOURS", "3"))
+# Since 10 Nov: when the only delivery offered to Dubai is a PAID standard one (e.g. AED 9), its fee is added to the Amazon.ae
+# price before the formula, so the margin is not eaten. INCLUDE_DELIVERY_FEE=0 turns it off.
+INCLUDE_DELIVERY_FEE = os.environ.get("INCLUDE_DELIVERY_FEE", "1") == "1"
+# Delivery to Dubai (standard delivery only, never a paid express option) up to MAX_DAYS days is sellable, which gives
 # the "4 to 5 days" shown in the shop (2 + 2-3 days of forwarding to Djibouti); anything later counts as out of stock.
 # Since 2 Nov: 2 days (a guest sees "FREE delivery <in 2 days> on your first order" on almost every page; the paid
 # "fastest delivery tomorrow" option used to be read as 1 day). MAX_DAYS can be changed without touching the code.
 MAX_DAYS = int(os.environ.get("MAX_DAYS", "2"))
-MAX_DAYS_OTHER = MAX_DAYS  # same limit for every seller
 STANDARD_DAYS = MAX_DAYS  # up to this many days to Dubai: standard delay; later (if MAX_DAYS is raised): longer delay shown
 FORWARD_DAYS = (2, 3)  # Dubai -> Djibouti
 # Since 10 Nov: "Only N left in stock" with N <= LOW_STOCK_MAX is not sellable. A tiny stock usually belongs to a small
@@ -50,28 +67,27 @@ PRICES_ONLY = os.environ.get("PRICES_ONLY") == "1"  # update prices only: no sto
 RETRY_MAX = int(os.environ.get("RETRY_MAX", "40"))  # pages read a second time at the end of each reader
 NO_DATE_KEEPS = os.environ.get("NO_DATE_KEEPS", "0") == "1"
 STOCK_GUARD = float(os.environ.get("STOCK_GUARD", "0.35"))  # share of read variants that may newly go Épuisé in one run before stock changes are held
-SELLER_GUARD = 0.25  # share of pages read that may newly go Épuisé because of the seller rule in one run
-SELLER_RULE = os.environ.get("SELLER_RULE", "0") == "1"  # off since 22 Oct (seller rule removed); SELLER_RULE=1 switches it back on
-EXEMPT_TAGS = set(os.environ.get(
-    "EXEMPT_TAGS", "sub:ch-accessoires,sub:mk-accessoires,sub:cp-accessoires,sub:bb-repas,sub:en-repas").split(","))
-VERIFIED = ("amazon", "brand", "allowlist")
+ODD_PAGES_MAX = 0.10  # more "listing removed / another item shown" pages than this share in one reader = a misread, not the truth
 PARK_TAG = "livraison-lente"  # draft + this tag = set aside for slow delivery, republished by this script
 OUT_TAG = "epuise-auto"  # draft + this tag = every variant Épuisé, hidden by park_soldout.py, republished when one is sellable again
+# Product tag "bloque" = no variant of this product is sold, whatever Amazon.ae says; "bloque:B0XXXXXXXX" = that variant only.
+# Added and removed by hand in Shopify (no code change needed). seller-hold.json is the same list kept in the repository.
+BLOCK_TAG = "bloque"
+SECOND_SOURCE_TAG = "source-2"  # product with a variant sold from its second source (supplier.fallback), see fallback_sync.py
+HOLD_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "seller-hold.json")
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
-ASIN_RE = re.compile(r"\b(?:AMZ-)?(B0[A-Z0-9]{8})\b")
-MONTHS = {m: i for i, m in enumerate(
-    ["january", "february", "march", "april", "may", "june", "july",
-     "august", "september", "october", "november", "december"], 1)}
 
 PRODUCTS_Q = """query($after:String,$q:String!){ products(first:50, after:$after, query:$q){
   pageInfo{hasNextPage endCursor}
-  nodes{ id handle vendor status tags
+  nodes{ id handle vendor status tags variantsCount{ count }
     ref: metafield(namespace:"internal", key:"supplier_ref"){value}
     spreadr: metafield(namespace:"global", key:"spreadr-asin"){value}
     weight: metafield(namespace:"internal", key:"weight_g"){value}
     variants(first:100){ nodes{ id title sku price inventoryPolicy
       range: metafield(namespace:"supplier", key:"delivery_range"){value}
+      state: metafield(namespace:"supplier", key:"sync_state"){value}
+      fallback: metafield(namespace:"supplier", key:"fallback"){value}
       inventoryItem{ measurement{ weight{ value unit } } } } } } } }"""
 PRICES_M = """mutation($p:ID!,$v:[ProductVariantsBulkInput!]!){
   productVariantsBulkUpdate(productId:$p, variants:$v){ userErrors{field message} } }"""
@@ -79,6 +95,21 @@ STATUS_M = """mutation($p:ProductUpdateInput!){productUpdate(product:$p){userErr
 TAGS_ADD_M = """mutation($id:ID!,$t:[String!]!){tagsAdd(id:$id, tags:$t){userErrors{field message}}}"""
 TAGS_REMOVE_M = """mutation($id:ID!,$t:[String!]!){tagsRemove(id:$id, tags:$t){userErrors{field message}}}"""
 META_M = """mutation($m:[MetafieldsSetInput!]!){metafieldsSet(metafields:$m){userErrors{field message}}}"""
+
+
+class LocationLost(RuntimeError):
+    """The pages no longer show the Dubai delivery address: their delivery dates are worth nothing."""
+
+
+def have_credentials():
+    """True when the Shopify credentials are set. In GitHub Actions their absence is a failure (a deleted or renamed secret
+    used to end every run "green" while nothing was checked); on a laptop the script just does nothing."""
+    if os.environ.get("SHOPIFY_STORE") and (os.environ.get("SHOPIFY_TOKEN") or os.environ.get("SHOPIFY_CLIENT_SECRET")):
+        return True
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        sys.exit("ALERTE: the Shopify secrets are missing in GitHub Actions: no control can run.")
+    print("No Shopify credentials set: nothing to do.")
+    return False
 
 
 def token():
@@ -120,20 +151,63 @@ def gql(query, variables):
         return res["data"]
 
 
-def load_variants():
+def iso(t):
+    return t.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def hours_since(text, now):
+    """Hours between an ISO time and now (negative when the time is in the future); a huge number when unreadable."""
+    try:
+        t = dt.datetime.fromisoformat(str(text).replace("Z", "+00:00"))
+    except ValueError:
+        return 1e9
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=dt.timezone.utc)
+    return (now - t).total_seconds() / 3600
+
+
+def read_state(meta):
+    """supplier.sync_state of a variant, the robot's memory between two runs:
+    "pend" {aed, t} = a price jump seen at t, waiting for a second reading; "src" / "src_t" = sold from its second source,
+    last confirmed at src_t; "cool" = not to be put back on sale before that time (an order just proved it unavailable)."""
+    try:
+        state = json.loads((meta or {}).get("value") or "{}")
+    except ValueError:
+        return {}
+    return state if isinstance(state, dict) else {}
+
+
+def load_hold_list():
+    """ASINs of seller-hold.json. A broken file stops the run (it used to crash every reader AFTER the reading)."""
+    if not os.path.exists(HOLD_FILE):
+        return set()
+    try:
+        asins = json.load(open(HOLD_FILE)).get("asins", [])
+        bad = [a for a in asins if not (isinstance(a, str) and ASIN_RE.fullmatch(a))]
+    except (ValueError, AttributeError) as e:
+        sys.exit(f"ALERTE: seller-hold.json cannot be read ({e}): nothing changed.")
+    if bad:
+        sys.exit(f"ALERTE: seller-hold.json holds entries that are not ASINs ({bad[:5]}): nothing changed.")
+    return set(asins)
+
+
+def load_variants(held=()):
     rows = []
     for search, parked in (("status:active", False),
                            (f"status:draft (tag:{PARK_TAG} OR tag:{OUT_TAG})", True)):
-        rows += load_rows(search, parked)
+        rows += load_rows(search, parked, held)
     return rows
 
 
-def load_rows(search, parked):
+def load_rows(search, parked, held=()):
     rows, after = [], None
     while True:
         data = gql(PRODUCTS_Q, {"after": after, "q": search})["products"]
         for p in data["nodes"]:
-            single = len(p["variants"]["nodes"]) == 1
+            total = ((p.get("variantsCount") or {}).get("count")) or len(p["variants"]["nodes"])
+            if total > len(p["variants"]["nodes"]):
+                print(f"::warning::{p['handle']} has {total} variants, only the first {len(p['variants']['nodes'])} are checked")
+            tags = {t.lower() for t in p.get("tags") or []}
             product_asin = None
             for src in (p.get("spreadr"), p.get("ref")):
                 m = src and ASIN_RE.search(src["value"])
@@ -141,8 +215,10 @@ def load_rows(search, parked):
                     product_asin = m.group(1)
                     break
             for v in p["variants"]["nodes"]:
+                if suppliers.is_other_source(v.get("sku")):
+                    continue  # MEDX- / PSAE- variants are read by their own sync
                 m = ASIN_RE.search(v.get("sku") or "")
-                asin = m.group(1) if m else (product_asin if single else None)
+                asin = m.group(1) if m else (product_asin if total == 1 else None)
                 if not asin:
                     continue
                 grams = None
@@ -154,12 +230,13 @@ def load_rows(search, parked):
                     if factor and w.get("value"):
                         grams = float(w["value"]) * factor
                 rows.append({"productId": p["id"], "handle": p["handle"], "vendor": p.get("vendor") or "",
-                             "exempt": bool(EXEMPT_TAGS & set(p.get("tags") or [])),
-                             "variantId": v["id"],
-                             "variant": v["title"], "asin": asin, "price": float(v["price"]),
-                             "policy": v["inventoryPolicy"], "grams": grams or DEFAULT_WEIGHT_G,
-                             "range": (v.get("range") or {}).get("value"),
-                             "parked": parked, "nvariants": len(p["variants"]["nodes"])})
+                             "variantId": v["id"], "variant": v["title"], "asin": asin, "price": float(v["price"]),
+                             "policy": v["inventoryPolicy"], "policy0": v["inventoryPolicy"],
+                             "grams": grams or DEFAULT_WEIGHT_G, "range": (v.get("range") or {}).get("value"),
+                             "state": read_state(v.get("state")),
+                             "fallback": ((v.get("fallback") or {}).get("value") or "").strip(),
+                             "blocked": BLOCK_TAG in tags or f"{BLOCK_TAG}:{asin.lower()}" in tags or asin in held,
+                             "parked": parked, "nvariants": total})
         if not data["pageInfo"]["hasNextPage"]:
             return rows
         after = data["pageInfo"]["endCursor"]
@@ -169,192 +246,30 @@ READER = None  # set to a browser_fetch.BrowserReader when FETCHER=browser
 
 
 def fetch(asin):
+    url = f"https://www.amazon.ae/dp/{asin}?language=en_AE"
     if READER:
-        return READER.get(f"https://www.amazon.ae/dp/{asin}?language=en_AE")
-    req = urllib.request.Request(f"https://www.amazon.ae/dp/{asin}?language=en_AE",
-                                 headers={"User-Agent": UA, "Accept-Language": "en-AE,en;q=0.9"})
-    with urllib.request.urlopen(req, timeout=30) as r:
-        return r.read().decode("utf-8", "replace")
-
-
-def days_until(text, today):
-    t = text.lower()
-    if t.startswith("today") or re.search(r"\b\d+\s*(hr|hrs|hour|hours|min|mins|minutes)\b", t):
-        return 0  # same day, including Amazon's "in 1 hr 30 mins" express delivery
-    found = re.findall(r"(\d{1,2})\s+([a-z]+)", t)
-    if not found and "tomorrow" in t:
-        return 1
-    if not found:
-        return None
-    day, month = found[-1]
-    month = next((full for full in MONTHS if len(month) >= 3 and full.startswith(month[:3])), None)  # "Oct" or "October"
-    if not month:
-        return None
-    d = dt.date(today.year, MONTHS[month], int(day))
-    if d < today:
-        d = dt.date(today.year + 1, MONTHS[month], int(day))
-    return (d - today).days
-
-
-def parse_price(html):
-    """AED price of the buy box, or None."""
-    i = html.find("apex-pricetopay-value")  # the price to pay; its a-offscreen text is often empty
-    if i >= 0:
-        w = re.search(r'a-price-whole">([\d,]+)', html[i:i + 600])
-        f = re.search(r'a-price-fraction">(\d+)', html[i:i + 800])
-        if w:
-            return float(w.group(1).replace(",", "") + "." + (f.group(1) if f else "0"))
-    for anchor in ('id="corePriceDisplay_desktop_feature_div"', 'id="corePrice_feature_div"',
-                   'id="corePrice_desktop"', 'id="apex_desktop"'):
-        i = html.find(anchor)
-        if i < 0:
-            continue
-        block = html[i:i + 6000]
-        m = re.search(r'a-offscreen">\s*(?:AED|د\.إ\.?)\s*&nbsp;?\s*([\d,]+\.?\d*)', block) or \
-            re.search(r'a-offscreen">[^<\d]*([\d,]+\.\d{2})', block)
-        if m:
-            return float(m.group(1).replace(",", ""))
-        w = re.search(r'a-price-whole">([\d,]+)', block)
-        if w:
-            f = re.search(r'a-price-fraction">(\d+)', block[w.end():w.end() + 200])
-            return float(w.group(1).replace(",", "") + "." + (f.group(1) if f else "0"))
-    m = re.search(r'"priceAmount":\s*([\d.]+)', html)
-    return float(m.group(1)) if m else None
-
-
-def free_delivery_options(block):
-    """Delivery dates of a buy box without the paid express options (data-csa-c-delivery-price="fastest" or an
-    amount): the free standard date is the one that counts. If only paid options exist, they are all returned."""
-    free, paid = [], []
-    for tag in re.findall(r"<[^>]*data-csa-c-delivery-time=[^>]*>", block):
-        t = re.search(r'data-csa-c-delivery-time="([^"]*)"', tag).group(1)
-        price = re.search(r'data-csa-c-delivery-price="([^"]*)"', tag)
-        price = price.group(1).strip().lower() if price else ""
-        (paid if price not in ("", "free") else free).append(t)
-    return free or paid
-
-
-def parse(html, today):
-    if 'id="productTitle"' not in html:  # blocked, empty or partial page: never read it as out of stock
-        return {"error": "captcha" if "captcha" in html.lower() else "no product page"}
-    avail = re.search(r'id="availability".*?</div>', html, re.S)
-    avail_text = re.sub(r"<[^>]+>|\s+", " ", avail.group(0)).strip() if avail else ""
-    price = parse_price(html)
-    in_stock = price is not None and not re.search(r"unavailable|out of stock", avail_text, re.I)
-    left = re.search(r"only\s+(\d+)\s+left in stock", avail_text, re.I)
-    # The buy box lists the standard date AND, when offered, a faster one ("Rush delivery Today by 3 PM",
-    # same-day or express); the fastest counts.
-    i = html.find('id="desktop_buybox"')
-    zone = html[i:i + 30000] if i >= 0 else html
-    options = free_delivery_options(zone)
-    scored = [(days_until(o, today), o) for o in options]
-    scored = [x for x in scored if x[0] is not None]
-    src, delivery = min(scored) if scored else (None, options[0] if options else None)
-    return {"aed": price, "inStock": in_stock, "availability": avail_text[:80], "seller": parse_seller(html),
-            "stockLeft": int(left.group(1)) if left else None, "deliveryText": delivery, "sourceDays": src, "storeDays": None if src is None else src + EXTRA_DAYS}
-
-
-def fetch_offers(asin):
-    """The "all offers" list of a listing (new condition)."""
-    url = (f"https://www.amazon.ae/gp/product/ajax/ref=dp_aod_NEW_mbc?asin={asin}&m=&qid=&smid=&sourcecja="
-           "&condition=NEW&experienceId=aodAjaxMain&pc=dp&language=en_AE")
+        return READER.get(url)
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept-Language": "en-AE,en;q=0.9"})
-    with urllib.request.urlopen(req, timeout=30) as r:
-        return r.read().decode("utf-8", "replace")
-
-
-def parse_offers(html, vendor, today):
-    """Fastest verified new offer (Amazon.ae, the brand, an authorised seller) in the offers list, or None."""
-    best = None
-    for block in html.split('id="aod-offer"')[1:]:
-        head = re.sub(r"<[^>]+>|\s+", " ", block[:3000])
-        if re.search(r"\b(used|renewed|refurbished)\b", head, re.I):
-            continue
-        m = re.search(r'id="aod-offer-soldBy".*?<a[^>]*>\s*([^<]+?)\s*</a>', block, re.S) or \
-            re.search(r'id="aod-offer-soldBy".*?class="a-size-small a-color-base">\s*([^<]+?)\s*<', block, re.S)
-        seller = m.group(1).strip(" .") if m else ""
-        if seller_class(seller, vendor) not in VERIFIED:
-            continue
-        pm = re.search(r'a-offscreen">\s*(?:AED|د\.إ\.?)\s*(?:&nbsp;)?\s*([\d,]+\.?\d*)', block)
-        scored = [(days_until(o, today), o) for o in free_delivery_options(block)]
-        scored = [x for x in scored if x[0] is not None]
-        if not pm or not scored:
-            continue
-        days, text = min(scored)
-        offer = {"aed": float(pm.group(1).replace(",", "")), "seller": seller, "sourceDays": days,
-                 "deliveryText": text, "storeDays": days + EXTRA_DAYS, "inStock": True}
-        if best is None or (offer["sourceDays"], offer["aed"]) < (best["sourceDays"], best["aed"]):
-            best = offer
-    return best
-
-
-def parse_seller(html):
-    """Name of the buy-box seller, or "" if not found."""
-    m = re.search(r'id="sellerProfileTriggerId"[^>]*>\s*([^<]+?)\s*<', html)
-    if m:
-        return m.group(1).strip(" .")
-    i = html.find('id="merchantInfoFeature_feature_div"')
-    block = re.sub(r"<[^>]+>|\s+", " ", html[i:i + 3000]) if i >= 0 else ""
-    return "Amazon.ae" if "Amazon.ae" in block else ""
-
-
-def allowlist():
-    """authorised-sellers.json next to this script: {"any_brand": ["seller", ...], "by_brand": {"brand": ["seller"]}}."""
     try:
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "authorised-sellers.json")) as f:
-            return json.load(f)
-    except (OSError, ValueError):
-        return {}
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return r.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        if e.code == 404:  # a removed listing: its body says so (amazon_page.gone_page)
+            return e.read().decode("utf-8", "replace")
+        raise
 
 
-ALLOW = allowlist()
-BRAND_STOP = {"the", "and", "paris", "beauty", "professional", "professionnel", "labs", "lab", "natural", "naturals",
-              "nutrition", "health", "care", "skin", "skincare", "hair", "baby", "kids", "products", "official"}
-
-
-def plain(text):
-    """Lower case, accents removed (L'Oréal -> l'oreal)."""
-    return unicodedata.normalize("NFKD", text or "").encode("ascii", "ignore").decode().strip().lower()
-
-
-def seller_class(seller, vendor):
-    """amazon / brand / allowlist (verified), third_party, or unknown when the page gave no seller name."""
-    s = plain(seller)
-    if not s:
-        return "unknown"
-    if "amazon" in s:
-        return "amazon"
-    v = plain(vendor)
-    tokens = [w for w in re.findall(r"[a-z0-9]+", v) if len(w) > 2 and w not in BRAND_STOP]
-    if tokens and tokens[0] in s:  # "Medicube Official Store", "CeraVe" ...
-        return "brand"
-    names = [plain(n) for n in ALLOW.get("any_brand", []) + ALLOW.get("by_brand", {}).get(v, [])]
-    if s in names:
-        return "allowlist"
-    return "third_party"
-
-
-def official(seller, vendor):
-    """Sold by Amazon itself, by the brand's own store or by an authorised seller."""
-    return seller_class(seller, vendor) in VERIFIED
-
-
-def seller_blocked(page, row):
-    """Authenticity rule: a non-verified seller is not sold (exempt: unbranded accessories)."""
-    return (SELLER_RULE and not row.get("exempt") and not page.get("error")
-            and seller_class(page.get("seller"), row["vendor"]) == "third_party")
-
-
-def sellable(page, row):
-    if page.get("held"):  # seller not confirmed authentic: stays Épuisé, see seller-hold.json
-        return False
-    days = page.get("sourceDays")
-    if seller_blocked(page, row):
-        return False
-    if low_stock(page):
-        return False
-    limit = MAX_DAYS if official(page.get("seller", ""), row["vendor"]) else MAX_DAYS_OTHER
-    return page["inStock"] and days is not None and days <= limit
+def read_page(asin):
+    """The page of an ASIN, with the offer to buy chosen (choose_offer). A page that shows another delivery city is not
+    used: the Dubai address is set again once, and the reading stops (LocationLost) if it still does not hold."""
+    page = parse(fetch(asin), dubai_today(), asin)
+    if page.get("error") == "location":
+        if READER:
+            READER.set_location()
+            page = parse(fetch(asin), dubai_today(), asin)
+        if page.get("error") == "location":
+            raise LocationLost(f"delivery location is '{page.get('location')}', not {amazon_page.CITY}")
+    return choose_offer(page)
 
 
 def low_stock(page):
@@ -363,44 +278,32 @@ def low_stock(page):
     return LOW_STOCK_MAX > 0 and left is not None and left <= LOW_STOCK_MAX
 
 
-def delivery_range(page):
+def sellable(page, row=None):
+    """Can this offer be bought now and reach Dubai in time? The seller's name plays no part."""
+    if page.get("error") or page.get("held") or page.get("gone") or page.get("redirect"):
+        return False
+    if low_stock(page):
+        return False
     days = page.get("sourceDays")
-    return "standard" if days is not None and days <= STANDARD_DAYS else "3-10"
+    return bool(page.get("inStock")) and days is not None and days <= MAX_DAYS
 
 
-def delivery_eta(page):
-    """Delivery in Djibouti as "a-b" days: days to Dubai + 2 to 3 days of forwarding."""
-    days = page["sourceDays"]
-    return f"{days + FORWARD_DAYS[0]}-{days + FORWARD_DAYS[1]}"
+def choose_offer(page):
+    """Some buy boxes list several offers (two sellers, each with its price, stock and date). The first one that can be
+    sold is the one we would buy; without any, the featured offer describes the page."""
+    if page.get("error") or page.get("gone") or page.get("redirect"):
+        return page
+    for k, offer in enumerate(page.get("offers") or []):
+        chosen = {**page, **offer, "offer": k}
+        if sellable(chosen):
+            return chosen
+    return page
 
 
-HIDE_EVERY = 50  # pages between two "hide what is unavailable now" passes
-
-
-def hide_unavailable(rows, pages, dry):
-    """Épuisé straight away for the variants whose page, read so far, says they cannot be bought, instead of waiting
-    for the end of the run. Only ever hides (prices and put-back-on-sale wait for the end). Same rules and the same
-    guard as the final pass: no change when the page has no delivery date or when too much of what was read looks
-    unavailable (probably a misread)."""
-    if dry or PRICES_ONLY:
-        return
-    live = [r for r in rows if not r["parked"] and pages.get(r["asin"]) and not pages[r["asin"]].get("error")]
-    out = [r for r in live if r["policy"] == "CONTINUE" and not (NO_DATE_KEEPS and pages[r["asin"]].get("inStock")
-           and pages[r["asin"]].get("sourceDays") is None and not pages[r["asin"]].get("held"))
-           and not sellable(pages[r["asin"]], r)]
-    if len(live) < 20 or len(out) > STOCK_GUARD * len(live):
-        return
-    by_product = {}
-    for r in out:
-        by_product.setdefault(r["productId"], []).append({"id": r["variantId"], "inventoryPolicy": "DENY"})
-    for pid, ups in by_product.items():
-        errs = gql(PRICES_M, {"p": pid, "v": ups})["productVariantsBulkUpdate"]["userErrors"]
-        if errs:
-            print("hide error:", pid, errs)
-    for r in out:
-        r["policy"] = "DENY"
-    if out:
-        print(f"{len(out)} variants set to Épuisé right away ({time.strftime('%H:%M:%S')})", flush=True)
+def cost_of(page):
+    """What the item costs us in Dubai: its price, plus the delivery fee when no free delivery exists."""
+    fee = page.get("deliveryFee") or 0.0
+    return page["aed"] + (fee if INCLUDE_DELIVERY_FEE else 0.0)
 
 
 def formula(aed, grams):
@@ -408,300 +311,439 @@ def formula(aed, grams):
     return int(math.ceil(fdj / 50) * 50)
 
 
+def guard_price(old, new, aed, state, now):
+    """(price to set or None, "rise" / "drop" when the change is held, new state).
+    A jump beyond the limits is not applied at once: the amount and the time are remembered ("pend") and the change goes
+    through when a reading at least PRICE_CONFIRM_HOURS later gives the same amount. Normal changes clear the memory."""
+    rest = {k: v for k, v in state.items() if k != "pend"}
+    if not old or old <= 0:
+        return new, None, rest
+    kind = "rise" if new > old * (1 + MAX_CHANGE) else "drop" if new < old * (1 - PRICE_DROP_MAX) else None
+    if not kind:
+        return new, None, rest
+    pend = state.get("pend") if isinstance(state.get("pend"), dict) else {}
+    same = bool(pend.get("aed")) and abs(pend["aed"] - aed) <= 0.05 * aed
+    if same and hours_since(pend.get("t"), now) >= PRICE_CONFIRM_HOURS:
+        return new, None, rest
+    if same:
+        return None, kind, dict(state)
+    return None, kind, {**rest, "pend": {"aed": round(aed, 2), "t": iso(now)}}
+
+
+def no_date(page):
+    """In stock without a delivery date, in the old "leave it as it is" mode (NO_DATE_KEEPS=1)."""
+    return NO_DATE_KEEPS and bool(page.get("inStock")) and page.get("sourceDays") is None and not page.get("held")
+
+
+def plain(text):
+    """Lower case, accents removed (L'Oréal -> l'oreal)."""
+    return unicodedata.normalize("NFKD", text or "").encode("ascii", "ignore").decode().strip().lower()
+
+
+def seller_class(seller, vendor):
+    """amazon / brand / third_party, or unknown when the page gave no seller name. For information only."""
+    s = plain(seller)
+    if not s:
+        return "unknown"
+    if "amazon" in s:
+        return "amazon"
+    tokens = [w for w in re.findall(r"[a-z0-9]+", plain(vendor)) if len(w) > 2]
+    return "brand" if tokens and tokens[0] in s else "third_party"
+
+
+def same_name(variant, variation):
+    """True when the option shown by Amazon.ae and our variant name share their words (report only, never hides)."""
+    a, b = (set(re.findall(r"[a-z0-9]+", plain(x))) for x in (variant, variation))
+    return not a or not b or a <= b or b <= a or variant == "Default Title"
+
+
+def eta_of(days):
+    """Delivery in Djibouti as "a-b" days: days to Dubai + 2 to 3 days of forwarding."""
+    return f"{days + FORWARD_DAYS[0]}-{days + FORWARD_DAYS[1]}"
+
+
+def delivery_eta(page):
+    return eta_of(page["sourceDays"])
+
+
+def delivery_range(page):
+    days = page.get("sourceDays")
+    return "standard" if days is not None and days <= STANDARD_DAYS else "3-10"
+
+
+HIDE_EVERY = 50  # pages between two "hide what is unavailable now" passes
+
+
+def hide_unavailable(rows, pages, dry, hidden):
+    """Épuisé straight away for the variants whose page, read so far, says they cannot be bought, instead of waiting
+    for the end of the run. Only ever hides (prices and put-back-on-sale wait for the end). Not hidden here: a variant
+    with a second source (the end of the run decides), a page in stock without a date (often a page that did not finish
+    loading: it is read again first). The guard counts everything hidden since the start of the run, so a reading that
+    goes wrong slowly cannot empty the shop 50 pages at a time. hidden = ids of the variants hidden so far (updated)."""
+    if dry or PRICES_ONLY:
+        return
+    live = [r for r in rows if not r["parked"] and pages.get(r["asin"]) and not pages[r["asin"]].get("error")]
+    out = [r for r in live if r["policy"] == "CONTINUE" and not r["fallback"]
+           and not (pages[r["asin"]].get("inStock") and pages[r["asin"]].get("sourceDays") is None)
+           and not sellable(pages[r["asin"]])]
+    if len(live) < 20 or len(hidden) + len(out) > STOCK_GUARD * len(live):
+        return
+    by_product = {}
+    for r in out:
+        by_product.setdefault(r["productId"], []).append(r)
+    done = 0
+    for pid, mine in by_product.items():
+        errs = gql(PRICES_M, {"p": pid, "v": [{"id": r["variantId"], "inventoryPolicy": "DENY"} for r in mine]}
+                   )["productVariantsBulkUpdate"]["userErrors"]
+        if errs:
+            print("hide error:", pid, errs)
+            continue
+        for r in mine:
+            r["policy"] = "DENY"
+            hidden.add(r["variantId"])
+            done += 1
+    if done:
+        print(f"{done} variants set to Épuisé right away ({time.strftime('%H:%M:%S')})", flush=True)
+
+
+def plan(rows, pages, now, fetch_other=None, hidden=(), prices_only=False):
+    """What to do with every variant whose page was read. No side effect: (decisions, info).
+    A decision = {"r": row, "page", "sell", "src" ("amazon" or the second-source reference), "cost" (AED), "days" (to
+    Dubai), "policy", "price" (to set, or None), "hold" ("rise"/"drop": price jump waiting for a confirmation), "state",
+    "applied" (False = nothing is written for this variant: stock guard, prices-only run, page without a date in the old
+    mode, second source that could not be read)}. fetch_other(module, slug) reads a second source (None = never)."""
+    hidden, others, decisions = set(hidden), {}, []
+    for r in rows:
+        page = pages.get(r["asin"])
+        if not page or page.get("error"):
+            continue
+        state = dict(r["state"])
+        cooling = bool(state.get("cool")) and hours_since(state["cool"], now) < 0
+        if state.get("cool") and not cooling:
+            state.pop("cool")
+        d = {"r": r, "page": page, "sell": False, "src": "amazon", "cost": None, "days": None, "price": None,
+             "hold": None, "wait": False}
+        if r["blocked"] or cooling:
+            pass
+        elif sellable(page):
+            d.update(sell=True, cost=cost_of(page), days=page["sourceDays"])
+        elif r["fallback"] and fetch_other:
+            mod, slug, _ = suppliers.module_of(r["fallback"])
+            if mod:
+                if (mod, slug) not in others:
+                    others[(mod, slug)] = fetch_other(mod, slug)
+                other = others[(mod, slug)]
+                using = r["policy"] == "CONTINUE" and state.get("src") == r["fallback"]
+                if other.get("error"):
+                    d["wait"] = using  # sold from it and unreadable right now: fallback_sync.py decides, not this run
+                elif mod.sellable(other, using):
+                    d.update(sell=True, src=r["fallback"], cost=other["aed"], days=mod.DUBAI_DAYS)
+        if d["sell"]:
+            new = formula(d["cost"], r["grams"])
+            if r["parked"] or abs(new - r["price"]) >= 50:  # a republished product always gets a fresh price
+                d["price"], d["hold"], state = guard_price(r["price"], new, d["cost"], state, now)
+            else:
+                state.pop("pend", None)
+            if d["hold"] == "rise":  # the real cost is unknown until the second reading: not sold meanwhile
+                d["sell"] = False
+        if d["sell"] and d["src"] != "amazon":
+            state["src"], state["src_t"] = d["src"], iso(now)
+        else:
+            state.pop("src", None)
+            state.pop("src_t", None)
+        d["policy"], d["state"] = ("CONTINUE" if d["sell"] else "DENY"), state
+        decisions.append(d)
+    # Safety net: if too many variants would newly go Épuisé in one run (counting those already hidden during the
+    # reading), the page reading is probably off (wrong location, blocking): nothing is written for this reader, not even
+    # the "verified" stamp, so the coverage check reads these variants again and hides what stays unverified.
+    live = [d for d in decisions if not d["r"]["parked"]]
+    newly_out = [d for d in live if (d["r"]["policy"] == "CONTINUE" or d["r"]["variantId"] in hidden)
+                 and not d["sell"] and not d["r"]["blocked"] and not no_date(d["page"])]
+    guard = len(live) >= 20 and len(newly_out) > STOCK_GUARD * len(live)
+    for d in decisions:
+        d["applied"] = not (prices_only or guard or d["wait"] or no_date(d["page"]))
+        if prices_only:  # prices only: the stock setting stays, a price is set only on what is on sale and sellable
+            if not (d["sell"] and d["r"]["policy"] == "CONTINUE"):
+                d["price"] = None
+            d["policy"] = d["r"]["policy"]
+    revive = {d["r"]["productId"] for d in decisions if d["r"]["parked"] and d["applied"] and d["policy"] == "CONTINUE"}
+    return decisions, {"guard": guard, "live": len(live), "newlyOut": len(newly_out), "revive": revive}
+
+
+def read_all(asins, rows, dry, hidden, delay):
+    """Reads the pages one by one, slowly. Returns (pages, why the reading stopped early or None)."""
+    pages, blocked, stopped = {}, 0, None
+    for n, asin in enumerate(asins, 1):
+        try:
+            pages[asin] = read_page(asin)
+        except Exception as e:  # network error, browser error
+            if type(e).__name__ == "LocationLost":
+                stopped = f"{e}: stopped after {n - 1} of {len(asins)} pages, the rest is left unchanged"
+                break
+            pages[asin] = {"error": str(e)[:100] or type(e).__name__}
+        blocked = blocked + 1 if pages[asin].get("error") == "captcha" else 0
+        if blocked:  # Amazon asked for a CAPTCHA: back off for a while instead of insisting
+            time.sleep(60 + random.uniform(0, 60))
+        if blocked >= 5:
+            stopped = f"Amazon.ae is showing CAPTCHAs: stopped after {n} of {len(asins)} pages, the rest is left unchanged"
+            break
+        if n % HIDE_EVERY == 0:
+            hide_unavailable(rows, pages, dry, hidden)
+        if n % 25 == 0:
+            bad = sum(1 for p in pages.values() if p.get("error"))
+            print(f"{n}/{len(asins)} pages read, {bad} not read ({time.strftime('%H:%M:%S')})", flush=True)
+        time.sleep(delay + random.uniform(0, delay / 2))
+
+    # Second chance, slowly, for the pages not read (error, CAPTCHA), read in stock without a delivery date (often a page
+    # that did not finish loading) or read as removed / replaced (a serious verdict: it is checked twice).
+    def unclear(p):
+        return p.get("error") or p.get("gone") or p.get("redirect") or (p.get("inStock") and p.get("sourceDays") is None)
+
+    if not stopped:
+        again = [a for a, p in pages.items() if unclear(p)][:RETRY_MAX]
+        if again:
+            print(f"Reading {len(again)} pages again (not read, no delivery date, removed or replaced)", flush=True)
+        fixed, blocked = 0, 0
+        for asin in again:
+            time.sleep(2 * delay + random.uniform(0, delay))
+            try:
+                pg = read_page(asin)
+            except Exception as e:
+                if type(e).__name__ == "LocationLost":
+                    stopped = f"{e}: stopped during the second reading"
+                    break
+                continue
+            if pg.get("error") == "captcha":
+                blocked += 1
+                if blocked >= 3:
+                    break
+                time.sleep(60 + random.uniform(0, 60))
+                continue
+            blocked = 0
+            if not pg.get("error") and (not unclear(pg) or pages[asin].get("error")
+                                        or (pages[asin].get("inStock") and not pg.get("inStock"))):
+                pages[asin] = pg
+                fixed += 1
+        if again:
+            print(f"Second read: {fixed} of {len(again)} pages now read with a clear answer", flush=True)
+    # Many "removed" or "another item" pages at once is how a block or a broken layout looks, not what Amazon.ae sells.
+    odd = [a for a, p in pages.items() if p.get("gone") or p.get("redirect")]
+    readable = sum(1 for p in pages.values() if not p.get("error"))
+    if len(odd) > max(5, ODD_PAGES_MAX * readable):
+        print(f"::warning::{len(odd)} of {readable} pages read as removed or replaced: taken as a misread, left unchanged")
+        for a in odd:
+            pages[a] = {"error": "removed/replaced pages in bulk (misread?)"}
+    return pages, stopped
+
+
+def start_browser():
+    """A headless browser set to the Dubai address: up to 3 tries, whatever goes wrong (address, CAPTCHA, a crash)."""
+    global READER
+    import browser_fetch
+    for attempt in range(1, 4):
+        reader = browser_fetch.BrowserReader()
+        try:
+            READER = reader.start()
+            break
+        except Exception as e:
+            try:
+                reader.close()
+            except Exception:
+                pass
+            if attempt == 3:
+                sys.exit(f"ALERTE: the browser could not start on Amazon.ae with a Dubai address ({type(e).__name__}: "
+                         f"{str(e)[:120]}), 3 tries: nothing changed.")
+            print(f"Browser not ready ({type(e).__name__}: {str(e)[:120]}), try {attempt} of 3: again in a minute", flush=True)
+            time.sleep(45 + random.uniform(0, 30))
+    print("Browser reader started, delivery location:", READER.location_text())
+
+
+def field(owner, key, kind, value, namespace="supplier"):
+    return {"ownerId": owner, "namespace": namespace, "key": key, "type": kind, "value": value}
+
+
 def main():
-    global SELLER_RULE
-    if not (os.environ.get("SHOPIFY_STORE") and (os.environ.get("SHOPIFY_TOKEN") or os.environ.get("SHOPIFY_CLIENT_SECRET"))):
-        print("No Shopify credentials set: nothing to do.")
+    if not have_credentials():
         return
     if not (MARGIN_CUSTOMS and SHIPPING_AED_PER_KG and AED_TO_FDJ):
-        sys.exit("PRICE_FORMULA secret is missing or malformed.")
-    outdir = sys.argv[1]
+        sys.exit("ALERTE: PRICE_FORMULA secret is missing or malformed: nothing changed.")
+    outdir = sys.argv[1] if len(sys.argv) > 1 else "results"
     os.makedirs(outdir, exist_ok=True)
     dry = os.environ.get("DRY_RUN") == "1"
     delay = float(os.environ.get("DELAY", "8"))
-    today = dt.datetime.now(dt.timezone(dt.timedelta(hours=4))).date()  # Amazon.ae dates are Dubai dates (UTC+4)
-    now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    rows = load_variants()
-    asins = sorted({r["asin"] for r in rows})
+    now_t = dt.datetime.now(dt.timezone.utc)
+    now = iso(now_t)
+    held = load_hold_list()
+    rows = load_variants(held)
+    by_asin = {}
+    for r in rows:
+        by_asin.setdefault(r["asin"], []).append(r)
+    asins = sorted(by_asin)
     if os.environ.get("LIMIT"):
         n_max = int(os.environ["LIMIT"])  # an evenly spread sample, not just the first ASINs
         asins = asins[::max(1, len(asins) // n_max)][:n_max]
     if os.environ.get("ONLY_ASINS"):  # a retry pass: only these ASINs (comma-separated), see coverage.py
         wanted = set(os.environ["ONLY_ASINS"].split(","))
         asins = [a for a in asins if a in wanted]
-    if os.environ.get("SHARD"):  # "i/n": this process reads only every n-th ASIN, starting at i (parallel runs)
+    if os.environ.get("SHARD"):  # "i/n": a stable share of the ASINs, so adding a product does not reshuffle the readers
         i, n = (int(x) for x in os.environ["SHARD"].split("/"))
-        asins = asins[i::n]
-    print(f"{len(rows)} variants with an ASIN, {len(asins)} Amazon pages to read")
-    global READER
+        asins = [a for a in asins if zlib.crc32(a.encode()) % n == i]
+    # Blocked variants (tag "bloque", seller-hold.json): Épuisé first, before any reading, and their page is not read.
+    skip = {a for a in asins if all(r["blocked"] for r in by_asin[a])}
+    block_now = [r for a in skip for r in by_asin[a] if r["policy"] == "CONTINUE"]
+    if block_now and not dry and not PRICES_ONLY:
+        for r in block_now:
+            errs = gql(PRICES_M, {"p": r["productId"], "v": [{"id": r["variantId"], "inventoryPolicy": "DENY"}]}
+                       )["productVariantsBulkUpdate"]["userErrors"]
+            if errs:
+                print("block error:", r["handle"], errs)
+            else:
+                r["policy"] = "DENY"
+    asins = [a for a in asins if a not in skip]
+    print(f"{len(rows)} variants with an ASIN, {len(asins)} Amazon pages to read, {len(skip)} blocked by hand "
+          f"({len(block_now)} of them were on sale)")
     if os.environ.get("FETCHER") == "browser":  # real headless browser set to a Dubai delivery address
-        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # python -I does not add the script folder
-        import browser_fetch
-        for attempt in range(1, 4):  # the Dubai address sometimes does not take on the first try: up to 3 tries
-            reader = browser_fetch.BrowserReader()
-            try:
-                READER = reader.start()
-                break
-            except (browser_fetch.LocationLost, browser_fetch.Captcha) as e:
-                reader.close()
-                if attempt == 3:
-                    sys.exit(f"Browser could not start on Amazon.ae with a Dubai address ({e}), 3 tries: nothing changed.")
-                print(f"Dubai address not set ({e}), try {attempt} of 3: trying again in a minute", flush=True)
-                time.sleep(45 + random.uniform(0, 30))
-        print("Browser reader started, delivery location:", READER.location_text())
-
-    vendor_of = {r["asin"]: r["vendor"] for r in rows}
-    exempt_asin = {r["asin"] for r in rows if r["exempt"]}
-    pages, blocked_in_a_row = {}, 0
+        start_browser()
     if os.environ.get("SHARD"):  # parallel readers do not all start at the same second
         time.sleep(random.uniform(0, 60))
-    for n, asin in enumerate(asins, 1):
-        try:
-            pages[asin] = parse(fetch(asin), today)
-            pg = pages[asin]
-            if (SELLER_RULE and asin not in exempt_asin and not pg.get("error")
-                    and seller_class(pg.get("seller"), vendor_of[asin]) == "third_party"):
-                time.sleep(delay)
-                try:  # the buy box is a third party: look for an Amazon.ae / brand / authorised offer instead
-                    alt = parse_offers(fetch_offers(asin), vendor_of[asin], today)
-                except Exception:
-                    alt = None
-                if alt:
-                    pg["buyBoxSeller"] = pg["seller"]
-                    pg.update(alt)
-        except Exception as e:  # network error, 404 = listing removed
-            if READER and type(e).__name__ == "LocationLost":
-                print(f"{e}: stopping after {n - 1} pages, rest left unchanged")
-                break
-            pages[asin] = {"error": str(e)[:100]}
-        blocked_in_a_row = blocked_in_a_row + 1 if pages[asin].get("error") == "captcha" else 0
-        if blocked_in_a_row:  # Amazon asked for a CAPTCHA: back off for a while instead of insisting
-            time.sleep(60 + random.uniform(0, 60))
-        if blocked_in_a_row >= 5:
-            print(f"Amazon is showing CAPTCHAs: stopping after {n} pages, rest left unchanged")
-            break
-        if n % HIDE_EVERY == 0:
-            hide_unavailable(rows, pages, dry)
-        if n % 25 == 0:
-            bad = sum(1 for p in pages.values() if p.get("error"))
-            print(f"{n}/{len(asins)} pages read, {bad} not read ({time.strftime('%H:%M:%S')})", flush=True)
-        time.sleep(delay + random.uniform(0, delay / 2))
+    hidden = set()
+    try:
+        pages, stopped = read_all(asins, rows, dry, hidden, delay)
+    finally:
+        if READER:
+            READER.close()
 
-    # Second chance, slowly, for the pages not read (error, CAPTCHA) or read in stock without a delivery date
-    # (often a page that did not finish loading): one more read each; the better result is kept.
-    if not (blocked_in_a_row >= 5):
-        again = [a for a, p in pages.items()
-                 if p.get("error") or (p.get("inStock") and p.get("sourceDays") is None)][:RETRY_MAX]
-        if again:
-            print(f"Reading {len(again)} pages again (not read or no delivery date)", flush=True)
-        fixed, blocked_in_a_row = 0, 0
-        for asin in again:
-            time.sleep(2 * delay + random.uniform(0, delay))
-            try:
-                pg = parse(fetch(asin), today)
-            except Exception as e:
-                if READER and type(e).__name__ == "LocationLost":
-                    break
-                continue
-            if pg.get("error") == "captcha":
-                blocked_in_a_row += 1
-                if blocked_in_a_row >= 3:
-                    break
-                time.sleep(60 + random.uniform(0, 60))
-                continue
-            blocked_in_a_row = 0
-            if not pg.get("error") and (pages[asin].get("error") or pg.get("sourceDays") is not None
-                                        or not pg.get("inStock")):
-                pages[asin] = pg
-                fixed += 1
-        if again:
-            print(f"Second read: {fixed} of {len(again)} pages now read with a clear answer", flush=True)
-
-    if READER:
-        READER.close()
-    hold_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "seller-hold.json")
-    held = set(json.load(open(hold_file)).get("asins", [])) if os.path.exists(hold_file) else set()
-    for asin in held & set(pages):
-        pages[asin]["held"] = True
-    report = {"checkedAt": now, "dryRun": dry, "changes": [], "skipped": [], "errors": [],
-              "republished": [], "stillParked": [], "parkedNow": [], "sellerFlags": [], "sellerGuardTripped": False}
-    by_product, range_fields = {}, []
-    # seller rule guard: too many new Épuisé because of the seller alone = probably a misread page
-    read = [r for r in rows if pages.get(r["asin"]) and not pages[r["asin"]].get("error")]
-    newly = [r for r in read if r["policy"] == "CONTINUE" and seller_blocked(pages[r["asin"]], r)]
-    if SELLER_RULE and len(read) >= 20 and len(newly) > SELLER_GUARD * len(read):
-        report["sellerGuardTripped"] = True
-        print(f"Seller rule not applied: {len(newly)} of {len(read)} variants would newly go Épuisé (guard {SELLER_GUARD:.0%}).")
-        flagged_rule, SELLER_RULE = True, False
-    else:
-        flagged_rule = False
-    for r in read:
-        pg = pages[r["asin"]]
-        cls = seller_class(pg.get("seller"), r["vendor"])
-        if cls == "third_party" or pg.get("buyBoxSeller"):
-            report["sellerFlags"].append({
-                "handle": r["handle"], "variant": r["variant"], "asin": r["asin"], "vendor": r["vendor"],
-                "seller": pg.get("buyBoxSeller") or pg.get("seller"), "class": cls, "aed": pg.get("aed"),
-                "days": pg.get("sourceDays"),
-                "action": ("exempt (accessoire)" if r["exempt"] else
-                           "offre officielle trouvée: " + pg["seller"] if pg.get("buyBoxSeller") else
-                           "signalé seulement (garde-fou)" if flagged_rule else "Épuisé")})
-    # Safety nets: a page in stock with no delivery date (location not read, partial page) says nothing about
-    # delivery, so the variant keeps its current setting; and if too many variants would newly go Épuisé in
-    # one run, the page reading is probably off (wrong location, blocking): no stock change is made at all.
-    def no_date(p):
-        return NO_DATE_KEEPS and bool(p.get("inStock")) and p.get("sourceDays") is None and not p.get("held")
-
-    live = [r for r in rows if not r["parked"] and pages.get(r["asin"]) and not pages[r["asin"]].get("error")]
-    newly_out = [r for r in live if r["policy"] == "CONTINUE" and not no_date(pages[r["asin"]])
-                 and not sellable(pages[r["asin"]], r)]
-    stock_guard = len(live) >= 20 and len(newly_out) > STOCK_GUARD * len(live)
-    report["stockGuardTripped"] = stock_guard
-    report["noDeliveryDate"] = sum(no_date(pages[r["asin"]]) for r in live)
-    report["lowStock"] = sum(low_stock(pages[r["asin"]]) for r in live)
-    if stock_guard:
-        print(f"Stock guard: {len(newly_out)} of {len(live)} variants would newly go Épuisé, no stock change made.")
-    # set-aside (draft) products come back as soon as one of their variants is sellable
-    revive = {r["productId"] for r in rows if r["parked"] and pages.get(r["asin"]) and not PRICES_ONLY
-              and not pages[r["asin"]].get("error") and sellable(pages[r["asin"]], r)}
+    decisions, info = plan(rows, pages, now_t, fetch_other=lambda mod, slug: mod.fetch(slug), hidden=hidden,
+                           prices_only=PRICES_ONLY)
+    revive = info["revive"]
+    report = {"checkedAt": now, "dryRun": dry, "shard": os.environ.get("SHARD"), "pagesAsked": len(asins),
+              "pagesRead": sum(1 for p in pages.values() if not p.get("error")), "changes": [], "skipped": [],
+              "errors": [], "republished": [], "stillParked": [], "gone": [], "redirected": [], "secondSource": [],
+              "nameMismatch": [], "blocked": len(skip), "hiddenDuringRun": len(hidden),
+              "stockGuardTripped": info["guard"], "stoppedEarly": stopped}
     for r in rows:
         page = pages.get(r["asin"])
-        if not page:
-            continue
-        if r["parked"] and r["productId"] not in revive:
-            if page.get("error"):
-                report["errors"].append({"asin": r["asin"], "handle": r["handle"], "error": page["error"]})
-            else:
-                report["stillParked"].append({"handle": r["handle"], "asin": r["asin"], "aed": page["aed"],
-                                              "inStock": page["inStock"], "seller": page["seller"],
-                                              "delivery": page["deliveryText"], "days": page["sourceDays"]})
-            continue
-        if page.get("error"):
+        if page and page.get("error"):
             report["errors"].append({"asin": r["asin"], "handle": r["handle"], "error": page["error"]})
-            continue
-        range_fields.append({"ownerId": r["variantId"], "namespace": "supplier", "key": "variant_checked_at",
-                             "type": "date_time", "value": now})  # this variant's page was read: coverage.py checks it
+    if info["guard"]:
+        print(f"Stock guard: {info['newlyOut']} of {info['live']} variants would newly go Épuisé, no stock change made.")
+    by_product, stamps, agg, second = {}, {}, {}, set()
+    for d in decisions:
+        r, page = d["r"], d["page"]
+        who = {"handle": r["handle"], "variant": r["variant"], "asin": r["asin"]}
+        if page.get("gone"):
+            report["gone"].append(who)
+        if page.get("redirect"):
+            report["redirected"].append({**who, "shows": page["redirect"]})
+        if page.get("variation") and r["nvariants"] > 1 and not same_name(r["variant"], page["variation"]):
+            report["nameMismatch"].append({**who, "amazon": page["variation"]})
+        if r["parked"] and r["productId"] not in revive:
+            report["stillParked"].append({**who, "aed": page.get("aed"), "inStock": page.get("inStock"),
+                                          "delivery": page.get("deliveryText"), "days": page.get("sourceDays")})
+        if d["hold"]:
+            report["skipped"].append({**who, "aed": d["cost"], "now": r["price"], "formula": formula(d["cost"], r["grams"]),
+                                      "kind": d["hold"]})
         upd = {"id": r["variantId"]}
-        if PRICES_ONLY or stock_guard or no_date(page):
-            new_policy = r["policy"]
-        else:
-            new_policy = "CONTINUE" if sellable(page, r) else "DENY"
-        if new_policy != r["policy"]:
-            upd["inventoryPolicy"] = new_policy
-        if page["aed"] is not None and new_policy == "CONTINUE" and (page["inStock"] or not PRICES_ONLY):
-            new = formula(page["aed"], r["grams"])
-            if r["parked"] or abs(new - r["price"]) >= 50:  # a republished product always gets a fresh price
-                if r["price"] and abs(new - r["price"]) / r["price"] > MAX_CHANGE:
-                    report["skipped"].append({"handle": r["handle"], "variant": r["variant"], "asin": r["asin"],
-                                              "aed": page["aed"], "now": r["price"], "formula": new})
-                else:
-                    upd["price"] = str(new)
+        if d["price"] is not None and (d["applied"] or PRICES_ONLY):
+            upd["price"] = str(d["price"])
+        if d["applied"]:
+            # DENY is sent even when the variant already looked Épuisé: another run may have put it back meanwhile
+            if d["policy"] != r["policy"] or d["policy"] == "DENY":
+                upd["inventoryPolicy"] = d["policy"]
+            mine = stamps.setdefault(r["productId"], [])
+            mine.append(field(r["variantId"], "variant_checked_at", "date_time", now))  # coverage.py checks it
+            if d["state"] != r["state"]:
+                mine.append(field(r["variantId"], "sync_state", "json", json.dumps(d["state"], separators=(",", ":"))))
+            if d["policy"] == "CONTINUE":
+                mine.append(field(r["variantId"], "delivery_eta", "single_line_text_field", eta_of(d["days"])))
+                rng = "standard" if d["days"] <= STANDARD_DAYS else "3-10"
+                if rng != r["range"]:
+                    mine.append(field(r["variantId"], "delivery_range", "single_line_text_field", rng))
+                if d["src"] != "amazon":
+                    second.add(r["productId"])
+                    report["secondSource"].append({**who, "source": d["src"], "aed": d["cost"]})
+            agg.setdefault(r["productId"], []).append(d)
+        changed = {k: v for k, v in upd.items() if k == "price" or (k == "inventoryPolicy" and v != r["policy0"])}
+        if changed:
+            report["changes"].append({**who, "aed": d["cost"] if d["cost"] is not None else page.get("aed"),
+                                      "oldPrice": r["price"], **changed})
         if len(upd) > 1:
-            report["changes"].append({"handle": r["handle"], "variant": r["variant"], "asin": r["asin"],
-                                      "aed": page["aed"], "oldPrice": r["price"], **upd})
             by_product.setdefault(r["productId"], []).append(upd)
-        if new_policy == "CONTINUE" and page.get("sourceDays") is not None and not PRICES_ONLY:
-            range_fields.append({"ownerId": r["variantId"], "namespace": "supplier", "key": "delivery_eta",
-                                 "type": "single_line_text_field", "value": delivery_eta(page)})
-            rng = delivery_range(page)
-            if rng != r["range"]:
-                range_fields.append({"ownerId": r["variantId"], "namespace": "supplier", "key": "delivery_range",
-                                     "type": "single_line_text_field", "value": rng})
-                report["changes"].append({"handle": r["handle"], "variant": r["variant"], "asin": r["asin"],
-                                          "deliveryRange": rng})
-        agg = by_product.setdefault(("meta", r["productId"]), [])
-        agg.append({**page, "ok": new_policy == "CONTINUE", "sellerClass": seller_class(page.get("seller"), r["vendor"])})
 
-    # ACTIVE products whose variants are all in stock but too slow: optionally set aside instead of Épuisé
-    if os.environ.get("SLOW_TO_DRAFT") == "1":
-        for pid in {r["productId"] for r in rows if not r["parked"]}:
-            mine = [r for r in rows if r["productId"] == pid]
-            ps = [pages.get(r["asin"]) for r in mine]
-            if (len(mine) == mine[0]["nvariants"] and all(p and not p.get("error") for p in ps)
-                    and all(p["inStock"] and not sellable(p, r) for p, r in zip(ps, mine))):
-                report["parkedNow"].append({"handle": mine[0]["handle"], "asin": mine[0]["asin"],
-                                            "delivery": ps[0]["deliveryText"], "seller": ps[0]["seller"]})
-
-    errors = 0
+    errors, failed = 0, set()
     if not dry:
         for pid, ups in by_product.items():
-            if isinstance(pid, tuple):
-                continue
             res = gql(PRICES_M, {"p": pid, "v": ups})["productVariantsBulkUpdate"]["userErrors"]
-            errors += len(res)
-            for e in res:
-                print("price/stock error:", pid, e)
-        fields = []
-        for key, plist in by_product.items():
-            if not isinstance(key, tuple):
+            if res:  # nothing of this product was written: it must not be stamped "verified"
+                failed.add(pid)
+                errors += len(res)
+                print("price/stock error:", pid, res)
+        fields = [f for pid, fs in stamps.items() if pid not in failed for f in fs]
+        for pid, ds in agg.items():
+            if pid in failed:
                 continue
-            pid = key[1]
-            any_stock = any(p["ok"] for p in plist)
-            days = [p["storeDays"] for p in plist if p["ok"] and p["storeDays"] is not None]
-            fields.append({"ownerId": pid, "namespace": "supplier", "key": "in_stock",
-                           "type": "boolean", "value": "true" if any_stock else "false"})
-            fields.append({"ownerId": pid, "namespace": "supplier", "key": "checked_at",
-                           "type": "date_time", "value": now})
-            seen = next((p for p in plist if p.get("seller")), None)
+            ok = [d for d in ds if d["policy"] == "CONTINUE"]
+            fields.append(field(pid, "in_stock", "boolean", "true" if ok else "false"))
+            fields.append(field(pid, "checked_at", "date_time", now))
+            seen = next((d["page"] for d in ds if d["page"].get("seller")), None)
             if seen:
-                fields.append({"ownerId": pid, "namespace": "supplier", "key": "seller",
-                               "type": "single_line_text_field", "value": seen["seller"][:100]})
-                fields.append({"ownerId": pid, "namespace": "supplier", "key": "seller_class",
-                               "type": "single_line_text_field", "value": seen["sellerClass"]})
-            if days:
-                fields.append({"ownerId": pid, "namespace": "supplier", "key": "delivery_days",
-                               "type": "number_integer", "value": str(min(days))})
-        fields += range_fields
-        for pid in revive:  # back online: ACTIVE, tag removed (after the prices and stock above)
+                fields.append(field(pid, "seller", "single_line_text_field", seen["seller"][:100]))
+                fields.append(field(pid, "seller_class", "single_line_text_field",
+                                    seller_class(seen["seller"], ds[0]["r"]["vendor"])))
+            if ok:
+                fields.append(field(pid, "delivery_days", "number_integer", str(min(d["days"] for d in ok) + EXTRA_DAYS)))
+        for pid in revive - failed:  # back online: ACTIVE, tag removed (after the prices and stock above)
             for q, vars_ in ((STATUS_M, {"p": {"id": pid, "status": "ACTIVE"}}),
                              (TAGS_REMOVE_M, {"id": pid, "t": [PARK_TAG, OUT_TAG]})):
-                res = gql(q, vars_)
-                errs = next(iter(res.values()))["userErrors"]
+                errs = next(iter(gql(q, vars_).values()))["userErrors"]
                 errors += len(errs)
                 for e in errs:
                     print("republish error:", pid, e)
-        for item in report["parkedNow"]:
-            pid = next(r["productId"] for r in rows if r["handle"] == item["handle"])
-            for q, vars_ in ((STATUS_M, {"p": {"id": pid, "status": "DRAFT"}}),
-                             (TAGS_ADD_M, {"id": pid, "t": [PARK_TAG]})):
-                errs = next(iter(gql(q, vars_).values()))["userErrors"]
-                errors += len(errs)
+        for pid in second - failed:
+            errors += len(gql(TAGS_ADD_M, {"id": pid, "t": [SECOND_SOURCE_TAG]})["tagsAdd"]["userErrors"])
         for i in range(0, len(fields), 25):
             res = gql(META_M, {"m": fields[i:i + 25]})["metafieldsSet"]["userErrors"]
             errors += len(res)
+            for e in res[:3]:
+                print("metafield error:", e)
 
-    report["republished"] = sorted({r["handle"] for r in rows if r["productId"] in revive})
-    path = os.path.join(outdir, f"sync-{now[:13].replace(':', '')}.json")
+    report["republished"] = sorted({r["handle"] for r in rows if r["productId"] in revive - failed})
+    report["noDeliveryDate"] = sum(1 for d in decisions if not d["r"]["parked"] and d["page"].get("inStock")
+                                   and d["page"].get("sourceDays") is None)
+    report["lowStock"] = sum(1 for d in decisions if not d["r"]["parked"] and low_stock(d["page"]))
+    tail = (os.environ.get("SHARD") or "all").replace("/", "of")
+    path = os.path.join(outdir, f"sync-{now[:13].replace(':', '')}-{tail}.json")
     json.dump(report, open(path, "w"), indent=1, ensure_ascii=False)
-    reasons = {}
+
+    reasons, days_seen = {}, {}
     for e in report["errors"]:
-        k = str(e.get("error") if isinstance(e, dict) else e)[:40]
-        reasons[k] = reasons.get(k, 0) + 1
-    if reasons:
-        print("Pages not read, by reason:", reasons)
+        reasons[str(e["error"])[:40]] = reasons.get(str(e["error"])[:40], 0) + 1
+    for d in decisions:
+        if not d["r"]["parked"]:
+            days_seen[d["page"].get("sourceDays")] = days_seen.get(d["page"].get("sourceDays"), 0) + 1
     prices = sum("price" in c for c in report["changes"])
-    stock = sum("inventoryPolicy" in c for c in report["changes"])
-    days_seen = {}
-    for r in live:
-        d = pages[r["asin"]].get("sourceDays")
-        days_seen[d] = days_seen.get(d, 0) + 1
-    texts = sorted({str(pages[r["asin"]].get("deliveryText"))[:50] for r in live})[:4]
-    buckets = {"under 5%": 0, "5-20%": 0, "over 20%": 0}
-    for c in report["changes"]:
-        if "price" in c and c.get("oldPrice"):
-            d = abs(float(c["price"]) - c["oldPrice"]) / c["oldPrice"]
-            buckets["under 5%" if d < 0.05 else "5-20%" if d < 0.2 else "over 20%"] += 1
     to_out = sum(c.get("inventoryPolicy") == "DENY" for c in report["changes"])
-    print(f"Stock changes: {to_out} would go Épuisé, {stock - to_out} back on sale.")
-    print("Delivery days read (None = no date):", days_seen, "| examples:", texts)
-    print("Size of the price changes:", buckets)
-    print(f"{report['noDeliveryDate']} pages in stock without a delivery date (stock left as is).")
-    print(f"{report['lowStock']} variants with {LOW_STOCK_MAX} or fewer left on Amazon.ae (Épuisé, LOW_STOCK_MAX).")
-    print(f"{'DRY RUN: ' if dry else ''}{prices} prices changed, {stock} stock changes, "
-          f"{len(report['skipped'])} big changes held for review, {len(report['errors'])} pages not read, "
-          f"{len(report['republished'])} set-aside products back online, {len(report['stillParked'])} still set aside, "
-          f"{len(report['parkedNow'])} set aside now, {len(report['sellerFlags'])} non-verified sellers flagged, {errors} Shopify errors. Report: {path}")
-    if stock_guard and not dry:
+    back = sum(c.get("inventoryPolicy") == "CONTINUE" for c in report["changes"])
+    lines = [
+        f"{'DRY RUN: ' if dry else ''}{report['pagesRead']} of {len(asins)} pages read, {len(report['errors'])} variants "
+        f"whose page was not read" + (f" ({reasons})" if reasons else ""),
+        f"Stock: {to_out} to Épuisé ({len(hidden)} of them during the reading), {back} back on sale, "
+        f"{len(report['republished'])} hidden products back online, {len(report['stillParked'])} variants still hidden.",
+        f"Prices: {prices} changed, {len(report['skipped'])} jumps held until a second reading.",
+        f"Delivery days read (None = no date): {days_seen}",
+        f"{report['noDeliveryDate']} in stock without a delivery date, {report['lowStock']} with {LOW_STOCK_MAX} or fewer "
+        f"left, {len(report['gone'])} listings removed, {len(report['redirected'])} pages showing another item, "
+        f"{len(report['secondSource'])} sold from their second source, {len(report['nameMismatch'])} option names that differ "
+        f"(information only).",
+        f"{errors} Shopify errors. Report: {path}"]
+    if stopped:
+        lines.insert(0, f"::warning::{stopped}")
+    print("\n".join(lines))
+    if os.environ.get("GITHUB_STEP_SUMMARY"):
+        with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+            f.write(f"**Reader {tail}**\n\n" + "\n".join("- " + x.replace("::warning::", "⚠️ ") for x in lines) + "\n\n")
+    # A reading that stopped early is not a failure of this reader: the coverage check reads the rest again and judges.
+    if info["guard"] and not dry:
         sys.exit("ALERTE: stock guard tripped, no stock change made by this reader (probably a misread).")
     if errors and not dry:
         sys.exit(f"ALERTE: {errors} Shopify errors.")

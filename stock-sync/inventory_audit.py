@@ -59,8 +59,7 @@ def has_asin(p, v):
 
 
 def main():
-    if not (os.environ.get("SHOPIFY_STORE") and (os.environ.get("SHOPIFY_TOKEN") or os.environ.get("SHOPIFY_CLIENT_SECRET"))):
-        print("No Shopify credentials set: nothing to do.")
+    if not s.have_credentials():
         return
     fix = os.environ.get("FIX", "1") == "1" and os.environ.get("DRY_RUN") != "1"
     now = dt.datetime.now(dt.timezone.utc)

@@ -1,0 +1,51 @@
+name: Second source check
+# Every 10 minutes: the variants sold from their second source (PadelShop.ae or MedX, when Amazon.ae is out of stock) are
+# confirmed there; what can no longer be bought there goes to Épuisé. Does nothing when no variant is in that case.
+# Started by heartbeat.yml (the reliable clock); the schedule below is a second chance.
+on:
+  schedule:
+    - cron: "1-59/10 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Read and report only, change nothing on Shopify"
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: fallback-sync
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Confirm the variants sold from their second source
+        working-directory: stock-sync
+        env:
+          SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          PRICE_FORMULA: ${{ secrets.PRICE_FORMULA || format('{0},{1},{2}', vars.PRICE_MULT, vars.SHIPPING_AED_PER_KG, vars.AED_TO_FDJ) }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
+        run: python3 -I fallback_sync.py
+  alert:
+    needs: [check]
+    if: ${{ failure() && !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Alert
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          .github/alert.sh "Alerte inventaire : contrôle du second fournisseur en échec" "Le contrôle des articles vendus via leur second fournisseur a échoué le $(TZ=Africa/Djibouti date '+%d/%m à %Hh%M') (heure de Djibouti). Détail : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

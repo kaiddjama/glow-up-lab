@@ -57,7 +57,6 @@ jobs:
           PRICE_FORMULA: ${{ secrets.PRICE_FORMULA || format('{0},{1},{2}', vars.PRICE_MULT, vars.SHIPPING_AED_PER_KG, vars.AED_TO_FDJ) }}
           ONLY_ASINS: ${{ steps.new.outputs.asins }}
           FETCHER: browser
-          SELLER_RULE: "0"
           DELAY: "8"
         run: python3 -I amazon_sync.py results
   alert:

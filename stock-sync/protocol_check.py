@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Checks that PROTOCOLE-INVENTAIRE.md says the same as the code: the settings line (section 8) against the defaults
-in amazon_sync.py, and the full-check times (section 4) against the cron lines of stock-sync.yml. Fails on any gap,
+in amazon_sync.py and coverage.py, and the full-check times (section 4) against the cron lines of stock-sync.yml. Fails on any gap,
 so the protocol cannot silently drift from what really runs."""
 import os
 import re
@@ -8,13 +8,14 @@ import sys
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 proto = open(os.path.join(root, "PROTOCOLE-INVENTAIRE.md"), encoding="utf-8").read()
-code = open(os.path.join(root, "stock-sync", "amazon_sync.py"), encoding="utf-8").read()
+code = open(os.path.join(root, "stock-sync", "amazon_sync.py"), encoding="utf-8").read() + \
+    open(os.path.join(root, "stock-sync", "coverage.py"), encoding="utf-8").read()
 wf = open(os.path.join(root, ".github", "workflows", "stock-sync.yml"), encoding="utf-8").read()
 gaps = []
 for name, val in re.findall(r"\b([A-Z_]{4,})=([0-9]+(?:,[0-9]+)?)", proto.split("## 8.")[1].split("## 9.")[0]):
     m = re.search(rf'os\.environ\.get\("{name}", "([^"]+)"\)', code)
     if not m:
-        gaps.append(f"{name}: not found in amazon_sync.py")
+        gaps.append(f"{name}: not found in amazon_sync.py / coverage.py")
         continue
     code_val = m.group(1)
     if name == "NO_DATE_KEEPS":
