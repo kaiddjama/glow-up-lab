@@ -18,7 +18,7 @@ Rien n'y est écrit sans avoir été vérifié ; ce qui n'est pas vérifié est 
 
 ## 2. Quand une variante est vendable
 Page Amazon.ae lue avec l'adresse de Dubaï ET en stock ET date de livraison GRATUITE à Dubaï de 2 jours maximum (MAX_DAYS=2 ; l'option express payante n'est jamais lue).
-Tout le reste = Épuisé : page sans date de livraison (depuis le 5 nov), délai trop long, vendeur en liste de blocage (seller-hold.json), variante sans ASIN.
+Tout le reste = Épuisé : stock presque fini sur Amazon.ae (« Only N left in stock » avec N ≤ 3, LOW_STOCK_MAX=3, depuis le 10 nov), page sans date de livraison (depuis le 5 nov), délai trop long, vendeur en liste de blocage (seller-hold.json), variante sans ASIN.
 Délai affiché en boutique : « 4 à 5 jours » (2 jours jusqu'à Dubaï + 2 à 3 jours Dubaï → Djibouti).
 
 ## 3. Quand un produit est visible
@@ -60,7 +60,7 @@ Délai affiché en boutique : « 4 à 5 jours » (2 jours jusqu'à Dubaï + 2 à
 | Débit Shopify limité | 30 tentatives avec attente | En place |
 
 ## 8. Réglages (variables, sans toucher au code)
-MAX_DAYS=2 · STOCK_GUARD=0,35 · NO_DATE_KEEPS=0 (1 = l'ancienne règle « page sans date laissée telle quelle ») · RETRY_MAX=40.
+MAX_DAYS=2 · STOCK_GUARD=0,35 · NO_DATE_KEEPS=0 (1 = l'ancienne règle « page sans date laissée telle quelle ») · RETRY_MAX=40 · LOW_STOCK_MAX=3 (0 = règle du stock presque fini désactivée).
 
 ## 9. Journal des leçons (on ajoute, on n'efface pas)
 - 22 oct : règle « vendeur » retirée (SELLER_RULE=0).
@@ -77,3 +77,4 @@ MAX_DAYS=2 · STOCK_GUARD=0,35 · NO_DATE_KEEPS=0 (1 = l'ancienne règle « page
 - 5 nov : un produit créé par API (productSet) peut être ACTIVE mais non publié sur la Boutique en ligne : sa page répond 404 (Owala) → park_soldout.py publie tout produit actif, vérifié et vendable qui ne l'est pas.
 - 5 nov (soir) : alerte #49, 2 lecteurs sans navigateur : l'installation « avec dépendances » téléchargeait des polices très lentement depuis le miroir Ubuntu, et l'apt-get interrompu gardait son verrou (les nouveaux essais échouaient) → navigateur installé sans dépendances système (déjà présentes), qui ne sont ajoutées que si Chromium ne démarre pas (.github/install-browser.sh).
 - 9 nov : alerte #58, un lecteur sur 16 (contrôle de 13h37 Djibouti) coupé par GitHub (« The hosted runner lost communication with the server ») : panne de la machine GitHub, pas du script. Rien à corriger : la vérification de couverture masque ce qui n'est pas relu en 6 h, et le contrôle suivant (16h46) a tout relu (0 variante non vérifiée) → alerte fermée. Règle : si un seul lecteur tombe pour cette raison et que le contrôle suivant est complet, on ferme l'alerte sans changer le code.
+- 10 nov : commande #1040, e.l.f. Camo Brunette lue « livrée demain » (petit stock d'un vendeur expédié par Amazon), mais ce stock est parti et l'offre est passée à un vendeur qui livre la semaine suivante (même cas que #1014). Hoodo a dû racheter ailleurs (65 AED perdus). → une variante avec 3 unités ou moins sur Amazon.ae (« Only N left in stock ») n'est plus vendable ; au contrôle des commandes, un tel article est signalé (amazon-ko) pour que Hoodo vérifie le délai sur son compte et achète vite.

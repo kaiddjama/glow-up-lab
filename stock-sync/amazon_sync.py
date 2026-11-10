@@ -39,6 +39,10 @@ MAX_DAYS = int(os.environ.get("MAX_DAYS", "2"))
 MAX_DAYS_OTHER = MAX_DAYS  # same limit for every seller
 STANDARD_DAYS = MAX_DAYS  # up to this many days to Dubai: standard delay; later (if MAX_DAYS is raised): longer delay shown
 FORWARD_DAYS = (2, 3)  # Dubai -> Djibouti
+# Since 10 Nov: "Only N left in stock" with N <= LOW_STOCK_MAX is not sellable. A tiny stock usually belongs to a small
+# seller shipped by Amazon; once it is gone the offer moves to a seller who delivers the next week (orders #1014, #1040:
+# the robot read "tomorrow", Hoodo saw "next week" and had to buy elsewhere). LOW_STOCK_MAX=0 turns the rule off.
+LOW_STOCK_MAX = int(os.environ.get("LOW_STOCK_MAX", "3"))
 PRICES_ONLY = os.environ.get("PRICES_ONLY") == "1"  # update prices only: no stock, set-aside or delivery-range change
 # Since 5 Nov: a page in stock with NO delivery date for the Dubai address is not sellable (it usually means Amazon.ae
 # does not deliver it there; eos body butter sold out for Hoodo while the robot read "in stock"). NO_DATE_KEEPS=1 restores
@@ -237,6 +241,7 @@ def parse(html, today):
     avail_text = re.sub(r"<[^>]+>|\s+", " ", avail.group(0)).strip() if avail else ""
     price = parse_price(html)
     in_stock = price is not None and not re.search(r"unavailable|out of stock", avail_text, re.I)
+    left = re.search(r"only\s+(\d+)\s+left in stock", avail_text, re.I)
     # The buy box lists the standard date AND, when offered, a faster one ("Rush delivery Today by 3 PM",
     # same-day or express); the fastest counts.
     i = html.find('id="desktop_buybox"')
@@ -246,7 +251,7 @@ def parse(html, today):
     scored = [x for x in scored if x[0] is not None]
     src, delivery = min(scored) if scored else (None, options[0] if options else None)
     return {"aed": price, "inStock": in_stock, "availability": avail_text[:80], "seller": parse_seller(html),
-            "deliveryText": delivery, "sourceDays": src, "storeDays": None if src is None else src + EXTRA_DAYS}
+            "stockLeft": int(left.group(1)) if left else None, "deliveryText": delivery, "sourceDays": src, "storeDays": None if src is None else src + EXTRA_DAYS}
 
 
 def fetch_offers(asin):
@@ -346,8 +351,16 @@ def sellable(page, row):
     days = page.get("sourceDays")
     if seller_blocked(page, row):
         return False
+    if low_stock(page):
+        return False
     limit = MAX_DAYS if official(page.get("seller", ""), row["vendor"]) else MAX_DAYS_OTHER
     return page["inStock"] and days is not None and days <= limit
+
+
+def low_stock(page):
+    """Only a few units left on Amazon.ae: the offer can switch to a slow seller at any moment."""
+    left = page.get("stockLeft")
+    return LOW_STOCK_MAX > 0 and left is not None and left <= LOW_STOCK_MAX
 
 
 def delivery_range(page):
@@ -545,6 +558,7 @@ def main():
     stock_guard = len(live) >= 20 and len(newly_out) > STOCK_GUARD * len(live)
     report["stockGuardTripped"] = stock_guard
     report["noDeliveryDate"] = sum(no_date(pages[r["asin"]]) for r in live)
+    report["lowStock"] = sum(low_stock(pages[r["asin"]]) for r in live)
     if stock_guard:
         print(f"Stock guard: {len(newly_out)} of {len(live)} variants would newly go Épuisé, no stock change made.")
     # set-aside (draft) products come back as soon as one of their variants is sellable
@@ -682,6 +696,7 @@ def main():
     print("Delivery days read (None = no date):", days_seen, "| examples:", texts)
     print("Size of the price changes:", buckets)
     print(f"{report['noDeliveryDate']} pages in stock without a delivery date (stock left as is).")
+    print(f"{report['lowStock']} variants with {LOW_STOCK_MAX} or fewer left on Amazon.ae (Épuisé, LOW_STOCK_MAX).")
     print(f"{'DRY RUN: ' if dry else ''}{prices} prices changed, {stock} stock changes, "
           f"{len(report['skipped'])} big changes held for review, {len(report['errors'])} pages not read, "
           f"{len(report['republished'])} set-aside products back online, {len(report['stillParked'])} still set aside, "
