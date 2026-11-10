@@ -6,7 +6,8 @@ It reads EVERY product (no sample) and checks, per product and per variant:
     variant stays orderable. With FIX=1 it switches tracking on (quantity stays 0, policy untouched);
   - an Épuisé variant (DENY) is really not for sale (availableForSale false);
   - every active product was read on Amazon.ae (supplier.checked_at) and not longer than STALE_HOURS ago;
-  - every sellable variant of an active product has an ASIN, and its own page was read (variant_checked_at) recently;
+  - every sellable variant of an active product has an ASIN, or the reference of another source (SKU "MEDX-..." /
+    "PSAE-...", read by their own syncs), and its own page was read (variant_checked_at) recently. Gift cards have neither;
   - an active, read, sellable product is published on the Online Store (otherwise its page answers 404);
   - prices are present and positive (the price itself comes from the live Amazon.ae price at each sync).
 Writes a markdown report (REPORT_FILE, and the job summary on GitHub). Exit code 1 = something Hoodo must know about
@@ -54,9 +55,25 @@ def age_hours(meta, now):
 
 
 def has_asin(p, v):
-    if s.ASIN_RE.search(v.get("sku") or "") or suppliers.is_other_source(v.get("sku") or ""):  # MedX / PadelShop: own sync
+    if s.ASIN_RE.search(v.get("sku") or ""):
         return True
     return len(p["variants"]["nodes"]) == 1 and bool(p.get("ref") and s.ASIN_RE.search(p["ref"]["value"]))
+
+
+def source_of(p, v):
+    """Pure: where this variant is bought. "other" (MedX, PadelShop.ae: read by their own syncs), "amazon",
+    "gift" (a gift card: nothing to buy) or None (nothing says where to buy it: it must not be on sale)."""
+    if p.get("isGiftCard"):
+        return "gift"
+    if suppliers.is_other_source(v.get("sku")):
+        return "other"
+    return "amazon" if has_asin(p, v) else None
+
+
+def stale_limit(p, v):
+    """Pure: hours after which a variant on sale counts as not read again (each other source has its own limit)."""
+    mod = suppliers.module_of(v.get("sku"))[0]
+    return mod.STALE_HOURS if mod and not p.get("isGiftCard") else STALE_HOURS
 
 
 def main():
@@ -81,15 +98,15 @@ def main():
                 fixed += 1
     untracked_products = sorted({p["handle"] for p, _ in untracked})
 
-    active = [p for p in products if p["status"] == "ACTIVE"]
+    active = [p for p in products if p["status"] == "ACTIVE" and not p["isGiftCard"]]  # a gift card is not bought anywhere
     sellable = lambda p: [v for v in p["variants"]["nodes"] if v["inventoryPolicy"] == "CONTINUE"]  # noqa: E731
     deny_but_orderable = [(p, v) for p, v in variants if p["status"] == "ACTIVE" and v["inventoryPolicy"] == "DENY"
                           and v["availableForSale"] and not p["isGiftCard"]]
     never_read = [p for p in active if not p.get("chk") and sellable(p)]
     stale = [p for p in active if p.get("chk") and sellable(p) and age_hours(p["chk"], now) > STALE_HOURS]
-    no_asin = [(p, v) for p in active for v in sellable(p) if not has_asin(p, v)]
+    no_asin = [(p, v) for p in active for v in sellable(p) if not source_of(p, v)]
     stale_var = [(p, v) for p in active if p.get("chk") for v in sellable(p)
-                 if has_asin(p, v) and (age_hours(v.get("vchk"), now) is None or age_hours(v["vchk"], now) > STALE_HOURS)]
+                 if source_of(p, v) and (age_hours(v.get("vchk"), now) is None or age_hours(v["vchk"], now) > stale_limit(p, v))]
     unpublished = [p for p in active if p.get("chk") and sellable(p) and not p.get("pub")]
     bad_price = [(p, v) for p, v in variants if p["status"] == "ACTIVE" and v["inventoryPolicy"] == "CONTINUE"
                  and not (float(v["price"] or 0) > 0)]
@@ -105,8 +122,8 @@ def main():
          f"| Épuisé (DENY) mais encore commandable | {len(deny_but_orderable)} |",
          f"| Produits actifs jamais lus sur Amazon.ae | {len(never_read)} |",
          f"| Produits actifs lus depuis plus de {STALE_HOURS:g} h | {len(stale)} |",
-         f"| Variantes en vente sans ASIN | {len(no_asin)} |",
-         f"| Variantes en vente dont la page n'a pas été lue depuis {STALE_HOURS:g} h | {len(stale_var)} |",
+         f"| Variantes en vente sans ASIN ni référence d'un autre fournisseur | {len(no_asin)} |",
+         f"| Variantes en vente dont la page n'a pas été relue à temps ({STALE_HOURS:g} h Amazon.ae, moins pour MedX et PadelShop.ae) | {len(stale_var)} |",
          f"| Produits vendables non publiés sur la Boutique en ligne (404) | {len(unpublished)} |",
          f"| Variantes en vente avec un prix absent ou nul | {len(bad_price)} |", ""]
 
@@ -123,7 +140,7 @@ def main():
     section("Épuisé mais encore commandable", {p["handle"] for p, _ in deny_but_orderable})
     section("Actifs jamais lus", [p["handle"] for p in never_read])
     section("Actifs périmés", [f"{p['handle']} ({age_hours(p['chk'], now):.0f} h)" for p in stale])
-    section("Variantes en vente sans ASIN", {p["handle"] for p, _ in no_asin})
+    section("Variantes en vente sans ASIN ni référence d'un autre fournisseur", {p["handle"] for p, _ in no_asin})
     section("Variantes non relues", {p["handle"] for p, _ in stale_var})
     section("Non publiés (404)", [p["handle"] for p in unpublished])
     section("Prix absent ou nul", {p["handle"] for p, _ in bad_price})
@@ -144,7 +161,7 @@ def main():
     if never_read:
         problems.append(f"{len(never_read)} produits actifs jamais lus sur Amazon.ae")
     if no_asin:
-        problems.append(f"{len(no_asin)} variantes en vente sans ASIN")
+        problems.append(f"{len(no_asin)} variantes en vente sans ASIN ni référence d'un autre fournisseur")
     if bad_price:
         problems.append(f"{len(bad_price)} variantes en vente sans prix")
     # stale pages alone are reported but do not fail: a full check takes ~45 min and the coverage step already handles them

@@ -171,6 +171,22 @@ def test_second_source():
     assert not d["applied"]
 
 
+def test_audit_sources():
+    import inventory_audit as audit
+    prod = lambda n=1, **kw: {"isGiftCard": False, "variants": {"nodes": [{}] * n}, **kw}  # noqa: E731
+    assert audit.source_of(prod(), {"sku": "B0AAAAAAAA"}) == "amazon"
+    assert audit.source_of(prod(), {"sku": "AMZ-B0AAAAAAAA"}) == "amazon"
+    assert audit.source_of(prod(ref={"value": "https://www.amazon.ae/dp/B0AAAAAAAA"}), {"sku": ""}) == "amazon"
+    assert audit.source_of(prod(2, ref={"value": "https://www.amazon.ae/dp/B0AAAAAAAA"}), {"sku": ""}) is None
+    assert audit.source_of(prod(), {"sku": None}) is None
+    # MedX and PadelShop.ae variants are read by their own syncs: not "without ASIN" (false alert of 10 Nov, 108 variants)
+    assert audit.source_of(prod(), {"sku": "MEDX-some-whey"}) == "other"
+    assert audit.source_of(prod(), {"sku": "PSAE-some-racket"}) == "other"
+    assert audit.source_of(prod(isGiftCard=True), {"sku": ""}) == "gift"
+    assert audit.stale_limit(prod(), {"sku": "MEDX-some-whey"}) == suppliers.module_of("MEDX-x")[0].STALE_HOURS
+    assert audit.stale_limit(prod(), {"sku": "B0AAAAAAAA"}) == audit.STALE_HOURS
+
+
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
