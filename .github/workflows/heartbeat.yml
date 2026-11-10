@@ -17,7 +17,7 @@ on:
   schedule:
     - cron: "37 * * * *"
   push:
-    branches: [main, "claude/project-thread-25b28p"]  # the branch: rehearsal before the merge, removed after it
+    branches: [main]
     paths: [".github/workflows/heartbeat.yml", "stock-sync/heartbeat.py"]
 permissions:
   contents: read
