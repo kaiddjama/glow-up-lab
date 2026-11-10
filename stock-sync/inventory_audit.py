@@ -20,6 +20,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # python -I does not add the script folder
 import amazon_sync as s  # noqa: E402
+import suppliers  # noqa: E402
 
 STALE_HOURS = float(os.environ.get("STALE_HOURS", "8"))  # five checks a day = one every ~5 h; coverage.py uses 6 h
 PUBLICATION = os.environ.get("ONLINE_STORE_PUBLICATION", "gid://shopify/Publication/338148819125")
@@ -53,7 +54,7 @@ def age_hours(meta, now):
 
 
 def has_asin(p, v):
-    if s.ASIN_RE.search(v.get("sku") or ""):
+    if s.ASIN_RE.search(v.get("sku") or "") or suppliers.is_other_source(v.get("sku") or ""):  # MedX / PadelShop: own sync
         return True
     return len(p["variants"]["nodes"]) == 1 and bool(p.get("ref") and s.ASIN_RE.search(p["ref"]["value"]))
 
