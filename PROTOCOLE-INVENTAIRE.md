@@ -18,7 +18,13 @@ Rien n'y est écrit sans avoir été vérifié ; ce qui n'est pas vérifié est 
 
 ## 2. Quand une variante est vendable
 Page Amazon.ae lue avec l'adresse de Dubaï ET en stock ET date de livraison GRATUITE à Dubaï de 2 jours maximum (MAX_DAYS=2 ; l'option express payante n'est jamais lue).
-Tout le reste = Épuisé : page sans date de livraison (depuis le 5 nov), délai trop long, vendeur en liste de blocage (seller-hold.json), variante sans ASIN.
+Tout le reste = Épuisé : stock presque fini sur Amazon.ae (« Only N left in stock » avec N ≤ 3, LOW_STOCK_MAX=3, depuis le 10 nov), page sans date de livraison (depuis le 5 nov), délai trop long, article retenu à la main (voir ci-dessous), variante sans ASIN, fiche supprimée sur Amazon.ae, page qui affiche un AUTRE article (un autre ASIN que celui demandé).
+- Souplesse (Hoodo, 10 nov) : le vendeur n'est jamais un motif de masquage, ni un titre, une description ou un nom de teinte qui change sur le même ASIN. Seule la preuve d'un autre article masque (autre ASIN affiché, fiche supprimée). Les noms d'options différents sont listés dans le rapport, pour information.
+- Plusieurs offres dans la même page (deux vendeurs) : la première offre achetable dans les règles est retenue, avec son prix.
+- Livraison : la date GRATUITE la plus proche compte ; s'il n'existe qu'une livraison standard PAYANTE, sa date compte et ses frais sont ajoutés au prix d'achat avant la formule. L'express payant ne compte jamais. Précommande ou « disponible à partir du… » = pas en stock.
+- Retenue à la main : étiquette produit Shopify `bloque` (tout le produit) ou `bloque:B0XXXXXXXX` (une variante), ou l'ASIN dans stock-sync/seller-hold.json. Une variante retenue passe en Épuisé avant toute lecture et n'est jamais remise en vente tant que la retenue existe.
+- Après une commande amazon-ko, la variante reste en Épuisé 24 h même si le robot la relit « disponible » (commandes #1014, #1040).
+- Second fournisseur (Hoodo, 10 nov) : une variante Amazon.ae peut porter le métachamp `supplier.fallback` = `PSAE-<handle>` ou `MEDX-<alias>`. Amazon.ae d'abord ; s'il ne peut pas la vendre et que ce fournisseur le peut, elle reste en vente à son prix (produit étiqueté `source-2`), confirmée toutes les 10 min (fallback-sync.yml), et repasse sur Amazon.ae dès qu'il peut la vendre.
 Délai affiché en boutique : « 4 à 5 jours » (2 jours jusqu'à Dubaï + 2 à 3 jours Dubaï → Djibouti).
 
 ## 3. Quand un produit est visible
@@ -34,19 +40,29 @@ Délai affiché en boutique : « 4 à 5 jours » (2 jours jusqu'à Dubaï + 2 à
 | 03:07, 08:07, 13:07, 18:07, 22:07 | Contrôle complet (stock-sync.yml) : 16 lecteurs, masquage toutes les 50 pages, relecture lente des pages ratées ou sans date, couverture (relit 2 fois ce qui n'est pas vérifié, puis met en Épuisé ce qui n'a pas été vérifié depuis 6 h), masquage des produits entièrement épuisés |
 | 03:37, 08:37, 13:37, 18:37, 22:37 | Tâche de secours : relance le contrôle et le contrôle des commandes s'ils ne sont pas partis |
 | toutes les 30 min et après chaque contrôle des commandes | park-soldout.yml : masque les produits jamais vérifiés, lit les nouveaux produits, remet en ligne ce qui est vendable |
-| toutes les 10 min | Contrôle des commandes : étiquettes amazon-ok / amazon-ko / amazon-incertain |
+| toutes les 30 min (:23 et :53) et après chaque contrôle complet | inventory-audit.yml : audit de TOUS les produits (hors archivés) : suivi du stock activé (corrigé automatiquement), Épuisé réellement non commandable, produits actifs jamais lus ou non relus depuis 8 h, variantes sans ASIN, produits non publiés (404), prix absent. Alerte GitHub si un problème subsiste |
+| toutes les 10 min | Contrôle des commandes (toutes les commandes des 72 dernières heures pas encore étiquetées) : étiquettes amazon-ok / amazon-ko / amazon-incertain ; amazon-qte si la quantité commandée dépasse ce qu'Amazon.ae montre ou autorise ; source-2 si l'article est à acheter chez le second fournisseur |
+| toutes les 10 min | fallback-sync.yml : confirme les variantes vendues via leur second fournisseur |
+| en continu | heartbeat.yml, l'horloge : le planning de GitHub prend des heures de retard ou saute des passages (mesuré le 10 nov). Une petite tâche reste éveillée 3 h, lance chaque contrôle à l'heure (commandes, MedX, PadelShop, second fournisseur, audit, et le contrôle complet s'il n'est pas parti 12 min après son heure), puis passe le relais à la suivante. Elle est relancée si elle disparaît (toutes les heures, à chaque contrôle des commandes et à chaque contrôle complet). Un contrôle complet lancé moins de 2 h après un autre qui s'est bien passé est annulé (pas de doublon). Les plannings GitHub restent en seconde chance |
 
 ## 5. Garde-fous contre les mauvaises lectures
-- Plus de 35 % des variantes lues passent en Épuisé d'un coup → aucun changement de stock (lecture probablement faussée) + alerte.
+- Plus de 35 % des variantes lues passent en Épuisé d'un coup (en comptant celles déjà masquées pendant la lecture) → aucun changement de stock, et ces variantes ne sont PAS marquées « vérifiées » : la couverture les relit tout de suite + alerte.
+- Couverture : tout ce que le contrôle en cours n'a pas lu est relu (2 passes). Non vérifié depuis 6 h → Épuisé ; si cela dépasse 10 % de ce qui est en vente → alerte, et seul ce qui n'est pas vérifié depuis 12 h (HARD_STALE_HOURS) est mis en Épuisé, quel que soit le nombre : un stock qu'on ne peut pas confirmer pendant une demi-journée n'est pas vendu. Cette étape tourne même si une étape précédente a échoué.
+- Une variante n'est marquée « vérifiée » que si sa décision a vraiment été écrite dans Shopify.
+- Prix : une hausse de plus de 150 % ou une baisse de plus de 40 % n'est pas appliquée tout de suite ; elle l'est si une lecture au moins 3 h plus tard donne le même montant. En attendant, hausse = Épuisé (coût réel inconnu), baisse = ancien prix gardé.
+- Page lue avec une autre ville que Dubaï → jamais utilisée ; l'adresse est remise une fois, sinon le lecteur s'arrête.
+- Beaucoup de pages « supprimées » ou « autre article » d'un coup (plus de 10 % d'un lecteur) → prises pour une mauvaise lecture, rien n'est changé.
+- Fiche supprimée ou autre article : relu une seconde fois avant de compter.
+- Identifiants Shopify absents dans GitHub → échec et alerte (avant : le contrôle se terminait « en vert » sans rien faire).
 - Plus de 60 % du catalogue serait masqué → rien n'est masqué + alerte.
-- Variation de prix de plus de 150 % → prix retenu pour vérification.
-- Plus de 150 variantes sans ASIN à couper d'un coup → rien n'est changé.
+- Plus de 150 variantes sans ASIN à couper d'un coup → rien n'est changé + alerte.
 - Adresse de Dubaï non prise au démarrage → 3 essais, puis le lecteur s'arrête sans rien changer (alerte).
 - Adresse de Dubaï perdue pendant la lecture → le lecteur s'arrête, rien n'est changé pour le reste.
 - CAPTCHA Amazon → pause d'1 à 2 min ; 5 de suite → le lecteur s'arrête (le reste est relu par la couverture).
 
 ## 6. Alertes
-- Échec non résolu (contrôle, couverture, masquage, garde-fou déclenché, erreurs Shopify) → issue GitHub « alerte-inventaire » dans glow-up-lab : GitHub envoie un e-mail et une notification de l'appli GitHub au propriétaire du dépôt. Au plus un rappel toutes les 3 h.
+- Échec non résolu (contrôle, couverture, masquage, garde-fou déclenché, erreurs Shopify) → issue GitHub « alerte-inventaire » dans glow-up-lab : GitHub envoie un e-mail et une notification de l'appli GitHub au propriétaire du dépôt. Une issue par type d'alerte (une nouvelle panne n'est plus cachée par une ancienne alerte ouverte), au plus un rappel toutes les 3 h par type.
+- Contrôle des commandes en échec, horloge en échec, second fournisseur en échec : même alerte. Si le commentaire sur la PR #15 échoue, l'alerte de commande part en issue.
 - Contrôle du matin (03:40 environ) : lit le résultat de la nuit ; message à Hoodo si un échec persiste.
 
 ## 7. Obstacles connus et voie retenue
@@ -56,11 +72,11 @@ Délai affiché en boutique : « 4 à 5 jours » (2 jours jusqu'à Dubaï + 2 à
 | Le robot ne voit pas le compte connecté de Hoodo (Prime) : dates différentes | Liste de blocage pour les cas signalés ; piste : API officielle Amazon (Associates / Creators API) | À étudier, rien de payé, rien affirmé |
 | Pages sans date de livraison | Relecture lente une fois, puis considérées indisponibles | En place |
 | Variantes sans ASIN (36 produits le 5 nov) | Restent masquées tant qu'elles ne sont pas reliées | À relier |
-| Exécutions GitHub sautées | Tâche de secours 5 fois par jour | En place |
+| Exécutions GitHub sautées ou en retard | Horloge heartbeat.yml (voir section 4) + tâche de secours 5 fois par jour | En place |
 | Débit Shopify limité | 30 tentatives avec attente | En place |
 
-## 8. Réglages (variables, sans toucher au code)
-MAX_DAYS=2 · STOCK_GUARD=0,35 · NO_DATE_KEEPS=0 (1 = l'ancienne règle « page sans date laissée telle quelle ») · RETRY_MAX=40.
+## 8. Réglages (valeurs par défaut du code ; pour en changer une : variable d'environnement dans le workflow, donc une PR)
+MAX_DAYS=2 · STOCK_GUARD=0,35 · NO_DATE_KEEPS=0 (1 = l'ancienne règle « page sans date laissée telle quelle ») · RETRY_MAX=40 · LOW_STOCK_MAX=3 (0 = règle du stock presque fini désactivée) · PRICE_DROP_MAX=0,4 · PRICE_CONFIRM_HOURS=3 · INCLUDE_DELIVERY_FEE=1 (0 = frais de livraison non comptés) · HARD_STALE_HOURS=12 (0 = limite désactivée).
 
 ## 9. Journal des leçons (on ajoute, on n'efface pas)
 - 22 oct : règle « vendeur » retirée (SELLER_RULE=0).
@@ -76,18 +92,24 @@ MAX_DAYS=2 · STOCK_GUARD=0,35 · NO_DATE_KEEPS=0 (1 = l'ancienne règle « page
 - 5 nov : deux contrôles (18:39 et 20:58 Djibouti) en échec partiel : Shopify n'a pas répondu à temps (pas de nouvel essai) et l'installation du navigateur a dépassé 8 min → 6 essais sur les coupures Shopify, installation du navigateur en 3 essais (25 min max).
 - 5 nov : un produit créé par API (productSet) peut être ACTIVE mais non publié sur la Boutique en ligne : sa page répond 404 (Owala) → park_soldout.py publie tout produit actif, vérifié et vendable qui ne l'est pas.
 - 5 nov (soir) : alerte #49, 2 lecteurs sans navigateur : l'installation « avec dépendances » téléchargeait des polices très lentement depuis le miroir Ubuntu, et l'apt-get interrompu gardait son verrou (les nouveaux essais échouaient) → navigateur installé sans dépendances système (déjà présentes), qui ne sont ajoutées que si Chromium ne démarre pas (.github/install-browser.sh).
+- 7 nov : des fiches créées par API avaient le suivi du stock désactivé (Old Spice, Crest, Colgate, Gum, Oral-B, Sensodyne…) : Shopify ignore alors « Épuisé » (DENY) et la variante reste commandable. Nouvel audit complet de tous les produits toutes les 30 min qui réactive le suivi (hors cartes cadeaux) et signale le reste ; les fils d'ajout doivent créer les variantes avec inventoryItem.tracked=true.
 - 9 nov : alerte #58, un lecteur sur 16 (contrôle de 13h37 Djibouti) coupé par GitHub (« The hosted runner lost communication with the server ») : panne de la machine GitHub, pas du script. Rien à corriger : la vérification de couverture masque ce qui n'est pas relu en 6 h, et le contrôle suivant (16h46) a tout relu (0 variante non vérifiée) → alerte fermée. Règle : si un seul lecteur tombe pour cette raison et que le contrôle suivant est complet, on ferme l'alerte sans changer le code.
+- 10 nov : commande #1040, e.l.f. Camo Brunette lue « livrée demain » (petit stock d'un vendeur expédié par Amazon), mais ce stock est parti et l'offre est passée à un vendeur qui livre la semaine suivante (même cas que #1014). Hoodo a dû racheter ailleurs (65 AED perdus). → une variante avec 3 unités ou moins sur Amazon.ae (« Only N left in stock ») n'est plus vendable ; au contrôle des commandes, un tel article est signalé (amazon-ko) pour que Hoodo vérifie le délai sur son compte et achète vite.
+- 10 nov : audit complet de la synchro (PR #67). Lecture des pages refaite sur 23 vraies pages (amazon_page.py) : le prix d'un autre produit plus bas dans la page pouvait être lu, une offre « Rush » comptait comme livraison, une précommande comme du stock, une page d'une autre ville ou d'un autre article était acceptée. Décisions refaites (plan(), testée hors ligne) : voir sections 2 et 5. Le planning GitHub n'est pas une horloge (contrôles de 10 min espacés de 15 à 75 min, contrôle complet parti avec 3 h de retard ou pas du tout) → horloge heartbeat.yml. Règle de souplesse de Hoodo (vendeur et libellés ne masquent plus) et second fournisseur (supplier.fallback). Tests : test_amazon.py, test_heartbeat.py, lancés à chaque modification.
+- 10 nov : le contrôle des fiches a trouvé 10 variantes dont la page Amazon.ae n'est pas l'article vendu → retenues dans seller-hold.json ; le contrôle d'identité (ASIN affiché ≠ ASIN demandé) les arrête désormais automatiquement.
 
 ## 10. Deuxième fournisseur : MedX Pharmacy (medxpharmacy.com, Dubaï), ajouté le 10 nov 2026
 Compléments sport (pré-workout, shots, whey, isolats, boissons protéinées, barres, gainers). Une variante MedX se reconnaît à son SKU `MEDX-<alias de la fiche MedX>`. Le code est dans `stock-sync/medx.py`, `medx_sync.py`, `medx_create.py` ; l'Amazon n'est pas touché (le contrôle Amazon ignore les SKU MEDX).
 - Lecture : page produit publique en HTML (pas de navigateur, pas de CAPTCHA), qui donne le stock exact de la pharmacie, le prix en AED (TVA comprise) et l'état de publication. MedX livre à Dubaï en 12 à 24 h : étape Dubaï = 1 jour, délai affiché « 4 à 5 jours ».
 - Vendable : page lue ET publiée ET stock d'au moins MEDX_MIN_QTY=8. Une variante déjà Épuisé ne revient que si le stock atteint MEDX_BACK_QTY=12 (pas de va-et-vient). Page illisible : rien ne change. Fiche disparue (404) ou retirée : Épuisé.
-- Création d'une variante : stock d'au moins 20 le jour de l'ajout. Les nouveaux produits sont créés en brouillon (tag medx-revue), montrés à Hoodo, puis mis en ligne sur son accord seulement.
-- Rythme : `medx-sync.yml` toutes les 30 minutes (à :17 et :47). Ensuite `coverage.py medx` met en Épuisé toute variante MedX en vente non lue depuis MEDX_STALE_HOURS=3 heures, puis `park_soldout.py` masque les produits entièrement épuisés (tag epuise-auto) et les remet en ligne.
+- Création d'une variante : stock d'au moins 20 le jour de l'ajout, sauf pour les produits que Hoodo a approuvés même à stock bas ou nul (`low_ok` dans `medx/selection.json`) : créés en Épuisé, ils se mettent en vente seuls quand MedX atteint 12 en stock et repassent Épuisé sous 8 (contrôle toutes les 10 minutes). Un produit approuvé mais sans stock à la mise en ligne reste masqué (tag epuise-auto) et est remis en ligne par `park_soldout.py`. Les nouveaux produits sont créés en brouillon (tag medx-revue), montrés à Hoodo, puis mis en ligne sur son accord seulement.
+- Rythme : `medx-sync.yml` toutes les 10 minutes (à partir de :03). Ensuite `coverage.py medx` met en Épuisé toute variante MedX en vente non lue depuis MEDX_STALE_HOURS=1 heure, puis `park_soldout.py` masque les produits entièrement épuisés (tag epuise-auto) et les remet en ligne.
 - Garde-fous : plus de 35 % des variantes lues qui passent Épuisé d'un coup, ou plus de la moitié des pages illisibles, ou des erreurs Shopify : alerte GitHub (le masquage est appliqué quand même, c'est le sens sûr). Prix : variation de plus de 150 % retenue pour vérification.
+- Poids et prix : le prix vient de la formule de prix (secret du dépôt, jamais écrite ici) appliquée au prix MedX et au poids d'expédition de la variante (poids de la variante d'abord, sinon celui de la fiche). Une fiche qui regroupe plusieurs formats porte un poids par variante.
+- Produit mixte (variantes Amazon et MedX sur la même fiche) : la synchro MedX ne touche que ses propres variantes et laisse les champs fournisseur de la fiche à la synchro Amazon.
 - Contrôle des commandes : une ligne MedX est vérifiée sur la page MedX (stock au moins MEDX_MIN_QTY), sans navigateur ; sinon la commande passe en amazon-ko (même étiquette) avec le motif « stock MedX insuffisant ».
 - Achat : la commande se passe à la main sur medxpharmacy.com, livrée à l'adresse de Dubaï (adresse hors du dépôt public), puis acheminée vers Djibouti comme pour l'Amazon.
-- Réglages (variables, sans toucher au code) : MEDX_MIN_QTY=8 · MEDX_BACK_QTY=12 · MEDX_STALE_HOURS=3 · MEDX_MIN_CREATE_QTY=20.
+- Réglages (variables, sans toucher au code) : MEDX_MIN_QTY=8 · MEDX_BACK_QTY=12 · MEDX_STALE_HOURS=1 · MEDX_MIN_CREATE_QTY=20.
 - 10 nov : premier ajout, 20 gammes / 51 variantes. Photos : seulement des emballages propres ; écartées les photos avec le shaker « MedX » offert ou tronquées, et une photo dont le parfum ne correspondait pas à la fiche (Kevin Levrone Gold Iso, vanille affichée pour un chocolat).
 
 ## 11. Troisième fournisseur : PadelShop.ae (padelshop.ae, Dubaï), ajouté le 10 nov 2026

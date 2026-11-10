@@ -47,18 +47,16 @@ def load_rows():
                 mine = [v for v in p["variants"]["nodes"] if medx.slug_of(v.get("sku"))]
                 if not mine:
                     continue
+                mixed = len(mine) < len(p["variants"]["nodes"])  # variants of another supplier on the same product
                 seen.add(p["id"])
                 grams = float(p["weight"]["value"]) if p.get("weight") else None
-                for v in mine:
-                    if not grams:
-                        w = ((v.get("inventoryItem") or {}).get("measurement") or {}).get("weight") or {}
-                        factor = {"GRAMS": 1, "KILOGRAMS": 1000, "POUNDS": 453.6, "OUNCES": 28.35}.get(w.get("unit"))
-                        vg = float(w["value"]) * factor if factor and w.get("value") else None
-                    else:
-                        vg = grams
+                for v in mine:  # the weight of the variant itself first (formats differ), then the product's, then the default
+                    w = ((v.get("inventoryItem") or {}).get("measurement") or {}).get("weight") or {}
+                    factor = {"GRAMS": 1, "KILOGRAMS": 1000, "POUNDS": 453.6, "OUNCES": 28.35}.get(w.get("unit"))
+                    vg = float(w["value"]) * factor if factor and w.get("value") else grams
                     rows.append({"productId": p["id"], "handle": p["handle"], "variantId": v["id"], "variant": v["title"],
                                  "slug": medx.slug_of(v["sku"]), "price": float(v["price"]), "policy": v["inventoryPolicy"],
-                                 "grams": vg or s.DEFAULT_WEIGHT_G, "parked": parked,
+                                 "grams": vg or s.DEFAULT_WEIGHT_G, "parked": parked, "mixed": mixed,
                                  "review": REVIEW_TAG in (p.get("tags") or [])})
             if not data["pageInfo"]["hasNextPage"]:
                 break
@@ -67,8 +65,7 @@ def load_rows():
 
 
 def main():
-    if not (os.environ.get("SHOPIFY_STORE") and (os.environ.get("SHOPIFY_TOKEN") or os.environ.get("SHOPIFY_CLIENT_SECRET"))):
-        print("No Shopify credentials set: nothing to do.")
+    if not s.have_credentials():
         return
     if not s.AED_TO_FDJ:
         sys.exit("ALERTE: PRICE_FORMULA is not set: no price can be computed, nothing changed.")
@@ -129,7 +126,8 @@ def main():
             report["changes"].append({"handle": r["handle"], "variant": r["variant"], "slug": r["slug"], "aed": pg.get("aed"),
                                       "qty": pg.get("qty"), "oldPrice": r["price"], **{k: v for k, v in upd.items() if k != "id"}})
             (outs if upd.get("inventoryPolicy") == "DENY" else others).setdefault(r["productId"], []).append(upd)
-    for pid in {r["productId"] for r, *_ in decisions}:
+    mixed_ids = {r["productId"] for r in rows if r["mixed"]}  # product-level supplier fields are left to the other supplier's sync
+    for pid in {r["productId"] for r, *_ in decisions} - mixed_ids:
         mine = [(pg, sell) for r, pg, on, sell in decisions if r["productId"] == pid]
         fields.append({"ownerId": pid, "namespace": "supplier", "key": "in_stock", "type": "boolean",
                        "value": "true" if any(sell for _, sell in mine) else "false"})

@@ -1,8 +1,11 @@
 name: Amazon.ae stock and price sync
+run-name: ${{ (github.event_name == 'workflow_dispatch' && (inputs.dry_run || inputs.limit != '' || inputs.prices_only)) && 'Essai ou contrôle partiel' || 'Contrôle complet du stock' }}
 # Reads product pages and updates price and stock. All settings are repository secrets.
 # Five full checks a day (about 40 min each on 16 runners), spread evenly over the day (Djibouti is UTC+3):
 # 03:07 (done ~04:00), 08:07, 13:07, 18:07, 22:07. Not exactly on the hour: GitHub skips runs scheduled on the hour when busy.
 # Run it by hand with "Run workflow": dry_run=true reads and reports only.
+# GitHub's schedule is often hours late or skipped: heartbeat.yml starts a full check that did not start by itself, and the
+# "gate" job below drops a full check that comes less than two hours after another one (schedule and clock both fired).
 on:
   schedule:
     - cron: "7 0 * * *"   # 03:07 Djibouti
@@ -26,12 +29,37 @@ on:
         default: ""
 permissions:
   contents: read
+  actions: write  # the gate reads the other runs; it also checks that the clock (heartbeat.yml) is alive
 concurrency:
   group: stock-sync
   cancel-in-progress: false
+env:
+  FULL_RUN: ${{ (github.event_name == 'workflow_dispatch' && (inputs.dry_run || inputs.limit != '' || inputs.prices_only)) && '0' || '1' }}
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      go: ${{ steps.gate.outputs.go || 'true' }}  # if the gate itself breaks, the check runs
+      t0: ${{ steps.gate.outputs.t0 }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Should this check run?
+        id: gate
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 -I stock-sync/heartbeat.py gate
+      - name: Keep the clock alive
+        if: ${{ github.ref_name == 'main' }}
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 -I stock-sync/heartbeat.py ensure
   unmapped:
     # Variants of multi-variant products with no ASIN cannot be read on Amazon.ae: they are set to Épuisé.
+    needs: gate
+    if: needs.gate.outputs.go == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -48,6 +76,8 @@ jobs:
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
         run: python3 -I unmapped_guard.py
   sync:
+    needs: gate
+    if: needs.gate.outputs.go == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 350
     strategy:
@@ -75,16 +105,25 @@ jobs:
           PRICE_FORMULA: ${{ secrets.PRICE_FORMULA || format('{0},{1},{2}', vars.PRICE_MULT, vars.SHIPPING_AED_PER_KG, vars.AED_TO_FDJ) }}  # the secret wins if set; else the repository variables
           FETCHER: browser
           PRICES_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.prices_only && '1' || '0' }}
-          SELLER_RULE: "0"
           DELAY: "8"
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
           LIMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.limit || '' }}
         run: python3 -I amazon_sync.py results
+      - name: Keep the report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: sync-report-${{ strategy.job-index }}
+          path: stock-sync/results/*.json
+          retention-days: 7
+          if-no-files-found: ignore
   coverage:
-    # Safeguard: every variant on sale must have been read on Amazon.ae in the last 6 h. Pages that were not read are
-    # read again (two passes); what is still unverified after that is set to Épuisé (the job fails if too many are).
-    needs: [unmapped, sync]
-    if: ${{ always() && !(github.event_name == 'workflow_dispatch' && (inputs.dry_run || inputs.limit != '' || inputs.prices_only)) }}
+    # Safeguard: every variant on sale must have been read on Amazon.ae by THIS check. What the readers did not read (a
+    # reader that stopped, tripped its guard or crashed) is read again here (two passes); what is still unverified for 6 h
+    # after that is set to Épuisé. The last step runs even when a step before it failed: a broken retry never leaves
+    # unverified stock on sale. The job fails (alert) if too much stayed unread.
+    needs: [gate, unmapped, sync]
+    if: ${{ always() && needs.gate.outputs.go == 'true' && !(github.event_name == 'workflow_dispatch' && (inputs.dry_run || inputs.limit != '' || inputs.prices_only)) }}
     runs-on: ubuntu-latest
     timeout-minutes: 240
     env:
@@ -92,6 +131,7 @@ jobs:
       SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
       SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
       PRICE_FORMULA: ${{ secrets.PRICE_FORMULA || format('{0},{1},{2}', vars.PRICE_MULT, vars.SHIPPING_AED_PER_KG, vars.AED_TO_FDJ) }}
+      RUN_STARTED_AT: ${{ needs.gate.outputs.t0 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -102,39 +142,50 @@ jobs:
         working-directory: stock-sync
         run: python3 -I coverage.py list
       - name: Install the browser
+        id: browser
         if: steps.p1.outputs.count != '0'
+        continue-on-error: true
         timeout-minutes: 25
         run: .github/install-browser.sh
       - name: Read them again (pass 1)
-        if: steps.p1.outputs.count != '0'
+        id: r1
+        if: steps.p1.outputs.count != '0' && steps.browser.outcome == 'success'
+        continue-on-error: true
         working-directory: stock-sync
         env:
           ONLY_ASINS: ${{ steps.p1.outputs.asins }}
           FETCHER: browser
-          SELLER_RULE: "0"
           DELAY: "8"
         run: python3 -I amazon_sync.py results
       - name: Variants not verified (pass 2)
         id: p2
-        if: steps.p1.outputs.count != '0'
+        if: steps.p1.outputs.count != '0' && steps.browser.outcome == 'success'
+        continue-on-error: true
         working-directory: stock-sync
         run: python3 -I coverage.py list
       - name: Read them again (pass 2)
-        if: steps.p1.outputs.count != '0' && steps.p2.outputs.count != '0'
+        id: r2
+        if: steps.p2.outcome == 'success' && steps.p2.outputs.count != '0'
+        continue-on-error: true
         working-directory: stock-sync
         env:
           ONLY_ASINS: ${{ steps.p2.outputs.asins }}
           FETCHER: browser
-          SELLER_RULE: "0"
           DELAY: "8"
         run: python3 -I amazon_sync.py results
       - name: Hide what is still not verified
+        if: ${{ !cancelled() }}
         working-directory: stock-sync
         run: python3 -I coverage.py enforce
+      - name: A second reading failed
+        if: ${{ !cancelled() && (steps.r1.outcome == 'failure' || steps.r2.outcome == 'failure') }}
+        run: |
+          echo "::error::A second reading stopped on its guard or on a Shopify error: see the steps above. What stayed unverified was handled by the step before this one."
+          exit 1
   park:
     # Hides the products whose variants are all Épuisé (and brings them back when one is sellable again).
-    needs: [unmapped, sync, coverage]
-    if: ${{ always() && !(github.event_name == 'workflow_dispatch' && (inputs.dry_run || inputs.limit != '' || inputs.prices_only)) }}
+    needs: [gate, unmapped, sync, coverage]
+    if: ${{ always() && needs.gate.outputs.go == 'true' && !(github.event_name == 'workflow_dispatch' && (inputs.dry_run || inputs.limit != '' || inputs.prices_only)) }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -151,7 +202,7 @@ jobs:
         run: python3 -I park_soldout.py
   alert:
     # Last resort: something failed and was not fixed by the retries: Hoodo is alerted (GitHub issue = e-mail + app).
-    needs: [unmapped, sync, coverage, park]
+    needs: [gate, unmapped, sync, coverage, park]
     if: ${{ failure() && !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
     runs-on: ubuntu-latest
     permissions:
@@ -164,4 +215,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          .github/alert.sh "Alerte inventaire : contrôle du stock en échec" "Le contrôle Amazon.ae de $(TZ=Africa/Djibouti date '+%d/%m %Hh%M') (heure de Djibouti) a échoué malgré les nouvelles tentatives : une partie du stock n'a peut-être pas été mise à jour. Les produits non vérifiés depuis 6 h sont masqués automatiquement. Détail : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          .github/alert.sh "Alerte inventaire : contrôle du stock en échec" "Le contrôle Amazon.ae de $(TZ=Africa/Djibouti date '+%d/%m %Hh%M') (heure de Djibouti) a rencontré un problème que les nouvelles tentatives n'ont pas réglé : une partie du stock n'a peut-être pas été mise à jour. Ce qui n'a pas pu être vérifié depuis 6 h est masqué automatiquement (depuis 12 h : masqué dans tous les cas). Le détail de ce qui a échoué est sur cette page : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

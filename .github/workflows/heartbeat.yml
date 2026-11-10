@@ -1,0 +1,69 @@
+name: Heartbeat (clock of the stock controls)
+# GitHub's schedule is late by hours or skips runs. This workflow is the clock the shop relies on instead: one small job
+# stays awake about three hours, starts each control when it is due (order check, MedX, PadelShop.ae, second source,
+# inventory audit, and a full stock check that did not start by itself), then hands over to a fresh copy of itself.
+# See stock-sync/heartbeat.py. The hourly schedule below, every order check and every full check restart it if it is gone.
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "How long this clock stays awake (minutes)"
+        type: string
+        default: "175"
+      dry:
+        description: "Start nothing, only say what would be started"
+        type: boolean
+        default: false
+  schedule:
+    - cron: "37 * * * *"
+  push:
+    branches: [main]
+    paths: [".github/workflows/heartbeat.yml", "stock-sync/heartbeat.py"]
+permissions:
+  contents: read
+  actions: write
+env:
+  GITHUB_TOKEN: ${{ github.token }}
+  TARGET_REF: ${{ github.ref_name }}
+  HEARTBEAT_DRY: ${{ (github.ref_name != 'main' || (github.event_name == 'workflow_dispatch' && inputs.dry)) && '1' || '0' }}
+jobs:
+  beat:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 200
+    concurrency:
+      group: heartbeat
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Clock
+        run: python3 -I stock-sync/heartbeat.py loop "${{ inputs.minutes }}"
+  starter:
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: heartbeat-starter
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start the clock if it is not running
+        run: python3 -I stock-sync/heartbeat.py ensure
+      - name: Rehearsal outside main (nothing is started)
+        if: github.ref_name != 'main'
+        run: python3 -I stock-sync/heartbeat.py loop 2
+  alert:
+    needs: [beat, starter]
+    if: ${{ failure() && github.ref_name == 'main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Alert
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          .github/alert.sh "Alerte inventaire : horloge des contrôles en échec" "L'horloge qui lance les contrôles (commandes, MedX, PadelShop, stock complet) a échoué le $(TZ=Africa/Djibouti date '+%d/%m à %Hh%M') (heure de Djibouti). Les contrôles continuent sur le planning GitHub, moins régulier. Détail : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

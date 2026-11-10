@@ -39,6 +39,7 @@ class BrowserReader:
         self.city = os.environ.get("BROWSER_CITY", "Dubai")
         self.pw = self.ctx = self.page = None
         self.count = 0
+        self.last_status = None
         self.city_picked = False
 
     def start(self):
@@ -170,7 +171,8 @@ class BrowserReader:
         """HTML of a page. Raises LocationLost if the delivery location is no longer the chosen city."""
         self.count += 1
         p = self.page
-        p.goto(url, wait_until="domcontentloaded")
+        resp = p.goto(url, wait_until="domcontentloaded")
+        self.last_status = resp.status if resp else None  # 404 = the listing was removed (see amazon_sync.parse)
         self._clear_gate()
         try:
             p.wait_for_selector("#productTitle, form[action*='validateCaptcha']", timeout=15000)

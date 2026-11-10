@@ -139,14 +139,26 @@
     "slug": "applied-nutrition-abe-pre-workout-shot-energy-flavor-60ml-pack-of-12",
     "label": "Énergie",
     "photo": "applied-nutrition-abe-pre-workout-shot-energy-flavor-60ml-pack-of-12.jpg"
+   },
+   {
+    "slug": "applied-nutrition-abe-pre-workout-shot-blue-lagoon-60ml-pack-of-12",
+    "label": "Blue Lagoon",
+    "photo": "applied-nutrition-abe-pre-workout-shot-blue-lagoon-60ml-pack-of-12.jpg"
+   },
+   {
+    "slug": "applied-nutrition-abe-pre-workout-shot-fruit-candy-flavor-60ml-pack-of-12",
+    "label": "Fruit Candy",
+    "photo": "applied-nutrition-abe-pre-workout-shot-fruit-candy-flavor-60ml-pack-of.jpg"
    }
   ],
-  "usage": "1 shot, 20 à 30 minutes avant l'entraînement. Un seul shot par séance."
+  "usage": "1 shot, 20 à 30 minutes avant l'entraînement. Un seul shot par séance.",
+  "extend": true,
+  "low_ok": true
  },
  {
   "key": "cellup-shots",
-  "handle": "amix-cellup-shots-pre-entrainement-mangue-boite-de-20",
-  "title": "Amix CellUp shots pré-entraînement mangue, boîte de 20 × 60 ml",
+  "handle": "amix-cellup-shots-pre-entrainement-boite-de-20",
+  "title": "Amix CellUp shots pré-entraînement, boîte de 20 × 60 ml",
   "vendor": "Amix",
   "tags": [
    "cat:complements",
@@ -161,7 +173,7 @@
   ],
   "weight_g": 1500,
   "option": "Parfum",
-  "intro": "Les shots Amix CellUp à la mangue sont prêts à boire : une ampoule de 60 ml fortement dosée, qui se prend sans mélange avant la séance. Très concentrés en caféine : un seul shot suffit.",
+  "intro": "Les shots Amix CellUp sont prêts à boire : une ampoule de 60 ml fortement dosée, qui se prend sans mélange avant la séance. Très concentrés en caféine : un seul shot suffit.",
   "points": [
    "Boîte de 20 ampoules de 60 ml, parfum mangue",
    "Par ampoule : 5 000 mg de bêta-alanine (CarnoSyne), 2 000 mg de taurine, 2 000 mg de L-arginine HCl, 2 000 mg de glycérol (GlyceroMax) et 250 mg de caféine",
@@ -169,16 +181,24 @@
    "Formule sans sucre"
   ],
   "note": "Complément alimentaire. Déconseillé aux moins de 18 ans, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Demande un avis médical en cas de traitement, de problème cardiaque, de tension ou d'anxiété.",
-  "seo_title": "Amix CellUp shots mangue | Boîte de 20",
-  "seo_desc": "Des shots pré-entraînement à la mangue : bêta-alanine, taurine, caféine. Boîte de 20. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "seo_title": "Amix CellUp shots | Boîte de 20",
+  "seo_desc": "Des shots pré-entraînement : bêta-alanine, taurine, caféine. Boîte de 20, mangue ou énergie. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
    {
     "slug": "amix-cellup-pre-workout-shot-mango-flavor-60ml-x-20pcs",
     "label": "Mangue",
     "photo": "amix-cellup-pre-workout-shot-mango-flavor-60ml-x-20pcs.jpg"
+   },
+   {
+    "slug": "amix-cellup-pre-workout-shot-energy-flavor-60ml-x-20pcs",
+    "label": "Énergie",
+    "photo": "amix-cellup-pre-workout-shot-energy-flavor-60ml-x-20pcs.jpg"
    }
   ],
-  "usage": "1 ampoule environ 20 à 30 minutes avant l'entraînement. Ne dépasse pas une ampoule par jour."
+  "usage": "1 ampoule environ 20 à 30 minutes avant l'entraînement. Ne dépasse pas une ampoule par jour.",
+  "old_handle": "amix-cellup-shots-pre-entrainement-mangue-boite-de-20",
+  "extend": true,
+  "low_ok": true
  },
  {
   "key": "raw-shake",
@@ -568,8 +588,8 @@
  },
  {
   "key": "bare-box",
-  "handle": "barebells-barres-proteinees-caramel-cacahuete-sale-boite-de-12",
-  "title": "Barebells barres protéinées caramel cacahuète salé, boîte de 12",
+  "handle": "barebells-barres-proteinees-boite-de-12",
+  "title": "Barebells barres protéinées, boîte de 12 × 55 g",
   "vendor": "Barebells",
   "tags": [
    "cat:complements",
@@ -584,23 +604,41 @@
   ],
   "weight_g": 800,
   "option": "Parfum",
-  "intro": "La boîte de 12 barres Barebells au caramel et aux cacahuètes salées, pour avoir toujours une collation sous la main à la maison, à la salle ou au bureau. Un cœur de chocolat, des cacahuètes salées croquantes, du caramel et un enrobage de chocolat.",
+  "intro": "La boîte de 12 barres Barebells, pour avoir toujours une collation sous la main à la maison, à la salle ou au bureau. Des barres moelleuses, sans sucres ajoutés, en quatre parfums dont deux versions vegan.",
   "points": [
-   "Boîte de 12 barres de 55 g",
-   "Par barre : 16 g de protéines, environ 210 calories, 2 g de sucres",
-   "Mélange de protéines de lait et de collagène hydrolysé, cacahuètes, maltitol"
+   "Boîte de 12 barres de 55 g, sans sucres ajoutés",
+   "Caramel cacahuète salé et caramel chocolat : environ 16 g de protéines et 200 calories par barre (caramel chocolat : 5 g de fibres, 2 g de sucres)",
+   "Noisette nougat et cacahuète salée : versions 100 % végétales (vegan)"
   ],
   "note": "Ne remplace pas une alimentation variée. Vérifie la liste des allergènes sur l'emballage. Contient du lait, des cacahuètes, du soja et du blé. Fabriqué dans un site qui traite aussi les fruits à coque et le sésame.",
-  "seo_title": "Barebells caramel cacahuète salé | Boîte de 12",
-  "seo_desc": "12 barres protéinées sans sucres ajoutés, environ 16 g de protéines chacune. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "seo_title": "Barebells barres protéinées | Boîte de 12",
+  "seo_desc": "12 barres protéinées sans sucres ajoutés, quatre parfums dont deux vegan. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
    {
     "slug": "barebells-salted-peanut-caramel-soft-protein-bar-55gm-box-of-12",
     "label": "Caramel cacahuète salé",
     "photo": "barebells-salted-peanut-caramel-soft-protein-bar-55gm-box-of-12.jpg"
+   },
+   {
+    "slug": "barebells-soft-caramel-protein-bar-55g-box-of-12",
+    "label": "Caramel chocolat",
+    "photo": "barebells-soft-caramel-protein-bar-55g-box-of-12.jpg"
+   },
+   {
+    "slug": "barebells-vegan-hazelnut-nougat-protein-bar-55gm-box-of-12",
+    "label": "Noisette nougat (vegan)",
+    "photo": "barebells-vegan-hazelnut-nougat-protein-bar-55gm-box-of-12.jpg"
+   },
+   {
+    "slug": "barebells-vegan-salty-peanut-protein-bar-55gm-box-of-12",
+    "label": "Cacahuète salée (vegan)",
+    "photo": "barebells-vegan-salty-peanut-protein-bar-55gm-box-of-12.jpg"
    }
   ],
-  "usage": "Une barre en collation ; la boîte se range au sec."
+  "usage": "Une barre en collation ; la boîte se range au sec.",
+  "old_handle": "barebells-barres-proteinees-caramel-cacahuete-sale-boite-de-12",
+  "extend": true,
+  "low_ok": true
  },
  {
   "key": "nano-bar",
@@ -725,7 +763,7 @@
   ],
   "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
   "seo_title": "MuscleMeds Carnivor Mass | Gainer 2,5 kg",
-  "seo_desc": "Un gainer à l'isolat de protéine de bœuf, avec BCAA et créatine. 50 doses, deux parfums. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "seo_desc": "Un gainer à l'isolat de protéine de bœuf, avec BCAA et créatine. 13 à 14 doses, deux parfums. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
    {
     "slug": "musclemeds-carnivor-mass-vanilla-caramel-56lb",
@@ -788,9 +826,17 @@
     "slug": "nxt-beef-protein-isolate-cherry-cola-18kg",
     "label": "Cherry cola",
     "photo": "nxt-beef-protein-isolate-cherry-cola-18kg.jpg"
+   },
+   {
+    "slug": "nxt-beef-protein-isolate-pineapple-cooler-18-kg",
+    "label": "Ananas (Pineapple Cooler)",
+    "photo": "nxt_pine.jpg",
+    "weight_g": 2100
    }
   ],
-  "usage": "1 dose (30 g) dans de l'eau, après l'entraînement ou entre les repas."
+  "usage": "1 dose (30 g) dans de l'eau, après l'entraînement ou entre les repas.",
+  "extend": true,
+  "low_ok": true
  },
  {
   "key": "raw-iso",
@@ -905,15 +951,22 @@
   ],
   "note": "Complément alimentaire. Déconseillé aux moins de 18 ans, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Demande un avis médical en cas de traitement, de problème cardiaque, de tension ou d'anxiété.",
   "seo_title": "Transparent Labs LEAN | Pré-workout 30 doses",
-  "seo_desc": "Un pré-entraînement sans édulcorants artificiels : citrulline, acétyl-L-carnitine et 180 mg de caféine. Punch aux fruits. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "seo_desc": "Un pré-entraînement sans édulcorants artificiels : citrulline, acétyl-L-carnitine et 180 mg de caféine. Punch aux fruits ou framboise bleue. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
    {
     "slug": "transparent-labs-lean-pre-workout-fruit-punch-cutting-season-formula-30-servings",
     "label": "Punch aux fruits",
     "photo": "transparent-labs-lean-pre-workout-fruit-punch-cutting-season-formula-3.jpg"
+   },
+   {
+    "slug": "transparent-labs-lean-pre-workout-blue-raspberry-cutting-season-formula-30-servings",
+    "label": "Framboise bleue",
+    "photo": "tl_lean_br.jpg"
    }
   ],
-  "usage": "1 dose dans de l'eau, 20 à 30 minutes avant la séance. Commence par une demi-dose si tu débutes."
+  "usage": "1 dose dans de l'eau, 20 à 30 minutes avant la séance. Commence par une demi-dose si tu débutes.",
+  "extend": true,
+  "low_ok": true
  },
  {
   "key": "tl-bbe",
@@ -952,14 +1005,26 @@
     "slug": "transparent-labs-bulk-black-elite-pre-workout-with-citrulline-beta-alanine-alpha-gpc-and-caffeine-blue-raspberry-618g",
     "label": "Framboise bleue",
     "photo": "transparent-labs-bulk-black-elite-pre-workout-with-citrulline-beta-ala.jpg"
+   },
+   {
+    "slug": "transparent-labs-bulk-black-elite-pre-workout-with-citrulline-alpha-gpc-and-caffeine-strawberry-mango-630g",
+    "label": "Fraise mangue",
+    "photo": "tl_bbe_sm.jpg"
+   },
+   {
+    "slug": "transparent-labs-bulk-black-elite-pre-workout-with-citrulline-beta-alanine-alpha-gpc-and-caffeine-peach-mango-624g",
+    "label": "Pêche mangue",
+    "photo": "tl_bbe_pm.jpg"
    }
   ],
-  "usage": "1 dose dans de l'eau, 20 à 30 minutes avant l'entraînement. Commence par une demi-dose si tu débutes."
+  "usage": "1 dose dans de l'eau, 20 à 30 minutes avant l'entraînement. Commence par une demi-dose si tu débutes.",
+  "extend": true,
+  "low_ok": true
  },
  {
   "key": "tl-bulk",
-  "handle": "transparent-labs-bulk-pre-entrainement-pasteque-30-doses",
-  "title": "Transparent Labs BULK pré-entraînement pastèque, 30 doses",
+  "handle": "transparent-labs-bulk-pre-entrainement-30-doses",
+  "title": "Transparent Labs BULK pré-entraînement, 30 doses",
   "vendor": "Transparent Labs",
   "tags": [
    "cat:complements",
@@ -981,16 +1046,24 @@
    "Édulcoré naturellement. Testé par un laboratoire indépendant (Informed Choice), sans édulcorants artificiels, colorants ni conservateurs."
   ],
   "note": "Complément alimentaire. Déconseillé aux moins de 18 ans, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Demande un avis médical en cas de traitement, de problème cardiaque, de tension ou d'anxiété.",
-  "seo_title": "Transparent Labs BULK | Pré-workout pastèque 30 doses",
-  "seo_desc": "Un pré-entraînement dosé pour la performance : citrulline, bêta-alanine, bétaïne et caféine. Pastèque. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "seo_title": "Transparent Labs BULK | Pré-workout 30 doses",
+  "seo_desc": "Un pré-entraînement dosé pour la performance : citrulline, bêta-alanine, bétaïne et caféine. Pastèque ou cerise noire. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
    {
     "slug": "transparent-labs-bulk-pre-workout-with-8g-citrulline-malate-4g-beta-alanine-and-caffeine-watermelon621g",
     "label": "Pastèque",
     "photo": "transparent-labs-bulk-pre-workout-with-8g-citrulline-malate-4g-beta-al.jpg"
+   },
+   {
+    "slug": "transparent-labs-bulk-pre-workout-with-8g-citrulline-malate-4g-beta-alanine-and-caffeine-black-cherry-633g",
+    "label": "Cerise noire",
+    "photo": "tl_bulk_bc.jpg"
    }
   ],
-  "usage": "1 dose dans de l'eau, 20 à 30 minutes avant la séance. Commence par une demi-dose si tu débutes."
+  "usage": "1 dose dans de l'eau, 20 à 30 minutes avant la séance. Commence par une demi-dose si tu débutes.",
+  "old_handle": "transparent-labs-bulk-pre-entrainement-pasteque-30-doses",
+  "extend": true,
+  "low_ok": true
  },
  {
   "key": "tl-post",
@@ -1107,27 +1180,875 @@
   ],
   "weight_g": 2300,
   "option": "Parfum et format",
-  "intro": "Un isolat de whey issu de vaches nourries à l'herbe (grass-fed), avec 28 g de protéines par dose et très peu de sucre. Deux saveurs au beurre de cacahuète, en deux formats.",
+  "intro": "Un isolat de whey issu de vaches nourries à l'herbe (grass-fed), avec 28 g de protéines par dose et très peu de sucre. Quatre saveurs (chocolat au lait, french vanilla, et deux au beurre de cacahuète), en plusieurs formats.",
   "points": [
-   "Vanille beurre de cacahuète : pot de 1,1 kg (2,5 lb), 30 doses",
-   "Chocolat beurre de cacahuète : pot de 2 kg (4,4 lb), 55 doses",
-   "28 g de protéines et 1 g de sucre par dose. Testé par un laboratoire indépendant (Informed Choice), sans édulcorants artificiels, colorants ni conservateurs."
+   "Pots de 1,1 kg (vanille beurre de cacahuète, 30 doses), 1,9 kg (chocolat au lait et french vanilla) et 2 kg (chocolat beurre de cacahuète, 55 doses)",
+   "28 g de protéines et 1 g de sucre par dose. Testé par un laboratoire indépendant (Informed Choice), sans édulcorants artificiels, colorants ni conservateurs.",
+   "Contient du lait ; les parfums au beurre de cacahuète contiennent des cacahuètes"
   ],
   "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement. Contient du lait et des cacahuètes.",
   "seo_title": "Transparent Labs isolat de whey | 28 g de protéines",
-  "seo_desc": "Un isolat de whey grass-fed : 28 g de protéines par dose, sans édulcorants artificiels. Beurre de cacahuète. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "seo_desc": "Un isolat de whey grass-fed : 28 g de protéines par dose, sans édulcorants artificiels. Chocolat, vanille, beurre de cacahuète. Livraison à Djibouti-ville en 4 à 5 jours.",
   "variants": [
    {
     "slug": "transparent-labs-100-grass-fed-whey-protein-isolate-vanilla-peanut-butter-28g-protein-25lb",
     "label": "Vanille beurre de cacahuète, 1,1 kg (30 doses)",
-    "photo": "transparent-labs-100-grass-fed-whey-protein-isolate-vanilla-peanut-but.jpg"
+    "photo": "transparent-labs-100-grass-fed-whey-protein-isolate-vanilla-peanut-but.jpg",
+    "weight_g": 1300
    },
    {
     "slug": "transparent-labs-100-grass-fed-whey-protein-isolate-with-28g-protein-and-real-peanut-flour-chocolate-peanut-butter-44lb",
     "label": "Chocolat beurre de cacahuète, 2 kg (55 doses)",
     "photo": "transparent-labs-100-grass-fed-whey-protein-isolate-with-28g-protein-a.jpg"
+   },
+   {
+    "slug": "transparent-labs-100-grass-fed-whey-protein-isolate-with-28g-protein-naturally-sweetened-milk-chocolate-42lb",
+    "label": "Chocolat au lait, 1,9 kg",
+    "photo": "transparent-labs-100-grass-fed-whey-protein-isolate-with-28g-protein-n.jpg",
+    "weight_g": 2350
+   },
+   {
+    "slug": "transparent-labs-100-grass-fed-whey-protein-isolate-french-vanilla-28g-protein-41lb",
+    "label": "French vanilla, 1,9 kg",
+    "photo": "transparent-labs-100-grass-fed-whey-protein-isolate-french-vanilla-28g.jpg",
+    "weight_g": 2350
    }
   ],
-  "usage": "1 mesure dans de l'eau ou du lait, après l'entraînement ou entre les repas."
+  "usage": "1 mesure dans de l'eau ou du lait, après l'entraînement ou entre les repas.",
+  "extend": true,
+  "low_ok": true
+ },
+ {
+  "key": "tl-stimfree",
+  "handle": "transparent-labs-stim-free-pre-entrainement-sans-cafeine-30-doses",
+  "title": "Transparent Labs Stim-Free pré-entraînement sans caféine, 30 doses",
+  "vendor": "Transparent Labs",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-performance",
+   "rayon:complements-performance"
+  ],
+  "weight_g": 650,
+  "option": "Parfum",
+  "intro": "Un pré-entraînement en poudre sans caféine, pour s'entraîner le soir ou pour les personnes sensibles aux stimulants. Il garde la base de performance de la gamme (citrulline, bêta-alanine, bétaïne, taurine) et remplace la caféine par de l'elevATP, un extrait de tourbe et de pomme qui soutient la production d'énergie de l'organisme.",
+  "points": [
+   "30 doses par pot (1 mesure = environ 20 g)",
+   "Par dose : 8 g de citrulline malate, 4 g de bêta-alanine, 2,5 g de bétaïne anhydre, 1,3 g de taurine, 1 g de L-tyrosine et 150 mg d'elevATP",
+   "Sans caféine. Édulcoré naturellement. Testé par un laboratoire indépendant (Informed Choice), sans édulcorants artificiels, colorants ni conservateurs."
+  ],
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "seo_title": "Transparent Labs Stim-Free | Pré-workout sans caféine",
+  "seo_desc": "Un pré-entraînement sans caféine : citrulline, bêta-alanine, bétaïne et elevATP. 30 doses, deux parfums. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "transparent-labs-stim-free-pre-workout-peach-mango-caffeine-free-with-elevatp-30-servings",
+    "label": "Pêche mangue",
+    "photo": "transparent-labs-stim-free-pre-workout-peach-mango-caffeine-free-with-.jpg"
+   },
+   {
+    "slug": "transparent-labs-stim-free-pre-workout-tropical-punch-caffeine-free-with-elevatp-30-servings",
+    "label": "Punch tropical",
+    "photo": "transparent-labs-stim-free-pre-workout-tropical-punch-caffeine-free-wi.jpg"
+   }
+  ],
+  "usage": "1 dose dans de l'eau, 20 à 30 minutes avant la séance. La bêta-alanine peut donner de légers picotements : c'est normal.",
+  "low_ok": true
+ },
+ {
+  "key": "tl-intra",
+  "handle": "transparent-labs-intra-workout-eaa-30-doses",
+  "title": "Transparent Labs Intra Workout EAA, 30 doses",
+  "vendor": "Transparent Labs",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-performance",
+   "rayon:complements-performance"
+  ],
+  "weight_g": 600,
+  "option": "Parfum",
+  "intro": "Des acides aminés essentiels en poudre, à boire pendant la séance : les neuf acides aminés essentiels, de la taurine, de la bétaïne, de la L-tyrosine et des électrolytes pour s'hydrater et tenir sur la durée.",
+  "points": [
+   "30 doses par pot de 540 g (1 mesure = environ 19 g)",
+   "Par dose : 6,7 g d'acides aminés essentiels, 2 g de taurine, 1,25 g de bétaïne, 1 g de L-tyrosine, 1 g de poudre d'eau de coco, avec du magnésium, du sodium et du potassium",
+   "Sans caféine. Édulcoré naturellement. Testé par un laboratoire indépendant (Informed Choice), sans édulcorants artificiels, colorants ni conservateurs."
+  ],
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "seo_title": "Transparent Labs Intra Workout EAA | 30 doses",
+  "seo_desc": "Des acides aminés essentiels avec électrolytes, à boire pendant la séance. 30 doses, framboise bleue ou fraise citronnade. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "transparent-labs-intra-workout-eaa-blue-raspberry-67g-eaas-with-electrolytes-30-servings",
+    "label": "Framboise bleue",
+    "photo": "transparent-labs-intra-workout-eaa-blue-raspberry-67g-eaas-with-electr.jpg"
+   },
+   {
+    "slug": "transparent-labs-intra-workout-eaa-strawberry-lemonade-67g-eaas-with-electrolytes-30-servings",
+    "label": "Fraise citronnade",
+    "photo": "transparent-labs-intra-workout-eaa-strawberry-lemonade-67g-eaas-with-e.jpg"
+   }
+  ],
+  "usage": "1 dose dans de l'eau, à boire pendant l'entraînement.",
+  "low_ok": true
+ },
+ {
+  "key": "kl-anabolic",
+  "handle": "kevin-levrone-anabolic-mass-gainer-7-kg",
+  "title": "Kevin Levrone Anabolic Mass gainer, 7 kg",
+  "vendor": "Kevin Levrone",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-proteines",
+   "rayon:complements-proteines"
+  ],
+  "weight_g": 7400,
+  "option": "Parfum",
+  "intro": "Un gainer (prise de masse) en sac de 7 kg, pour les sportifs qui doivent augmenter leur apport en calories. Il associe des protéines, des glucides, de la créatine, de la taurine, de la L-arginine et de la L-ornithine.",
+  "points": [
+   "Sac de 7 kg ; 1 dose = 2 mesures (120 g)",
+   "Par dose : 48 g de protéines, 54 g de glucides et environ 440 calories",
+   "Avec 1,8 g de créatine monohydrate et 3,6 g de taurine par dose"
+  ],
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "seo_title": "Kevin Levrone Anabolic Mass | Gainer 7 kg",
+  "seo_desc": "Un gainer en sac de 7 kg : 48 g de protéines par dose, avec créatine et taurine. Chocolat ou cookies & crème. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "kl-anabolic-mass-chocolate-7kg",
+    "label": "Chocolat",
+    "photo": "kl-anabolic-mass-chocolate-7kg.jpg"
+   },
+   {
+    "slug": "kl-anabolic-mass-cookies-and-cream-7kg",
+    "label": "Cookies & crème",
+    "photo": "kl-anabolic-mass-cookies-and-cream-7kg.jpg"
+   }
+  ],
+  "usage": "Mélanger 2 mesures (120 g) avec de l'eau ou du lait dans un shaker.",
+  "low_ok": true
+ },
+ {
+  "key": "critical-mass",
+  "handle": "applied-nutrition-critical-mass-gainer-6-kg",
+  "title": "Applied Nutrition Critical Mass gainer, 6 kg",
+  "vendor": "Applied Nutrition",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-proteines",
+   "rayon:complements-proteines"
+  ],
+  "weight_g": 6400,
+  "option": "Parfum",
+  "intro": "Un gainer très calorique en sac de 6 kg, pour les sportifs qui ont du mal à prendre du poids. Avec des BCAA, de la L-glutamine et des acides gras essentiels.",
+  "points": [
+   "Sac de 6 kg, 25 doses (1 dose = 4 mesures, 240 g)",
+   "Par dose : 59 g de protéines et environ 900 calories",
+   "Saveur chocolat"
+  ],
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "seo_title": "Applied Nutrition Critical Mass | Gainer 6 kg",
+  "seo_desc": "Un gainer en sac de 6 kg : 59 g de protéines et environ 900 calories par dose. Saveur chocolat. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "applied-nutrition-critical-mass-lean-mass-gainer-chocolate-6kg",
+    "label": "Chocolat",
+    "photo": "applied-nutrition-critical-mass-lean-mass-gainer-chocolate-6kg.jpg"
+   }
+  ],
+  "usage": "Mélanger 4 mesures (240 g) dans 500 à 1 000 ml de lait ou d'eau. 1 à 3 doses par jour selon les besoins en calories.",
+  "low_ok": true
+ },
+ {
+  "key": "hyper-mass",
+  "handle": "biotechusa-hyper-mass-gainer",
+  "title": "BioTechUSA Hyper Mass gainer",
+  "vendor": "BioTechUSA",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-proteines",
+   "rayon:complements-proteines"
+  ],
+  "weight_g": 2600,
+  "option": "Parfum et format",
+  "intro": "Un gainer (prise de masse) qui associe trois sources de protéines, trois sources de glucides et de la créatine monohydrate micronisée. Sans sucre ajouté et sans gluten.",
+  "points": [
+   "Pot de 2,27 kg (34 doses) ou de 4 kg (61 doses)",
+   "Par dose (environ 65 g) : 254 calories, 20 g de protéines, 38 g de glucides et 3,25 g de créatine monohydrate",
+   "Trois parfums : fraise, caramel salé et cookies & crème"
+  ],
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "seo_title": "BioTechUSA Hyper Mass | Gainer 2,27 ou 4 kg",
+  "seo_desc": "Un gainer avec créatine, sans sucre ajouté ni gluten. Pot de 2,27 kg ou de 4 kg, trois parfums. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "biotechusa-hyper-mass-strawberry-4000g",
+    "label": "Fraise, 2,27 kg",
+    "photo": "biotechusa-hyper-mass-strawberry-4000g.jpg",
+    "weight_g": 2600
+   },
+   {
+    "slug": "biotechusa-hyper-mass-salted-caramel-2270g",
+    "label": "Caramel salé, 2,27 kg",
+    "photo": "biotechusa-hyper-mass-salted-caramel-2270g.jpg",
+    "weight_g": 2600
+   },
+   {
+    "slug": "biotech-usa-hyper-masscookies-cream4000g",
+    "label": "Cookies & crème, 4 kg",
+    "photo": "biotech-usa-hyper-masscookies-cream4000g.jpg",
+    "weight_g": 4350
+   }
+  ],
+  "usage": null,
+  "low_ok": true
+ },
+ {
+  "key": "beef-mass",
+  "handle": "applied-nutrition-beef-mass-gainer-3-13-kg",
+  "title": "Applied Nutrition Beef Mass Gainer, 3,13 kg",
+  "vendor": "Applied Nutrition",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-proteines",
+   "rayon:complements-proteines"
+  ],
+  "weight_g": 3450,
+  "option": "Parfum",
+  "intro": "Un gainer sans produits laitiers, à base de protéine de bœuf hydrolysée et de glucides, pour augmenter son apport en calories et en protéines sans lactose.",
+  "points": [
+   "Pot de 3,13 kg, 25 doses",
+   "Par dose : 42 g de protéines, 70 g de glucides et 452 calories",
+   "Sans produits laitiers, sans lactose, faible en sucre et en matières grasses ; saveur cola"
+  ],
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "seo_title": "Applied Nutrition Beef Mass Gainer | 3,13 kg",
+  "seo_desc": "Un gainer à la protéine de bœuf, sans produits laitiers : 42 g de protéines et 452 calories par dose. Saveur cola. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "applied-nutrition-beef-mass-gainer-cola-313kg",
+    "label": "Cola",
+    "photo": "applied-nutrition-beef-mass-gainer-cola-313kg.jpg"
+   }
+  ],
+  "usage": null,
+  "low_ok": true
+ },
+ {
+  "key": "mutant-mass",
+  "handle": "mutant-mass-gainer-5-lb",
+  "title": "Mutant Mass gainer, 5 lb (2,27 kg)",
+  "vendor": "Mutant",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-proteines",
+   "rayon:complements-proteines"
+  ],
+  "weight_g": 2600,
+  "option": "Parfum",
+  "intro": "Un gainer très calorique qui associe des protéines de whey et de caséine à des glucides complexes (avoine, patate douce, riz) et à des graisses de noix de coco, d'avocat et de lin.",
+  "points": [
+   "Pot de 2,27 kg, environ 16 doses (1 dose = 2 mesures, 140 g)",
+   "Par dose : 550 calories et 28 g de protéines ; avec 4 mesures : 1 100 calories et 56 g de protéines",
+   "Contient du lait, du soja et de la noix de coco"
+  ],
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "seo_title": "Mutant Mass | Gainer 2,27 kg",
+  "seo_desc": "Un gainer whey et caséine : 550 calories et 28 g de protéines par dose. Fraise banane ou cookies & crème. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "mutant-mass-gainer-strawberry-banana-5lb",
+    "label": "Fraise banane",
+    "photo": "mutant-mass-gainer-strawberry-banana-5lb.jpg"
+   },
+   {
+    "slug": "mutant-mass-gainer-cookies-cream-5lb",
+    "label": "Cookies & crème",
+    "photo": "mutant-mass-gainer-cookies-cream-5lb.jpg"
+   }
+  ],
+  "usage": "1 dose (2 mesures) dans 350 à 475 ml d'eau ou de lait ; 4 mesures dans 475 à 600 ml pour un shake plus calorique.",
+  "low_ok": true
+ },
+ {
+  "key": "evogen-huge",
+  "handle": "evogen-super-huge-gainer-12-lb",
+  "title": "Evogen Super Huge gainer, 12 lb (5,44 kg)",
+  "vendor": "Evogen",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-proteines",
+   "rayon:complements-proteines"
+  ],
+  "weight_g": 6000,
+  "option": "Parfum",
+  "intro": "Un gainer en sac de 5,44 kg, pour les sportifs qui veulent beaucoup de calories : protéines, glucides, acides aminés essentiels et BCAA.",
+  "points": [
+   "Sac de 12 lb (5,44 kg)",
+   "Par dose : 1 220 calories et 50 g de protéines",
+   "22 g d'acides aminés essentiels, 10 g de BCAA et 5 g de leucine par dose ; saveur chocolat"
+  ],
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "seo_title": "Evogen Super Huge | Gainer 5,44 kg",
+  "seo_desc": "Un gainer en sac de 5,44 kg : 1 220 calories et 50 g de protéines par dose. Saveur chocolat. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "evogen-super-huge-mass-gainer-chocolate-shake-12lb",
+    "label": "Chocolat",
+    "photo": "evo_choc.jpg"
+   }
+  ],
+  "usage": null,
+  "low_ok": true
+ },
+ {
+  "key": "bsn-truemass",
+  "handle": "bsn-true-mass-1200-gainer-10-lb",
+  "title": "BSN True Mass 1200 gainer, 10 lb (4,7 kg)",
+  "vendor": "BSN",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-proteines",
+   "rayon:complements-proteines"
+  ],
+  "weight_g": 5000,
+  "option": "Parfum",
+  "intro": "Un gainer très calorique pour prendre du poids et du muscle : un mélange de protéines de whey (concentré et isolat) et de caséine, avec des glucides pour l'énergie et la récupération.",
+  "points": [
+   "Sac d'environ 4,7 kg, 15 doses",
+   "Par dose : 50 g de protéines, 200 g de glucides et environ 1 200 calories",
+   "Deux parfums : chocolat et vanille"
+  ],
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "seo_title": "BSN True Mass 1200 | Gainer 4,7 kg",
+  "seo_desc": "Un gainer de 1 200 calories par dose avec 50 g de protéines. Chocolat ou vanille. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "bsn-true-mass-protein-powder-1200-465-kg",
+    "label": "Chocolat",
+    "photo": "bsn-true-mass-protein-powder-1200-465-kg.jpg"
+   },
+   {
+    "slug": "bsn-true-mass-vanilla-10lb",
+    "label": "Vanille",
+    "photo": "bsn-true-mass-vanilla-10lb.jpg"
+   }
+  ],
+  "usage": null,
+  "low_ok": true
+ },
+ {
+  "key": "nitrotech",
+  "handle": "muscletech-nitro-tech-whey-1-8-kg",
+  "title": "MuscleTech Nitro-Tech whey, 1,8 kg",
+  "vendor": "MuscleTech",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-proteines",
+   "rayon:complements-proteines"
+  ],
+  "weight_g": 2200,
+  "option": "Parfum",
+  "intro": "Une whey à base d'isolat et de peptides de whey, enrichie en créatine monohydrate : 30 g de protéines et 3 g de créatine par dose.",
+  "points": [
+   "Pot de 4 lb (1,81 kg)",
+   "30 g de protéines et 3 g de créatine monohydrate par dose",
+   "Saveur chocolat au lait"
+  ],
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "seo_title": "MuscleTech Nitro-Tech whey | 1,8 kg",
+  "seo_desc": "Une whey avec créatine : 30 g de protéines et 3 g de créatine par dose. Chocolat au lait. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "muscletech-nitrotech-performance-milk-chocolate-4-lb",
+    "label": "Chocolat au lait",
+    "photo": "muscletech-nitrotech-performance-milk-chocolate-4-lb.jpg"
+   }
+  ],
+  "usage": "1 mesure dans environ 180 ml d'eau froide ou de lait écrémé.",
+  "low_ok": false
+ },
+ {
+  "key": "isopure",
+  "handle": "isopure-zero-carb-isolat-de-whey-3-lb",
+  "title": "Isopure Zero Carb isolat de whey, 3 lb (1,36 kg)",
+  "vendor": "Isopure",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-proteines",
+   "rayon:complements-proteines"
+  ],
+  "weight_g": 1650,
+  "option": "Parfum",
+  "intro": "Un isolat de whey sans glucides ni sucre, pour avoir des protéines sans calories en plus.",
+  "points": [
+   "Pot de 3 lb (1,36 kg), environ 44 doses",
+   "25 g de protéines par dose, zéro glucide, zéro sucre",
+   "Sans gluten ni lactose ; 20 vitamines et minéraux"
+  ],
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "seo_title": "Isopure Zero Carb | Isolat de whey 1,36 kg",
+  "seo_desc": "Un isolat de whey 100 % sans glucides : 25 g de protéines par dose. Cookies & crème ou fraise. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "isopure-zero-carb-protein-cookies-and-cream-3-lb",
+    "label": "Cookies & crème",
+    "photo": "isopure-zero-carb-protein-cookies-and-cream-3-lb.jpg"
+   },
+   {
+    "slug": "isopure-zero-carb-strawberry-3lb",
+    "label": "Fraises & crème",
+    "photo": "isopure-zero-carb-strawberry-3lb.jpg"
+   }
+  ],
+  "usage": "1 mesure dans de l'eau : secouer dans un shaker ou mixer.",
+  "low_ok": false
+ },
+ {
+  "key": "reflex-iso",
+  "handle": "reflex-nutrition-isolate-pro-isolat-de-whey-1-8-kg",
+  "title": "Reflex Nutrition Isolate Pro isolat de whey, 1,8 kg",
+  "vendor": "Reflex Nutrition",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-proteines",
+   "rayon:complements-proteines"
+  ],
+  "weight_g": 2150,
+  "option": "Parfum",
+  "intro": "Un isolat de whey issu de vaches nourries à l'herbe, filtré pour retirer presque toute la matière grasse, le sucre et le lactose : un shake léger et facile à digérer.",
+  "points": [
+   "Pot de 1,8 kg, 60 doses",
+   "25 g de protéines par dose",
+   "Faible en lactose, très peu de matières grasses et de glucides ; chocolat ou vanille"
+  ],
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "seo_title": "Reflex Nutrition Isolate Pro | Isolat 1,8 kg",
+  "seo_desc": "Un isolat de whey grass-fed : 25 g de protéines par dose, 60 doses. Chocolat ou vanille. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "reflex-nutrition-isolate-pro-whey-protein-isolate-chocolate-18kg",
+    "label": "Chocolat",
+    "photo": "reflex-nutrition-isolate-pro-whey-protein-isolate-chocolate-18kg.jpg"
+   },
+   {
+    "slug": "reflex-nutrition-isolate-pro-whey-protein-isolate-vanilla-18kg",
+    "label": "Vanille",
+    "photo": "reflex-nutrition-isolate-pro-whey-protein-isolate-vanilla-18kg.jpg"
+   }
+  ],
+  "usage": "1 mesure bombée (environ 30 g) dans 150 à 200 ml d'eau, à secouer jusqu'à ce que le mélange soit lisse.",
+  "low_ok": false
+ },
+ {
+  "key": "isoflex",
+  "handle": "allmax-isoflex-isolat-de-whey-5-lb",
+  "title": "Allmax Isoflex isolat de whey, 5 lb (2,27 kg)",
+  "vendor": "Allmax",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-proteines",
+   "rayon:complements-proteines"
+  ],
+  "weight_g": 2650,
+  "option": "Parfum",
+  "intro": "Un isolat de whey pur, sans sucre ajouté : 27 g de protéines et 120 calories par dose.",
+  "points": [
+   "Pot de 5 lb (2,27 kg)",
+   "Par dose : 27 g de protéines, 0 g de sucre, 120 calories",
+   "100 % isolat de whey ; saveur chocolat cacahuète"
+  ],
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "seo_title": "Allmax Isoflex | Isolat de whey 2,27 kg",
+  "seo_desc": "Un isolat de whey pur : 27 g de protéines, 0 g de sucre et 120 calories par dose. Chocolat cacahuète. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "allmax-isoflex-isolate-whey-protein-peanut-butter-5lb",
+    "label": "Chocolat cacahuète",
+    "photo": "allmax-isoflex-isolate-whey-protein-peanut-butter-5lb.jpg"
+   }
+  ],
+  "usage": null,
+  "low_ok": false
+ },
+ {
+  "key": "itholate",
+  "handle": "raw-nutrition-cbum-itholate-isolat-de-whey-992-g",
+  "title": "Raw Nutrition CBUM Itholate isolat de whey, 992 g",
+  "vendor": "Raw Nutrition",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-proteines",
+   "rayon:complements-proteines"
+  ],
+  "weight_g": 1200,
+  "option": "Parfum",
+  "intro": "Un isolat de whey 100 % isolat, rapide à absorber, sans sucres ajoutés ni agents de remplissage, pour la récupération après l'entraînement.",
+  "points": [
+   "Pot de 992 g, 25 doses",
+   "100 % isolat de whey, avec tous les acides aminés essentiels",
+   "Saveur chocolat beurre de cacahuète"
+  ],
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demande conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "seo_title": "Raw Nutrition CBUM Itholate | Isolat 992 g",
+  "seo_desc": "Un isolat de whey 100 % isolat, 25 doses. Chocolat beurre de cacahuète. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "raw-cbum-itholate-protein-chocolate-peanut-butter-992-gm",
+    "label": "Chocolat beurre de cacahuète",
+    "photo": "raw-cbum-itholate-protein-chocolate-peanut-butter-992-gm.jpg"
+   }
+  ],
+  "usage": null,
+  "low_ok": false
+ },
+ {
+  "key": "abe-rtd",
+  "handle": "applied-nutrition-abe-pre-entrainement-pret-a-boire-canette-330-ml",
+  "title": "Applied Nutrition ABE pré-entraînement prêt à boire, canette 330 ml",
+  "vendor": "Applied Nutrition",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-performance",
+   "rayon:complements-performance"
+  ],
+  "weight_g": 400,
+  "option": "Parfum",
+  "intro": "Le pré-entraînement ABE en canette gazeuse, prêt à boire : pas de mesure, pas de shaker. Une canette de 330 ml, sans sucre et sans calorie, avec 200 mg de caféine, de la citrulline, de la bêta-alanine, de la taurine et des vitamines B.",
+  "points": [
+   "Canette de 330 ml, vendue à l'unité",
+   "200 mg de caféine par canette ; zéro sucre, zéro calorie",
+   "Sept parfums"
+  ],
+  "note": "Complément alimentaire. Déconseillé aux enfants, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Ne dépasse pas la dose indiquée sur l'emballage.",
+  "seo_title": "Applied Nutrition ABE prêt à boire | Canette 330 ml",
+  "seo_desc": "Le pré-workout ABE en canette : 200 mg de caféine, citrulline et bêta-alanine, zéro sucre. Sept parfums. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "applied-nutrition-abe-pre-workout-rtd-blue-lagoon-330ml",
+    "label": "Blue Lagoon",
+    "photo": "applied-nutrition-abe-pre-workout-rtd-blue-lagoon-330ml.jpg"
+   },
+   {
+    "slug": "applied-nutrition-abe-pre-workout-rtd-cloudy-lemonade-330ml",
+    "label": "Cloudy Lemonade",
+    "photo": "applied-nutrition-abe-pre-workout-rtd-cloudy-lemonade-330ml.jpg"
+   },
+   {
+    "slug": "applied-nutrition-abe-pre-workout-rtd-cherry-slushie-330ml",
+    "label": "Cherry Slushie",
+    "photo": "applied-nutrition-abe-pre-workout-rtd-cherry-slushie-330ml.jpg"
+   },
+   {
+    "slug": "applied-nutrition-abe-pre-workout-rtd-grape-soda-330ml-x1pc",
+    "label": "Grape Soda",
+    "photo": "applied-nutrition-abe-pre-workout-rtd-grape-soda-330ml-x1pc.jpg"
+   },
+   {
+    "slug": "applied-nutrition-abe-pre-workout-rtd-apple-elderflower-330ml",
+    "label": "Pomme sureau",
+    "photo": "applied-nutrition-abe-pre-workout-rtd-apple-elderflower-330ml.jpg"
+   },
+   {
+    "slug": "applied-nutrition-abe-pre-workout-rtd-energy-330ml",
+    "label": "Energy",
+    "photo": "applied-nutrition-abe-pre-workout-rtd-energy-330ml.jpg"
+   },
+   {
+    "slug": "applied-nutrition-abe-pre-workout-drink-orange-burst-330ml",
+    "label": "Orange Burst",
+    "photo": "applied-nutrition-abe-pre-workout-drink-orange-burst-330ml.jpg"
+   }
+  ],
+  "usage": "1 canette, environ 20 à 30 minutes avant l'entraînement. Une seule canette par séance.",
+  "low_ok": false
+ },
+ {
+  "key": "cellup-drink",
+  "handle": "amix-cellup-boisson-pre-entrainement-pack-de-12",
+  "title": "Amix CellUP boisson pré-entraînement, pack de 12 × 500 ml",
+  "vendor": "Amix",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-performance",
+   "rayon:complements-performance"
+  ],
+  "weight_g": 6500,
+  "option": "Parfum",
+  "intro": "Une boisson pré-entraînement prête à boire, sans sucre, avec de la tyrosine, de la citrulline, de la taurine, des vitamines B et de la caféine. Pack de 12 canettes de 500 ml, saveur Tropical Breeze.",
+  "points": [
+   "Pack de 12 canettes de 500 ml",
+   "Sans sucre (zero sugar), contient de la caféine",
+   "Saveur Tropical Breeze"
+  ],
+  "note": "Complément alimentaire. Déconseillé aux enfants, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Ne dépasse pas la dose indiquée sur l'emballage.",
+  "seo_title": "Amix CellUP boisson pré-workout | Pack de 12",
+  "seo_desc": "Une boisson pré-entraînement sans sucre : tyrosine, citrulline, taurine et caféine. Pack de 12 canettes de 500 ml. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "amix-cellup-preworkout-drink-tropical-breeze-flavor-500ml-x-12pcs",
+    "label": "Tropical Breeze",
+    "photo": "amix-cellup-preworkout-drink-tropical-breeze-flavor-500ml-x-12pcs.jpg"
+   }
+  ],
+  "usage": "1 canette 20 à 30 minutes avant l'entraînement.",
+  "low_ok": false
+ },
+ {
+  "key": "nitronox",
+  "handle": "amix-nitronox-hardcore-shots-pre-entrainement-boite-de-20",
+  "title": "Amix NitroNOX Hardcore shots pré-entraînement, boîte de 20 × 60 ml",
+  "vendor": "Amix",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-performance",
+   "rayon:complements-performance"
+  ],
+  "weight_g": 1500,
+  "option": "Parfum",
+  "intro": "Des shots pré-entraînement prêts à boire, à base de L-arginine, de bêta-alanine et de caféine, pour l'énergie, l'endurance et la congestion musculaire pendant les séances intenses.",
+  "points": [
+   "Boîte de 20 shots de 60 ml",
+   "Contient de la caféine : un seul shot par séance",
+   "Deux parfums : raisin et baies"
+  ],
+  "note": "Complément alimentaire. Déconseillé aux enfants, aux femmes enceintes ou allaitantes et aux personnes sensibles à la caféine. Ne dépasse pas la dose indiquée sur l'emballage.",
+  "seo_title": "Amix NitroNOX Hardcore shots | Boîte de 20",
+  "seo_desc": "Des shots pré-entraînement : L-arginine, bêta-alanine et caféine. Boîte de 20, raisin ou baies. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "amix-nitronox-hardcore-shots-grape-flavor-60ml-x-20pcs",
+    "label": "Raisin",
+    "photo": "amix-nitronox-hardcore-shots-grape-flavor-60ml-x-20pcs.jpg"
+   },
+   {
+    "slug": "amix-nitronox-hardcore-shots-berries-flavor-60ml-x-20pcs",
+    "label": "Baies",
+    "photo": "amix-nitronox-hardcore-shots-berries-flavor-60ml-x-20pcs.jpg"
+   }
+  ],
+  "usage": "1 shot environ 20 à 30 minutes avant l'entraînement. Un seul shot par séance.",
+  "low_ok": true
+ },
+ {
+  "key": "zero-hero",
+  "handle": "amix-zero-hero-barres-proteinees-31-pourcent-boite-de-15",
+  "title": "Amix Zero Hero barres protéinées 31 %, boîte de 15 × 65 g",
+  "vendor": "Amix",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-snacks",
+   "rayon:complements-proteines"
+  ],
+  "weight_g": 1250,
+  "option": "Parfum",
+  "intro": "Des barres protéinées à 31 % de protéines, pauvres en sucre et en matières grasses : une collation après la séance ou au bureau.",
+  "points": [
+   "Boîte de 15 barres de 65 g",
+   "31 % de protéines, faible en sucre et en matières grasses",
+   "Deux parfums : double chocolat et beurre de cacahuète"
+  ],
+  "note": "Ne remplace pas une alimentation variée. Vérifie la liste des allergènes sur l'emballage.",
+  "seo_title": "Amix Zero Hero 31 % | Boîte de 15 barres",
+  "seo_desc": "Des barres protéinées à 31 % de protéines, faibles en sucre. Boîte de 15, double chocolat ou beurre de cacahuète. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "amix-zero-hero-31-protein-bar-double-chocolate-flavor-65gm-x-15pcs",
+    "label": "Double chocolat",
+    "photo": "amix-zero-hero-31-protein-bar-double-chocolate-flavor-65gm-x-15pcs.jpg"
+   },
+   {
+    "slug": "amix-zero-hero-31-protein-bar-peanut-butter-flavor-65gm-x-15pcs",
+    "label": "Beurre de cacahuète",
+    "photo": "amix-zero-hero-31-protein-bar-peanut-butter-flavor-65gm-x-15pcs.jpg"
+   }
+  ],
+  "usage": "Une barre en collation ; la boîte se range au sec.",
+  "low_ok": true
+ },
+ {
+  "key": "protein-nuts",
+  "handle": "amix-protein-nuts-barres-proteinees-boite-de-25",
+  "title": "Amix Protein Nuts barres protéinées, boîte de 25 × 40 g",
+  "vendor": "Amix",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-snacks",
+   "rayon:complements-proteines"
+  ],
+  "weight_g": 1300,
+  "option": "Parfum",
+  "intro": "Des barres croquantes aux noix, riches en protéines et en bonnes graisses, avec un enrobage au chocolat.",
+  "points": [
+   "Boîte de 25 barres de 40 g",
+   "Noix croquantes, enrobage chocolat",
+   "Deux parfums : cajou coco et cacahuète caramel"
+  ],
+  "note": "Ne remplace pas une alimentation variée. Vérifie la liste des allergènes sur l'emballage.",
+  "seo_title": "Amix Protein Nuts | Boîte de 25 barres",
+  "seo_desc": "Des barres protéinées croquantes aux noix, enrobées de chocolat. Boîte de 25, cajou coco ou cacahuète caramel. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "amix-protein-nuts-bar-cashew-coconut-flavor-40gm-x-25pcs",
+    "label": "Cajou coco",
+    "photo": "amix-protein-nuts-bar-cashew-coconut-flavor-40gm-x-25pcs.jpg"
+   },
+   {
+    "slug": "amix-protein-nuts-bar-peanut-caramel-flavor-40gm-x-25pcs",
+    "label": "Cacahuète caramel",
+    "photo": "amix-protein-nuts-bar-peanut-caramel-flavor-40gm-x-25pcs.jpg"
+   }
+  ],
+  "usage": "Une barre avant ou après l'entraînement, ou en collation.",
+  "low_ok": true
+ },
+ {
+  "key": "carb-killa",
+  "handle": "grenade-carb-killa-barres-proteinees-caramel-sale-boite-de-12",
+  "title": "Grenade Carb Killa barres protéinées caramel salé, boîte de 12 × 60 g",
+  "vendor": "Grenade",
+  "tags": [
+   "cat:complements",
+   "concern:energie",
+   "energie",
+   "nouveau",
+   "stock:sur-commande",
+   "sur-commande",
+   "sub:cp-sport",
+   "sub:cp-snacks",
+   "rayon:complements-proteines"
+  ],
+  "weight_g": 900,
+  "option": "Parfum",
+  "intro": "Des barres protéinées qui ont le goût d'une barre chocolatée, avec 20 g de protéines et très peu de sucre. Saveur caramel salé.",
+  "points": [
+   "Boîte de 12 barres de 60 g",
+   "20 g de protéines et moins de 2 g de sucre par barre",
+   "Saveur caramel salé"
+  ],
+  "note": "Ne remplace pas une alimentation variée. Vérifie la liste des allergènes sur l'emballage.",
+  "seo_title": "Grenade Carb Killa caramel salé | Boîte de 12",
+  "seo_desc": "Des barres protéinées : 20 g de protéines et moins de 2 g de sucre. Boîte de 12, caramel salé. Livraison à Djibouti-ville en 4 à 5 jours.",
+  "variants": [
+   {
+    "slug": "grenade-carb-killa-protein-bar-60gm-box-of-12",
+    "label": "Caramel salé",
+    "photo": "grenade-carb-killa-protein-bar-60gm-box-of-12.jpg"
+   }
+  ],
+  "usage": "Une barre en collation ; la boîte se range au sec.",
+  "low_ok": true
  }
 ]

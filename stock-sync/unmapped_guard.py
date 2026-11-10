@@ -27,8 +27,7 @@ Q = """query($after:String){ products(first:50, after:$after, query:"status:acti
 
 
 def main():
-    if not (os.environ.get("SHOPIFY_STORE") and (os.environ.get("SHOPIFY_TOKEN") or os.environ.get("SHOPIFY_CLIENT_SECRET"))):
-        print("No Shopify credentials set: nothing to do.")
+    if not s.have_credentials():
         return
     dry = os.environ.get("DRY_RUN") == "1"
     todo, no_asin_single, after = {}, [], None
@@ -68,8 +67,7 @@ def main():
     if dry or n == 0:
         return
     if n > MAX_FLIPS:
-        print(f"More than {MAX_FLIPS} variants: not changed, to be checked by hand.")
-        return
+        sys.exit(f"ALERTE: {n} variants on sale have no ASIN (more than {MAX_FLIPS}): not changed, a data problem to check by hand.")
     errors = 0
     for pid, ups in todo.items():
         res = s.gql(s.PRICES_M, {"p": pid, "v": [{"id": u["id"], "inventoryPolicy": "DENY"} for u in ups]})
@@ -78,6 +76,8 @@ def main():
         for e in errs:
             print("error:", pid, e)
     print(f"{n} variants set to Épuisé, {errors} Shopify errors.")
+    if errors:
+        sys.exit(f"ALERTE: {errors} Shopify errors while hiding variants without an ASIN.")
 
 
 if __name__ == "__main__":

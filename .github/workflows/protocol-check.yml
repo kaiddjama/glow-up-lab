@@ -14,3 +14,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python3 -I stock-sync/protocol_check.py
+      - name: Offline tests (page reading, decisions, clock, coverage, MedX, PadelShop.ae)
+        run: |
+          for t in test_amazon test_heartbeat test_medx test_padelshop; do python3 -I "stock-sync/$t.py"; done

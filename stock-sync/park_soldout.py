@@ -29,7 +29,7 @@ Q = """query($after:String,$q:String!,$pub:ID!){ products(first:100, after:$afte
     pub: publishedOnPublication(publicationId:$pub)
     chk: metafield(namespace:"supplier", key:"checked_at"){value}
     ref: metafield(namespace:"internal", key:"supplier_ref"){value}
-    variants(first:100){ nodes{ sku inventoryPolicy } } } } }"""
+    variants(first:100){ nodes{ id sku inventoryPolicy } } } } }"""
 
 
 def load(search):
@@ -48,8 +48,7 @@ def all_out(p):
 
 
 def main():
-    if not (os.environ.get("SHOPIFY_STORE") and (os.environ.get("SHOPIFY_TOKEN") or os.environ.get("SHOPIFY_CLIENT_SECRET"))):
-        print("No Shopify credentials set: nothing to do.")
+    if not s.have_credentials():
         return
     dry = os.environ.get("DRY_RUN") == "1"
     active = load("status:active")
@@ -76,11 +75,17 @@ def main():
     if dry:
         return
     if active and len(to_hide) > MAX_SHARE * len(active):
-        sys.exit(f"{len(to_hide)} of {len(active)} products would be hidden: not changed, to be checked by hand.")
+        sys.exit(f"ALERTE: {len(to_hide)} of {len(active)} products would be hidden: not changed, to be checked by hand.")
     errors = 0
+    for p in unverified:  # never read: its variants are not left "on sale" inside the hidden product (the sync decides later)
+        ups = [{"id": v["id"], "inventoryPolicy": "DENY"} for v in p["variants"]["nodes"] if v["inventoryPolicy"] == "CONTINUE"]
+        errs = s.gql(s.PRICES_M, {"p": p["id"], "v": ups})["productVariantsBulkUpdate"]["userErrors"] if ups else []
+        errors += len(errs)
     for p, status in [(p, "DRAFT") for p in to_hide] + [(p, "ACTIVE") for p in to_show]:
-        calls = [(s.STATUS_M, {"p": {"id": p["id"], "status": status}}),
-                 ((s.TAGS_ADD_M if status == "DRAFT" else s.TAGS_REMOVE_M), {"id": p["id"], "t": [s.OUT_TAG]})]
+        # hiding: the tag first, so a product is never left in draft without the tag that brings it back
+        calls = [(s.TAGS_ADD_M, {"id": p["id"], "t": [s.OUT_TAG]}), (s.STATUS_M, {"p": {"id": p["id"], "status": status}})] \
+            if status == "DRAFT" else \
+                [(s.STATUS_M, {"p": {"id": p["id"], "status": status}}), (s.TAGS_REMOVE_M, {"id": p["id"], "t": [s.OUT_TAG]})]
         for q, vars_ in calls:
             errs = next(iter(s.gql(q, vars_).values()))["userErrors"]
             errors += len(errs)
@@ -93,7 +98,7 @@ def main():
             print("publish error:", p["handle"], e)
     print(f"{len(to_hide)} hidden, {len(to_show)} back online, {len(to_publish)} published, {errors} Shopify errors.")
     if errors:
-        sys.exit(1)
+        sys.exit(f"ALERTE: {errors} Shopify errors while hiding or showing products.")
 
 
 if __name__ == "__main__":

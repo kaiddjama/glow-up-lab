@@ -7,12 +7,20 @@
                                     items with a SKU "PSAE-..." on padelshop.ae, which must say available):
                                     - all items sellable: the order gets the tag amazon-ok
                                     - an item not sellable (or with no ASIN): the order gets the tag amazon-ko, the
-                                      variant goes to Épuisé, and alert.md describes it for the owner
+                                      variant goes to Épuisé and stays so for COOL_HOURS (the robot may still read it
+                                      "available" while it is not), and alert.md describes it for the owner
+                                    - an Amazon.ae item that cannot be bought there but can at its second source
+                                      (supplier.fallback): the order is fine, alert.md says where to buy it (tag source-2)
+                                    - more units ordered than Amazon.ae shows or allows per order: tag amazon-qte, a
+                                      line in alert.md, nothing hidden
                                     - a page that could not be read: the order is left alone and tried again at the next
                                       run, until it is ORDER_MAX_AGE_H old (then amazon-incertain)
+An order stays in the list until it carries one of these tags, for WINDOW_H hours: a check that was down for a night
+catches up by itself. One order that cannot be handled never stops the others.
 Needs the app scopes read_orders and write_orders. DRY_RUN=1 reports only.
 """
 import datetime as dt
+import json
 import os
 import sys
 
@@ -20,14 +28,19 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # python -I does
 import amazon_sync as s  # noqa: E402
 import medx  # noqa: E402
 import padelshop  # noqa: E402
+import suppliers  # noqa: E402
 
-WINDOW_H = 6  # orders newer than this are looked at
+WINDOW_H = 72  # orders newer than this and not tagged yet are looked at
 ORDER_MAX_AGE_H = 2  # an order whose pages still cannot be read after this long is tagged amazon-incertain
+COOL_HOURS = 24  # a variant an order proved unavailable is not put back on sale by the sync before this long
 
-Q = """query($q:String!){ orders(first:25, query:$q, sortKey:CREATED_AT){ nodes{
-  id name createdAt tags
+Q = """query($q:String!,$after:String){ orders(first:20, after:$after, query:$q, sortKey:CREATED_AT){
+  pageInfo{hasNextPage endCursor}
+  nodes{ id name createdAt tags
   lineItems(first:50){ nodes{ title variantTitle sku quantity
     variant{ id inventoryPolicy
+      state: metafield(namespace:"supplier", key:"sync_state"){value}
+      fallback: metafield(namespace:"supplier", key:"fallback"){value}
       product{ id handle vendor isGiftCard
         ref: metafield(namespace:"internal", key:"supplier_ref"){value}
         spreadr: metafield(namespace:"global", key:"spreadr-asin"){value}
@@ -38,7 +51,13 @@ TAGS_ADD_ORDER_M = """mutation($id:ID!,$t:[String!]!){tagsAdd(id:$id, tags:$t){u
 def recent_orders():
     since = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=WINDOW_H)).strftime("%Y-%m-%dT%H:%M:%SZ")
     q = f"created_at:>={since} -tag:amazon-ok -tag:amazon-ko -tag:amazon-incertain -status:cancelled"
-    return s.gql(Q, {"q": q})["orders"]["nodes"]
+    orders, after = [], None
+    while True:
+        data = s.gql(Q, {"q": q, "after": after})["orders"]
+        orders += data["nodes"]
+        if not data["pageInfo"]["hasNextPage"]:
+            return orders
+        after = data["pageInfo"]["endCursor"]
 
 
 def asin_of(item):
@@ -57,31 +76,87 @@ def asin_of(item):
     return None
 
 
+def why_not(pg):
+    """In French, for the owner: why this Amazon.ae page cannot be bought now."""
+    if pg.get("gone"):
+        return "fiche supprimée sur Amazon.ae"
+    if pg.get("redirect"):
+        return f"Amazon.ae affiche maintenant un autre article ({pg['redirect']}) à cette adresse"
+    if not pg.get("inStock"):
+        return "pas en stock sur Amazon.ae"
+    if s.low_stock(pg):
+        return (f"stock très faible sur Amazon.ae ({pg['stockLeft']} restant(s)) : l'offre peut passer à un vendeur lent, "
+                "vérifie le délai sur ton compte et achète vite")
+    if pg.get("sourceDays") is None:
+        return "en stock mais sans date de livraison pour Dubaï"
+    return f"livraison trop lente ({pg.get('deliveryText')})"
+
+
+def quantity_note(pg, wanted):
+    """A warning when more units were ordered than Amazon.ae shows in stock or allows in one order, else None."""
+    left, most = pg.get("stockLeft"), pg.get("maxQty")
+    if left is not None and wanted > left:
+        return f"{wanted} commandés, {left} restant(s) sur Amazon.ae"
+    if most is not None and wanted > most:
+        return f"{wanted} commandés, Amazon.ae en laisse acheter {most} par commande"
+    return None
+
+
+def other_source(pages, ref):
+    """(page, module, display name) of a MEDX-/PSAE- reference, read once per run."""
+    mod, slug, name = suppliers.module_of(ref)
+    if not mod:
+        return None, None, None
+    if ref not in pages:
+        pages[ref] = mod.fetch(slug)
+    return pages[ref], mod, name
+
+
+def check_item(it, amazon_page_of, other_pages):
+    """("ok" | "ko" | "unknown", reason or None, notes). notes = [(tag, text)] to tell the owner without blocking."""
+    for mod, name in ((medx, "MedX"), (padelshop, "PadelShop.ae")):
+        if mod.slug_of(it.get("sku")):
+            pg, _, _ = other_source(other_pages, it["sku"].strip())
+            if pg.get("error"):
+                return "unknown", None, []
+            if mod.sellable(pg, True):
+                return "ok", None, []
+            if pg.get("gone"):
+                return "ko", f"fiche retirée chez {name}", []
+            if mod is medx:
+                return "ko", (f"stock MedX insuffisant ({pg['qty']} restant)" if pg["publish"] else "fiche MedX non publiée"), []
+            return "ko", f"plus disponible chez {name}", []
+    asin = asin_of(it)
+    if not asin:
+        return "ko", "pas de code ASIN, impossible à vérifier", []
+    pg = amazon_page_of(asin)
+    if pg.get("error"):
+        return "unknown", None, []
+    if s.sellable(pg):
+        note = quantity_note(pg, it.get("quantity") or 1)
+        return "ok", None, [("amazon-qte", note)] if note else []
+    ref = ((it["variant"].get("fallback") or {}).get("value") or "").strip()
+    if ref:  # Amazon.ae cannot sell it: is the second source able to?
+        other, mod, name = other_source(other_pages, ref)
+        if mod and other.get("error"):
+            return "unknown", None, []
+        if mod and mod.sellable(other, True):
+            return "ok", None, [("source-2", f"à acheter chez {name} ({ref}) : {why_not(pg)}")]
+    return "ko", why_not(pg), []
+
+
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "list"
-    if not (os.environ.get("SHOPIFY_STORE") and (os.environ.get("SHOPIFY_TOKEN") or os.environ.get("SHOPIFY_CLIENT_SECRET"))):
-        print("No Shopify credentials set: nothing to do.")
+    if not s.have_credentials():
         return
     try:
         orders = recent_orders()
     except RuntimeError as e:
         if "ACCESS_DENIED" not in str(e):
             raise
-        # The Shopify app has no read_orders scope yet: say so on the run page instead of failing every 10 minutes.
-        try:  # which access scopes does the app really have? (scope names only, nothing secret)
-            granted = [x["handle"] for x in s.gql("{ currentAppInstallation { accessScopes { handle } } }", {})
-                       ["currentAppInstallation"]["accessScopes"]]
-            print("Granted scopes with 'order' in the name:", [h for h in granted if "order" in h] or "none",
-                  "| total scopes:", len(granted))
-        except Exception as e:
-            print("Could not list the granted scopes:", type(e).__name__)
-        print("::warning title=Order check not active::The Shopify app lacks the read_orders / write_orders access scopes. "
-              "Add them to the app and approve the update; the check starts by itself afterwards.")
-        out = os.environ.get("GITHUB_OUTPUT")
-        if out:
-            with open(out, "a") as f:
-                f.write("count=0\n")
-        return
+        # The Shopify app has no read_orders scope: this used to be a quiet warning; without it no order is checked at all.
+        sys.exit("ALERTE: the Shopify app lacks the read_orders / write_orders access scopes: no order can be checked. "
+                 "Add them to the app and approve the update.")
     if mode == "list":
         print(f"{len(orders)} recent orders to check.")
         out = os.environ.get("GITHUB_OUTPUT")
@@ -91,95 +166,103 @@ def main():
         return
     dry = os.environ.get("DRY_RUN") == "1"
     now = dt.datetime.now(dt.timezone.utc)
-    today = now.astimezone(dt.timezone(dt.timedelta(hours=4))).date()  # Dubai date, as in amazon_sync.py
-    import browser_fetch
-    reader = browser_fetch.BrowserReader().start()
-    print("Browser reader started, delivery location:", reader.location_text())
-    pages, alerts, medx_pages, shop_pages = {}, [], {}, {}
+    pages, other_pages, alerts, problems = {}, {}, [], 0
+    browser = {"tried": False}
 
     def page_of(asin):
         if asin not in pages:
-            try:
-                pages[asin] = s.parse(reader.get(f"https://www.amazon.ae/dp/{asin}?language=en_AE"), today)
-            except Exception as e:  # LocationLost, timeouts...
-                pages[asin] = {"error": type(e).__name__}
+            if not browser["tried"]:  # started only when an Amazon.ae item has to be read
+                browser["tried"] = True
+                try:
+                    s.start_browser()
+                except SystemExit as e:
+                    print(e)
+            if not s.READER:
+                pages[asin] = {"error": "browser not started"}
+            else:
+                try:
+                    pages[asin] = s.read_page(asin)
+                except Exception as e:  # LocationLost, timeouts...
+                    pages[asin] = {"error": type(e).__name__}
         return pages[asin]
 
     try:
         for o in orders:
-            bad, unknown = [], []
-            for it in o["lineItems"]["nodes"]:
-                if (it.get("variant") or {}).get("product", {}).get("isGiftCard"):
-                    continue  # gift card: nothing to buy on Amazon.ae
-                label = f"{it['title']}" + (f" ({it['variantTitle']})" if it.get("variantTitle") else "")
-                slug = medx.slug_of(it.get("sku"))
-                if slug:  # MedX Pharmacy item: plain page, no browser needed
-                    if slug not in medx_pages:
-                        medx_pages[slug] = medx.fetch(slug)
-                    mp = medx_pages[slug]
-                    if mp.get("error"):
+            try:
+                bad, unknown, notes = [], [], []
+                for it in o["lineItems"]["nodes"]:
+                    if (it.get("variant") or {}).get("product", {}).get("isGiftCard"):
+                        continue  # gift card: nothing to buy
+                    label = f"{it['title']}" + (f" ({it['variantTitle']})" if it.get("variantTitle") else "")
+                    if not it.get("variant"):
+                        bad.append((it, label, "article sans fiche dans la boutique (supprimée ?), impossible à vérifier"))
+                        continue
+                    verdict, why, extra = check_item(it, page_of, other_pages)
+                    notes += [(tag, f"{label} : {text}") for tag, text in extra]
+                    if verdict == "ko":
+                        bad.append((it, label, why))
+                    elif verdict == "unknown":
                         unknown.append(label)
-                    elif not medx.sellable(mp, True):
-                        bad.append((it, label, "fiche retirée chez MedX" if mp.get("gone") else
-                                    f"stock MedX insuffisant ({mp['qty']} restant)" if mp["publish"] else "fiche MedX non publiée"))
+                age_h = s.hours_since(o["createdAt"], now)
+                if bad:
+                    tag = "amazon-ko"
+                elif unknown and age_h < ORDER_MAX_AGE_H:
+                    print(f"{o['name']}: {len(unknown)} page(s) not read, will try again.")
                     continue
-                shop = padelshop.slug_of(it.get("sku"))
-                if shop:  # PadelShop.ae item: plain JSON page, no browser needed
-                    if shop not in shop_pages:
-                        shop_pages[shop] = padelshop.fetch(shop)
-                    sp = shop_pages[shop]
-                    if sp.get("error"):
-                        unknown.append(label)
-                    elif not padelshop.sellable(sp, True):
-                        bad.append((it, label, "fiche retirée chez PadelShop.ae" if sp.get("gone") else "plus disponible chez PadelShop.ae"))
+                elif unknown:
+                    tag = "amazon-incertain"
+                else:
+                    tag = "amazon-ok"
+                print(f"{o['name']}: {tag}")
+                for it, label, why in bad:
+                    print(f"  indisponible: {label} - {why}")
+                    alerts.append(f"- Commande {o['name']}: **{label}** : {why}")
+                if tag == "amazon-incertain":
+                    alerts.append(f"- Commande {o['name']}: pages illisibles pour {', '.join(unknown)} : à vérifier à la main")
+                for _, text in notes:
+                    print(f"  note: {text}")
+                    alerts.append(f"- Commande {o['name']}: {text}")
+                if dry:
                     continue
-                asin = asin_of(it)
-                if not asin:
-                    bad.append((it, label, "pas de code ASIN, impossible à vérifier"))
-                    continue
-                pg = page_of(asin)
-                if pg.get("error"):
-                    unknown.append(label)
-                elif not s.sellable(pg, {"vendor": it["variant"]["product"]["vendor"] or ""}):
-                    why = ("pas en stock sur Amazon.ae" if not pg["inStock"] else
-                           f"livraison trop lente ({pg.get('deliveryText')})")
-                    bad.append((it, label, why))
-            age_h = (now - dt.datetime.fromisoformat(o["createdAt"].replace("Z", "+00:00"))).total_seconds() / 3600
-            if bad:
-                tag = "amazon-ko"
-            elif unknown and age_h < ORDER_MAX_AGE_H:
-                print(f"{o['name']}: {len(unknown)} page(s) not read, will try again.")
-                continue
-            elif unknown:
-                tag = "amazon-incertain"
-            else:
-                tag = "amazon-ok"
-            print(f"{o['name']}: {tag}")
-            for it, label, why in bad:
-                print(f"  indisponible: {label} - {why}")
-                alerts.append(f"- Commande {o['name']}: **{label}** : {why}")
-            if tag == "amazon-incertain":
-                alerts.append(f"- Commande {o['name']}: pages Amazon illisibles pour {', '.join(unknown)} : à vérifier à la main")
-            if dry:
-                continue
-            errs = s.gql(TAGS_ADD_ORDER_M, {"id": o["id"], "t": [tag]})["tagsAdd"]["userErrors"]
-            if errs:
-                print("tag error:", errs)
-            by_product = {}
-            for it, _, _ in bad:
-                v = it.get("variant")
-                if v and v["inventoryPolicy"] == "CONTINUE":
-                    by_product.setdefault(v["product"]["id"], []).append({"id": v["id"], "inventoryPolicy": "DENY"})
-            for pid, ups in by_product.items():
-                errs = s.gql(s.PRICES_M, {"p": pid, "v": ups})["productVariantsBulkUpdate"]["userErrors"]
+                tags = [tag] + sorted({t for t, _ in notes})
+                errs = s.gql(TAGS_ADD_ORDER_M, {"id": o["id"], "t": tags})["tagsAdd"]["userErrors"]
                 if errs:
-                    print("variant error:", errs)
+                    problems += 1
+                    print("tag error:", errs)
+                by_product, cool = {}, []
+                until = s.iso(now + dt.timedelta(hours=COOL_HOURS))
+                for it, _, _ in bad:
+                    v = it.get("variant")
+                    if not v:
+                        continue
+                    if v["inventoryPolicy"] == "CONTINUE":
+                        by_product.setdefault(v["product"]["id"], []).append({"id": v["id"], "inventoryPolicy": "DENY"})
+                    if asin_of(it) and not suppliers.is_other_source(it.get("sku")):
+                        state = {**s.read_state(v.get("state")), "cool": until}
+                        state.pop("src", None)
+                        state.pop("src_t", None)
+                        cool.append(s.field(v["id"], "sync_state", "json", json.dumps(state, separators=(",", ":"))))
+                for pid, ups in by_product.items():
+                    errs = s.gql(s.PRICES_M, {"p": pid, "v": ups})["productVariantsBulkUpdate"]["userErrors"]
+                    if errs:
+                        problems += 1
+                        print("variant error:", errs)
+                if cool:
+                    errs = s.gql(s.META_M, {"m": cool})["metafieldsSet"]["userErrors"]
+                    if errs:
+                        print("cool-down error:", errs)
+            except Exception as e:  # one order that cannot be handled must not stop the others
+                problems += 1
+                print(f"::warning::{o.get('name')}: not checked ({type(e).__name__}: {str(e)[:150]}), tried again at the next run")
     finally:
-        reader.close()
+        if s.READER:
+            s.READER.close()
     if alerts:
         with open("alert.md", "w") as f:
-            f.write("Articles commandés non disponibles chez le fournisseur (Amazon.ae, MedX ou PadelShop.ae) :\n\n" + "\n".join(alerts) + "\n")
+            f.write("Commandes à regarder (Amazon.ae, MedX ou PadelShop.ae) :\n\n" + "\n".join(alerts) + "\n")
         print("\n".join(alerts))
+    if problems and not dry:
+        sys.exit(f"ALERTE: {problems} order(s) could not be checked or tagged completely; see the log.")
 
 
 if __name__ == "__main__":

@@ -11,12 +11,16 @@ on:
         description: "Delivery district in the Deliver-to pop-up (empty = first suggestion)"
         type: string
         default: ""
+      facts:
+        description: "Also print the raw page markers and keep the pages (artifact probe-pages, 3 days)"
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -29,4 +33,15 @@ jobs:
           DELAY: "8"
           BROWSER_DISTRICT: ${{ inputs.district }}
           ASINS: ${{ inputs.asins || 'B0CR9LFM72 B0DHVLFR2V B0CWS5QP8F B0BGMGWP14 B015PL0HG0 B06XH28C1K B0019LVGPC B07NWMVMT1 B0013G6FSG B001GCU6KA' }}
+          FACTS: ${{ inputs.facts && '1' || '0' }}
+          DUMP_DIR: ${{ inputs.facts && 'dump' || '' }}
+          PYTHONUNBUFFERED: "1"
         run: python3 probe_browser.py $ASINS
+      - name: Keep the pages
+        if: ${{ always() && inputs.facts }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe-pages
+          path: stock-sync/dump/
+          if-no-files-found: ignore
+          retention-days: 3

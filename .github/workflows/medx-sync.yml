@@ -1,10 +1,10 @@
 name: MedX stock and price sync
 # Second supplier (medxpharmacy.com, Dubai). The pages are plain HTML: no browser, no CAPTCHA, about one minute a run.
-# Every 30 minutes (not on the hour: GitHub skips runs scheduled on the hour when busy).
+# Every 10 minutes from :03 (not on the hour: GitHub skips runs scheduled on the hour when busy).
 # Run it by hand with "Run workflow": dry_run=true reads and reports only.
 on:
   schedule:
-    - cron: "17,47 * * * *"
+    - cron: "3-59/10 * * * *"
   workflow_dispatch:
     inputs:
       dry_run:
@@ -44,7 +44,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
   coverage:
-    # Safeguard: a MedX variant on sale that was not read for 3 hours is set to Épuisé (stock that cannot be confirmed is never sold).
+    # Safeguard: a MedX variant on sale that was not read for 1 hour is set to Épuisé (stock that cannot be confirmed is never sold).
     needs: [sync]
     if: ${{ always() && !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
     runs-on: ubuntu-latest
@@ -88,4 +88,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          .github/alert.sh "Alerte inventaire : contrôle MedX en échec" "Le contrôle MedX de $(TZ=Africa/Djibouti date '+%d/%m %Hh%M') (heure de Djibouti) a échoué : le stock de certains produits MedX n'a peut-être pas été vérifié (ceux non lus depuis 3 h sont masqués automatiquement). Détail : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          .github/alert.sh "Alerte inventaire : contrôle MedX en échec" "Le contrôle MedX de $(TZ=Africa/Djibouti date '+%d/%m %Hh%M') (heure de Djibouti) a échoué : le stock de certains produits MedX n'a peut-être pas été vérifié (ceux non lus depuis 1 h sont masqués automatiquement). Détail : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
