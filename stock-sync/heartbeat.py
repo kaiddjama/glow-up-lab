@@ -190,7 +190,7 @@ def loop(minutes):
     me = int(os.environ.get("GITHUB_RUN_ID", "0"))
     hours = sync_hours()
     print(f"Clock awake for {minutes:g} min on {REF}; full checks at (UTC) {hours}; dry={DRY}", flush=True)
-    t0, fails, successor, missing, asked = now(), 0, False, set(), set()
+    t0, fails, successor, asked = now(), 0, False, set()
     nxt = {wf: t0 for wf, _, _ in JOBS}  # first look at once, then on each control's own minutes
     next_sync = t0
     while (now() - t0).total_seconds() < minutes * 60:
@@ -199,13 +199,13 @@ def loop(minutes):
             if not successor:  # the next clock waits in line behind this one and takes over when it ends, however it ends
                 successor = bool(clocks(me)) or start(BEAT)
             for wf, interval, offset in JOBS:
-                if wf in missing or t < nxt[wf]:
+                if t < nxt[wf]:
                     continue
                 nxt[wf] = next_slot(t, interval, offset)
                 runs = runs_of(wf, 3)
-                if runs is None:
-                    missing.add(wf)
-                    print(f"{wf} is not in the repository: left out", flush=True)
+                if runs is None:  # not known to GitHub (yet): looked at again in half an hour
+                    nxt[wf] = t + dt.timedelta(minutes=30)
+                    print(f"{wf} is not in the repository: left out for 30 min", flush=True)
                 elif due(runs, interval, t):
                     fails = 0 if start(wf, {"dry_run": "false"}) else fails + 1
             if t >= next_sync:

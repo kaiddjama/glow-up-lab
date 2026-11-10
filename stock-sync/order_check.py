@@ -34,7 +34,7 @@ WINDOW_H = 72  # orders newer than this and not tagged yet are looked at
 ORDER_MAX_AGE_H = 2  # an order whose pages still cannot be read after this long is tagged amazon-incertain
 COOL_HOURS = 24  # a variant an order proved unavailable is not put back on sale by the sync before this long
 
-Q = """query($q:String!,$after:String){ orders(first:50, after:$after, query:$q, sortKey:CREATED_AT){
+Q = """query($q:String!,$after:String){ orders(first:20, after:$after, query:$q, sortKey:CREATED_AT){
   pageInfo{hasNextPage endCursor}
   nodes{ id name createdAt tags
   lineItems(first:50){ nodes{ title variantTitle sku quantity
