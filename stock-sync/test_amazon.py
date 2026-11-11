@@ -130,6 +130,66 @@ def test_reading():
                                                                        deliveries=[delivery("Tomorrow, 11 November")])])))
 
 
+def test_page_changes():
+    """Amazon.ae changes its pages. Every fact has a spare reading that gives the same answer; an offer that cannot be
+    understood counts as NOT READ, never as out of stock; one reader raises the alert when it happens on many pages."""
+    form = '<input type="hidden" name="items[0.base][customerVisiblePrice][amount]" value="54.0">'
+    words = ("<div>FREE delivery <b>Friday, 13 November</b> on your first order. Or fastest delivery <b>Tomorrow, "
+             "11 November</b>. Order within 2 hrs 10 mins</div>")
+    both = [delivery("Friday, 13 November", program="ncp"), delivery("Tomorrow, 11 November", "fastest", "DELIVERY")]
+    normal = page(offers=[offer(seller="Kuwa", ships="fba", deliveries=both) + form + words])
+    ref = read(normal)
+    assert ref["via"] == ref["blind"] == ref["pageVia"] == ref["pageBlind"] == [] and ref["sourceDays"] == 1, ref
+    facts = ("aed", "inStock", "stockLeft", "sourceDays", "amazonShips", "deliveryFee", "seller")
+    changes = {"price": ('id="corePrice_feature_div"', 'id="newPrice"'), "delivery": ("data-csa-c-delivery-", "data-new-"),
+               "stock": ('id="availability"', 'id="newAvailability"'), "cart": ('id="add-to-cart-button"', 'id="buy-now-button"'),
+               "shipper": ("InfoFeature_feature_div", "Info_new_div")}
+    everything = normal
+    for fact, (old, new) in changes.items():
+        pg = read(normal.replace(old, new))
+        assert [pg[k] for k in facts] == [ref[k] for k in facts] and pg["via"] == [fact] and s.sellable(pg), (fact, pg)
+        everything = everything.replace(old, new)
+    pg = read(everything.replace('id="productTitle"', 'id="title"').replace('id="desktop_buybox"', 'id="buybox"'))
+    assert [pg[k] for k in facts] == [ref[k] for k in facts] and sorted(pg["via"]) == sorted(changes), pg
+    assert pg["pageVia"] == ["title", "buybox"] and pg["title"] == "e.l.f. Camo Concealer", pg
+    # the low stock line is still seen through the spare reading
+    low = normal.replace("In Stock", "Only 2 left in stock - order soon.").replace('id="availability"', 'id="newAvailability"')
+    assert read(low)["stockLeft"] == 2 and not s.sellable(read(low))
+    # spare delivery reading: a time slot is express and never counts; a seller-shipped offer keeps the free date
+    slot = words.replace("Tomorrow, 11 November", "Today 5 PM - 9 PM")
+    pg = read(page(offers=[offer(seller="Kuwa", ships="fba") + form + slot]))
+    assert pg["sourceDays"] == 3 and pg["via"] == ["delivery"] and not s.sellable(pg), pg
+    assert read(page(offers=[offer(ships="seller") + words]))["sourceDays"] == 3
+    # an offer nobody understands: NOT READ (error), whatever is missing; a page that SAYS unavailable is read as such
+    bare = page(offers=[offer(deliveries=both)])
+    assert read(bare.replace('id="corePrice_feature_div"', 'id="x"'))["error"] == "layout: price"
+    assert read(bare.replace('id="add-to-cart-button"', 'id="x"'))["error"] == "layout: cart"
+    assert read(page(offers=[offer(price="", cart=False, avail="")]))["error"] == "layout: offer"
+    gone = read(page(offers=[offer(price="", cart=False, avail="Currently unavailable.")]))
+    assert not gone.get("error") and not gone["inStock"] and s.why_out(gone) == "rupture", gone
+    unread = {"B0AAAAAAAA": read(bare.replace('id="corePrice_feature_div"', 'id="x"'))}
+    decisions, _ = decide([row()], unread)
+    assert not decisions, decisions  # a page not read changes nothing: not hidden, not confirmed
+    # facts found by no reading on an offer that can be bought: reported, the offer is still read
+    pg = read(page(city="", offers=[offer(avail="", deliveries=both)]))
+    assert pg["blind"] == ["stock"] and pg["pageBlind"] == ["location"] and s.sellable(pg, 3), pg
+    # one reader: a few odd pages are just read again; many raise the alert, by fact
+    ok, odd, spare = read(normal), read(bare.replace('id="corePrice_feature_div"', 'id="x"')), read(normal.replace(*changes["price"]))
+    stats, alerts = s.layout_watch({**{f"A{k}": ok for k in range(26)}, **{f"B{k}": odd for k in range(4)}})
+    assert stats["unreadable"] == {"price": 4} and not alerts, (stats, alerts)
+    stats, alerts = s.layout_watch({**{f"A{k}": ok for k in range(22)}, **{f"B{k}": odd for k in range(8)}})
+    assert len(alerts) == 1 and "the price (8)" in alerts[0], alerts
+    stats, alerts = s.layout_watch({**{f"A{k}": ok for k in range(18)}, **{f"B{k}": spare for k in range(12)}})
+    assert stats["spare"] == {"price": 12} and len(alerts) == 1 and "spare reading" in alerts[0], (stats, alerts)
+    # far more "in stock without a date" pages than Amazon.ae ever has: a changed delivery block, those pages are not read
+    nodate = read(page(offers=[offer()]))
+    few = {**{f"A{k}": ok for k in range(28)}, **{f"B{k}": dict(nodate) for k in range(2)}}
+    assert s.layout_watch(few)[1] == [] and not few["B0"].get("error")
+    many = {**{f"A{k}": ok for k in range(20)}, **{f"B{k}": dict(nodate) for k in range(10)}}
+    stats, alerts = s.layout_watch(many)
+    assert stats["noDateInBulk"] == 10 and many["B0"]["error"] == "layout: delivery" and len(alerts) == 1, (stats, alerts)
+
+
 def test_not_the_same_item():
     pg = read(page(shown="B0BBBBBBBB"))  # the page is about another ASIN
     assert pg.get("redirect") == "B0BBBBBBBB" and not s.sellable(pg), pg

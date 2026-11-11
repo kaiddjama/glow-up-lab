@@ -10,7 +10,8 @@ For every variant that has an ASIN (SKU "B0…" / "AMZ-B0…", or the product me
 reads the Amazon.ae page (amazon_page.py: price, stock, delivery date of every offer of the buy box, which item the page
 is about) and updates the price, the "continue selling" setting and the supplier.* metafields.
 
-What never changes a variant: a page that could not be read (blocked, partial, wrong delivery city). What hides it: out of
+What never changes a variant: a page that could not be read (blocked, partial, wrong delivery city, or not
+understood because Amazon.ae changed its layout: see layout_watch). What hides it: out of
 stock, too slow, a tiny stock, a listing that was removed, a page that now shows ANOTHER item (another ASIN). What never
 hides it: another seller, a changed title, description or shade label on the same ASIN (Hoodo, 10 Nov).
 The decisions are taken by plan(), a function without side effects that the tests run offline.
@@ -80,6 +81,11 @@ PRICES_ONLY = os.environ.get("PRICES_ONLY") == "1"  # update prices only: no sto
 RETRY_MAX = int(os.environ.get("RETRY_MAX", "40"))  # pages read a second time at the end of each reader
 NO_DATE_KEEPS = os.environ.get("NO_DATE_KEEPS", "0") == "1"
 STOCK_GUARD = float(os.environ.get("STOCK_GUARD", "0.35"))  # share of read variants that may newly go Épuisé in one run before stock changes are held
+# Since 11 Nov: Amazon.ae changes its pages (often on a share of the visitors first). Every fact has a spare reading
+# (amazon_page.py); a page whose featured offer cannot be understood counts as NOT READ (never "out of stock" on a guess).
+# One reader raises the alert when more than LAYOUT_MAX of its pages are in that case, read through a spare reading, or
+# missing a fact altogether: the shop keeps running, and the main reading is repaired before the spare one breaks too.
+LAYOUT_MAX = float(os.environ.get("LAYOUT_MAX", "0.10"))
 ODD_PAGES_MAX = 0.10  # more "listing removed / another item shown" pages than this share in one reader = a misread, not the truth
 PARK_TAG = "livraison-lente"  # draft + this tag = set aside for slow delivery, republished by this script
 OUT_TAG = "epuise-auto"  # draft + this tag = every variant Épuisé, hidden by park_soldout.py, republished when one is sellable again
@@ -607,6 +613,49 @@ def read_all(asins, rows, dry, hidden, delay):
     return pages, stopped
 
 
+FACT_NAMES = {"price": "the price", "delivery": "the delivery date", "stock": "the stock line", "cart": "the add-to-cart "
+              "button", "shipper": "who ships the offer", "buybox": "the buy box", "title": "the product title",
+              "location": "the delivery city", "offer": "the offer"}
+
+
+def layout_watch(pages):
+    """What this reading says about the layout of Amazon.ae's pages: (stats for the report, alert lines).
+    Changes pages in one case: far more pages "in stock without a delivery date" than Amazon.ae ever has (2 to 4 % are
+    imports without a date) is a delivery block that changed, not the truth: those pages become NOT READ."""
+    stats = {"unreadable": {}, "spare": {}, "missing": {}, "noDateInBulk": 0}
+    for p in pages.values():
+        if p.get("layout"):
+            stats["unreadable"][p["layout"]] = stats["unreadable"].get(p["layout"], 0) + 1
+        if p.get("error"):
+            continue
+        for k in set((p.get("via") or []) + (p.get("pageVia") or [])):
+            stats["spare"][k] = stats["spare"].get(k, 0) + 1
+        for k in set((p.get("blind") or []) + (p.get("pageBlind") or [])):
+            stats["missing"][k] = stats["missing"].get(k, 0) + 1
+    readable = sum(1 for p in pages.values() if not p.get("error"))
+    alerts = []
+    no_date = [a for a, p in pages.items() if not p.get("error") and p.get("inStock") and p.get("sourceDays") is None
+               and not p.get("held")]
+    if len(no_date) > max(8, LAYOUT_MAX * readable):
+        stats["noDateInBulk"] = len(no_date)
+        for a in no_date:
+            pages[a] = {"error": "layout: delivery", "layout": "delivery"}
+        alerts.append(f"{len(no_date)} of {readable} pages in stock show no delivery date (2 to 4 % is normal): Amazon.ae "
+                      "probably changed its delivery block. These pages count as not read, nothing was hidden for it.")
+        readable -= len(no_date)
+    unreadable = sum(stats["unreadable"].values())
+    if unreadable > max(5, LAYOUT_MAX / 2 * len(pages)):
+        what = ", ".join(f"{FACT_NAMES.get(k, k)} ({n})" for k, n in sorted(stats["unreadable"].items(), key=lambda x: -x[1]))
+        alerts.append(f"{unreadable} of {len(pages)} pages could not be understood, missing: {what}. Amazon.ae probably "
+                      "changed its page. These pages count as not read: nothing hidden on a guess, nothing confirmed.")
+    for kind, text in (("spare", "read only through the spare reading: the shop still works, repair the main reading"),
+                       ("missing", "not found at all: a rule is off for these pages (low stock, fastest date or city check)")):
+        for k, n in sorted(stats[kind].items(), key=lambda x: -x[1]):
+            if n >= max(10, LAYOUT_MAX * readable):
+                alerts.append(f"{FACT_NAMES.get(k, k)} was {text} ({n} of {readable} pages).")
+    return stats, alerts
+
+
 def start_browser():
     """A headless browser set to the Dubai address: up to 3 tries, whatever goes wrong (address, CAPTCHA, a crash)."""
     global READER
@@ -684,6 +733,7 @@ def main():
         if READER:
             READER.close()
 
+    layout, layout_alerts = layout_watch(pages)
     decisions, info = plan(rows, pages, now_t, fetch_other=lambda mod, slug: mod.fetch(slug), hidden=hidden,
                            prices_only=PRICES_ONLY)
     revive = info["revive"]
@@ -691,7 +741,8 @@ def main():
               "pagesRead": sum(1 for p in pages.values() if not p.get("error")), "changes": [], "skipped": [],
               "errors": [], "republished": [], "stillParked": [], "gone": [], "redirected": [], "secondSource": [],
               "nameMismatch": [], "blocked": len(skip), "hiddenDuringRun": len(hidden),
-              "stockGuardTripped": info["guard"], "stoppedEarly": stopped}
+              "stockGuardTripped": info["guard"], "stoppedEarly": stopped, "layout": layout,
+              "layoutAlerts": layout_alerts}
     for r in rows:
         page = pages.get(r["asin"])
         if page and page.get("error"):
@@ -820,9 +871,13 @@ def main():
         f"left, {len(report['gone'])} listings removed, {len(report['redirected'])} pages showing another item, "
         f"{len(report['secondSource'])} sold from their second source, {len(report['nameMismatch'])} option names that differ "
         f"(information only).",
+        f"Page layout: {sum(layout['unreadable'].values())} pages not understood {layout['unreadable'] or ''}, spare "
+        f"readings used {layout['spare'] or 'on no page'}, facts missing {layout['missing'] or 'on no page'}.",
         f"{errors} Shopify errors. Report: {path}"]
     if stopped:
         lines.insert(0, f"::warning::{stopped}")
+    for a in layout_alerts:
+        lines.insert(0, f"::warning::Amazon.ae page layout: {a}")
     print("\n".join(lines))
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
@@ -832,6 +887,8 @@ def main():
         sys.exit("ALERTE: stock guard tripped, no stock change made by this reader (probably a misread).")
     if errors and not dry:
         sys.exit(f"ALERTE: {errors} Shopify errors.")
+    if layout_alerts and not dry:
+        sys.exit("ALERTE: Amazon.ae page layout: " + " | ".join(layout_alerts))
 
 
 if __name__ == "__main__":
