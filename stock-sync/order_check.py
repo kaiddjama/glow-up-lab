@@ -6,9 +6,16 @@
                                     SKU "MEDX-..." are read on medxpharmacy.com instead, stock at least MEDX_MIN_QTY, and
                                     items with a SKU "PSAE-..." on padelshop.ae, which must say available):
                                     - all items sellable: the order gets the tag amazon-ok
-                                    - an item not sellable (or with no ASIN): the order gets the tag amazon-ko, the
-                                      variant goes to Épuisé and stays so for COOL_HOURS (the robot may still read it
-                                      "available" while it is not), and alert.md describes it for the owner
+                                    - an item not sellable (or with no ASIN): the page is read a second time first (a
+                                      serious verdict is checked twice); then the order gets the tag amazon-ko, the
+                                      variant goes to Épuisé, and alert.md describes it for the owner with what the page
+                                      showed (seller, stock, every delivery date). When the reason is about STOCK (out
+                                      of stock, tiny stock, listing removed or replaced) the variant stays Épuisé for
+                                      COOL_HOURS: the robot may still read it "available" while it is not. When it is
+                                      about the DATE, the next stock check decides (no cool-down): order #1048 hid six
+                                      good variants for a day on an evening date
+                                    - the same rule as the stock check decides, evening slack included (the item was on
+                                      sale when the customer ordered it)
                                     - an Amazon.ae item that cannot be bought there but can at its second source
                                       (supplier.fallback): the order is fine, alert.md says where to buy it (tag source-2)
                                     - more units ordered than Amazon.ae shows or allows per order: tag amazon-qte, a
@@ -23,6 +30,7 @@ import datetime as dt
 import json
 import os
 import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # python -I does not add the script folder
 import amazon_sync as s  # noqa: E402
@@ -76,20 +84,31 @@ def asin_of(item):
     return None
 
 
+def seen(pg):
+    """What the page showed, so the owner can compare with her own account without asking."""
+    bits = [f"vendeur {pg['seller']}" if pg.get("seller") else "",
+            "expédié par Amazon" if pg.get("amazonShips") else "",
+            f"dates affichées : {pg['promises']}" if pg.get("promises") else ""]
+    bits = [b for b in bits if b]
+    return f" [lu à {pg['hour']} h à Dubaï : {' ; '.join(bits)}]" if bits and pg.get("hour") is not None else ""
+
+
 def why_not(pg):
-    """In French, for the owner: why this Amazon.ae page cannot be bought now."""
+    """(in French, for the owner: why this Amazon.ae page cannot be bought now; is the reason about stock?).
+    A stock reason keeps the variant Épuisé for COOL_HOURS; a date reason is left to the next stock check."""
     if pg.get("gone"):
-        return "fiche supprimée sur Amazon.ae"
+        return "fiche supprimée sur Amazon.ae", True
     if pg.get("redirect"):
-        return f"Amazon.ae affiche maintenant un autre article ({pg['redirect']}) à cette adresse"
+        return f"Amazon.ae affiche maintenant un autre article ({pg['redirect']}) à cette adresse", True
     if not pg.get("inStock"):
-        return "pas en stock sur Amazon.ae"
+        return "pas en stock sur Amazon.ae" + seen(pg), True
     if s.low_stock(pg):
         return (f"stock très faible sur Amazon.ae ({pg['stockLeft']} restant(s)) : l'offre peut passer à un vendeur lent, "
-                "vérifie le délai sur ton compte et achète vite")
+                "vérifie le délai sur ton compte et achète vite" + seen(pg)), True
     if pg.get("sourceDays") is None:
-        return "en stock mais sans date de livraison pour Dubaï"
-    return f"livraison trop lente ({pg.get('deliveryText')})"
+        return "en stock mais sans date de livraison pour Dubaï" + seen(pg), False
+    return (f"livraison trop lente ({pg.get('deliveryText')}, soit {pg['sourceDays']} jours jusqu'à Dubaï) : "
+            "vérifie sur ton compte, la variante revient seule en vente si le délai redevient bon" + seen(pg)), False
 
 
 def quantity_note(pg, wanted):
@@ -113,36 +132,44 @@ def other_source(pages, ref):
 
 
 def check_item(it, amazon_page_of, other_pages):
-    """("ok" | "ko" | "unknown", reason or None, notes). notes = [(tag, text)] to tell the owner without blocking."""
+    """("ok" | "ko" | "unknown", reason or None, notes, cool). notes = [(tag, text)] to tell the owner without blocking;
+    cool = the variant must stay Épuisé for COOL_HOURS (a stock reason). amazon_page_of(asin, again=False) reads a page
+    (again=True: a fresh reading)."""
     for mod, name in ((medx, "MedX"), (padelshop, "PadelShop.ae")):
         if mod.slug_of(it.get("sku")):
             pg, _, _ = other_source(other_pages, it["sku"].strip())
             if pg.get("error"):
-                return "unknown", None, []
+                return "unknown", None, [], False
             if mod.sellable(pg, True):
-                return "ok", None, []
+                return "ok", None, [], False
             if pg.get("gone"):
-                return "ko", f"fiche retirée chez {name}", []
+                return "ko", f"fiche retirée chez {name}", [], False
             if mod is medx:
-                return "ko", (f"stock MedX insuffisant ({pg['qty']} restant)" if pg["publish"] else "fiche MedX non publiée"), []
-            return "ko", f"plus disponible chez {name}", []
+                return "ko", (f"stock MedX insuffisant ({pg['qty']} restant)" if pg["publish"] else "fiche MedX non publiée"), [], False
+            return "ko", f"plus disponible chez {name}", [], False
     asin = asin_of(it)
     if not asin:
-        return "ko", "pas de code ASIN, impossible à vérifier", []
+        return "ko", "pas de code ASIN, impossible à vérifier", [], False
     pg = amazon_page_of(asin)
     if pg.get("error"):
-        return "unknown", None, []
-    if s.sellable(pg):
+        return "unknown", None, [], False
+    pg, ok = s.offer_for(pg, True)  # the item was on sale when it was ordered: same rule as the stock check
+    if not ok:  # a serious verdict is checked twice: a second, fresh reading
+        again = amazon_page_of(asin, True)
+        if not again.get("error"):
+            pg, ok = s.offer_for(again, True)
+    if ok:
         note = quantity_note(pg, it.get("quantity") or 1)
-        return "ok", None, [("amazon-qte", note)] if note else []
+        return "ok", None, [("amazon-qte", note)] if note else [], False
+    why, cool = why_not(pg)
     ref = ((it["variant"].get("fallback") or {}).get("value") or "").strip()
     if ref:  # Amazon.ae cannot sell it: is the second source able to?
         other, mod, name = other_source(other_pages, ref)
         if mod and other.get("error"):
-            return "unknown", None, []
+            return "unknown", None, [], False
         if mod and mod.sellable(other, True):
-            return "ok", None, [("source-2", f"à acheter chez {name} ({ref}) : {why_not(pg)}")]
-    return "ko", why_not(pg), []
+            return "ok", None, [("source-2", f"à acheter chez {name} ({ref}) : {why}")], False
+    return "ko", why, [], cool
 
 
 def main():
@@ -169,7 +196,10 @@ def main():
     pages, other_pages, alerts, problems = {}, {}, [], 0
     browser = {"tried": False}
 
-    def page_of(asin):
+    def page_of(asin, again=False):
+        if again and s.READER and not pages.get(asin, {}).get("error"):
+            time.sleep(6)
+            pages.pop(asin, None)
         if asin not in pages:
             if not browser["tried"]:  # started only when an Amazon.ae item has to be read
                 browser["tried"] = True
@@ -195,12 +225,12 @@ def main():
                         continue  # gift card: nothing to buy
                     label = f"{it['title']}" + (f" ({it['variantTitle']})" if it.get("variantTitle") else "")
                     if not it.get("variant"):
-                        bad.append((it, label, "article sans fiche dans la boutique (supprimée ?), impossible à vérifier"))
+                        bad.append((it, label, "article sans fiche dans la boutique (supprimée ?), impossible à vérifier", False))
                         continue
-                    verdict, why, extra = check_item(it, page_of, other_pages)
+                    verdict, why, extra, cool_it = check_item(it, page_of, other_pages)
                     notes += [(tag, f"{label} : {text}") for tag, text in extra]
                     if verdict == "ko":
-                        bad.append((it, label, why))
+                        bad.append((it, label, why, cool_it))
                     elif verdict == "unknown":
                         unknown.append(label)
                 age_h = s.hours_since(o["createdAt"], now)
@@ -214,7 +244,7 @@ def main():
                 else:
                     tag = "amazon-ok"
                 print(f"{o['name']}: {tag}")
-                for it, label, why in bad:
+                for it, label, why, _ in bad:
                     print(f"  indisponible: {label} - {why}")
                     alerts.append(f"- Commande {o['name']}: **{label}** : {why}")
                 if tag == "amazon-incertain":
@@ -231,13 +261,13 @@ def main():
                     print("tag error:", errs)
                 by_product, cool = {}, []
                 until = s.iso(now + dt.timedelta(hours=COOL_HOURS))
-                for it, _, _ in bad:
+                for it, _, _, cool_it in bad:
                     v = it.get("variant")
                     if not v:
                         continue
                     if v["inventoryPolicy"] == "CONTINUE":
                         by_product.setdefault(v["product"]["id"], []).append({"id": v["id"], "inventoryPolicy": "DENY"})
-                    if asin_of(it) and not suppliers.is_other_source(it.get("sku")):
+                    if cool_it and asin_of(it) and not suppliers.is_other_source(it.get("sku")):
                         state = {**s.read_state(v.get("state")), "cool": until}
                         state.pop("src", None)
                         state.pop("src_t", None)
