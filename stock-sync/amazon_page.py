@@ -249,6 +249,7 @@ def buybox_offers(html, via=None):
     return segments
 
 
+NOW_BOX = 'id="desktop_almBuyBox"'  # the Amazon Now buy box (only seen on pages whose featured offer is Amazon Now)
 AVAIL_TEXT_RE = re.compile(
     r"only\s+\d+\s+left in stock(?:\s*-\s*order soon)?\.?|currently unavailable\.?|temporarily out of stock\.?|"
     r"out of stock\.?|(?:available|in stock)\s+(?:on|from|soon)\b[^.]{0,30}|in stock\b|"
@@ -262,6 +263,13 @@ def availability_of(seg, via=None):
     m = re.search(r'\sid="availability"[^>]*>(.*?)</div>', seg, re.S)
     if m and clean(m.group(1)):
         return clean(m.group(1))
+    # The two other boxes Amazon.ae uses today have their own stock line: the "Currently unavailable" box and the
+    # Amazon Now box. They are normal readings, not spare ones.
+    for mark in ('id="outOfStock"', 'id="availability-string"'):
+        i = seg.find(mark)
+        found = AVAIL_TEXT_RE.search(clean(seg[i:i + 3000])) if i >= 0 else None
+        if found:
+            return found.group(0).strip()
     # Spare reading: the same wording, looked for in the availability box of the buy box, then in the text of the offer.
     i = seg.find("availabilityInsideBuyBox_feature_div")
     for text in ((clean(seg[i:i + 4000]) if i >= 0 else ""), clean(seg)):
@@ -279,10 +287,15 @@ def parse_offer(seg, today):
     Every fact has a spare reading for the day Amazon changes its page (validated on real pages, see PROTOCOLE section 13):
     "via" lists the facts that needed it. "blind" lists the facts found by neither reading on an offer that can be bought
     (a rule is then silently off: low stock, fastest date). "doubt" says the offer itself could not be understood: it does
-    not look buyable, and nothing on the page says it is unavailable. Such an offer is never read as out of stock."""
+    not look buyable, and nothing on the page says it is unavailable. Such an offer is never read as out of stock.
+
+    "amazonNow": the featured box is Amazon Now (delivery in minutes inside Dubai, its own basket, no ordinary "Add to
+    cart"). It is recognised by its own marker, so it is neither a page we cannot read nor a plain "out of stock": the
+    ordinary offer is absent, the variant is not sold, and the reason is kept apart (PROTOCOLE section 13)."""
     via, blind = [], []
     price = parse_price(seg, via)
     avail = availability_of(seg, via)
+    now = NOW_BOX in seg
     left = re.search(r"only\s+(\d+)\s+left in stock", avail, re.I)
     cart = 'id="add-to-cart-button"' in seg
     if not cart and ('name="submit.add-to-cart"' in seg or 'id="buy-now-button"' in seg):
@@ -292,7 +305,7 @@ def parse_offer(seg, today):
     q = re.search(r'<select[^>]*\bid="quantity"[^>]*>(.*?)</select>', seg, re.S)
     options = [int(x) for x in re.findall(r'<option[^>]*value="(\d+)"', q.group(1))] if q else []
     in_stock = price is not None and cart and not off
-    ships = shipped_by_amazon(seg, via, blind if in_stock else None)
+    ships = shipped_by_amazon(seg, via if in_stock else None, blind if in_stock else None)
     promises = delivery_options(seg)
     if not promises:
         promises = delivery_options_text(seg)
@@ -300,7 +313,9 @@ def parse_offer(seg, today):
             via.append("delivery")
     days, text, fee = pick_delivery(promises, today, amazon=ships)
     doubt = None
-    if not in_stock and not off:
+    if now and not cart:
+        in_stock = False  # Amazon Now only: nothing to put in the ordinary basket
+    elif not in_stock and not off:
         doubt = "price" if cart else "cart" if price is not None else "offer"
     if in_stock and not avail:
         blind.append("stock")  # no stock line at all: "Only N left" cannot be seen
@@ -311,7 +326,7 @@ def parse_offer(seg, today):
             # every promise as the page words it ("free: Saturday, 14 November | fastest: Tomorrow, 12 November"), for the
             # reports and the order alerts: Hoodo can compare with what her account shows
             "promises": " | ".join(f"{o['kind']}: {o['text']}" for o in promises)[:160],
-            "via": via, "blind": blind, "doubt": doubt}
+            "via": via, "blind": blind, "doubt": doubt, "amazonNow": bool(now and not cart)}
 
 
 def page_asin(html):

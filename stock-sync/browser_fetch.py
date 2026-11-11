@@ -2,8 +2,9 @@
 
 Starts headless Chromium (Playwright), sets the delivery location to a UAE city (default Dubai) like a visitor
 would in the "Deliver to" pop-up, and returns the HTML of product pages. The location is checked before
-reading starts and again every CHECK_EVERY pages: if the page no longer shows the city, reading stops
-(LocationLost) so no delivery date from another location is ever used.
+reading starts and again every CHECK_EVERY pages: if the page no longer shows the city, the address is set again
+once and the page read again; if the city still does not show, reading stops (LocationLost) so no delivery date
+from another location is ever used.
 
 Settings (environment): BROWSER_CITY (default Dubai), BROWSER_DISTRICT (default Ras Al Khor), BROWSER_HEADLESS=0 for a visible window,
 BROWSER_PROFILE (folder that keeps cookies between runs; default: a fresh profile each run), BROWSER_DEBUG=1.
@@ -18,6 +19,7 @@ UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like
 HOME = "https://www.amazon.ae/?language=en_AE"
 LOCATION_LINK = "#nav-global-location-popover-link"
 LOCATION_TEXT = "#glow-ingress-line2"
+BUYBOX_LOCATION = "#contextualIngressPtLabel_deliveryShortLine"  # "Deliver to Dubai, Ras Al Khor" inside the buy box
 CHECK_EVERY = 25
 
 
@@ -83,6 +85,13 @@ class BrowserReader:
 
     def location_ok(self):
         return self.city.lower() in self.location_text().lower()
+
+    def buybox_city_ok(self):
+        """The buy box itself says where it delivers: the line the delivery date of the page goes with."""
+        try:
+            return self.city.lower() in self.page.inner_text(BUYBOX_LOCATION, timeout=3000).lower()
+        except Exception:
+            return False
 
     def _captcha(self):
         """True for a real CAPTCHA (characters to type)."""
@@ -170,6 +179,22 @@ class BrowserReader:
     def get(self, url):
         """HTML of a page. Raises LocationLost if the delivery location is no longer the chosen city."""
         self.count += 1
+        self._load(url)
+        if self.count % CHECK_EVERY == 0 and "/dp/" in url and not self.location_ok():
+            # The header no longer shows the city. One odd header must not stop a whole reader (11 Nov: a reader stopped
+            # after 24 of 163 pages on a header that said "Update location"). If the buy box still says it delivers to
+            # the city, the page is good. Otherwise the address is set again, like at the start, and the page is read
+            # again; reading stops only if the city still does not show.
+            seen = self.location_text()
+            if not self.buybox_city_ok():
+                debug("location check failed:", seen, "| setting the address again")
+                self.set_location()  # raises LocationLost when the city cannot be confirmed
+                self._load(url)
+                if not (self.location_ok() or self.buybox_city_ok()):
+                    raise LocationLost(f"delivery location changed to '{seen}'")
+        return self.page.content()
+
+    def _load(self, url):
         p = self.page
         resp = p.goto(url, wait_until="domcontentloaded")
         self.last_status = resp.status if resp else None  # 404 = the listing was removed (see amazon_sync.parse)
@@ -179,6 +204,3 @@ class BrowserReader:
         except Exception:
             pass
         p.wait_for_timeout(int(random.uniform(800, 1800)))  # lets the buy box and delivery block render
-        if self.count % CHECK_EVERY == 0 and "/dp/" in url and not self.location_ok():
-            raise LocationLost(f"delivery location changed to '{self.location_text()}'")
-        return p.content()

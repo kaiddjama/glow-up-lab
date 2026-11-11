@@ -100,6 +100,10 @@ def why_not(pg):
         return "fiche supprimée sur Amazon.ae", True
     if pg.get("redirect"):
         return f"Amazon.ae affiche maintenant un autre article ({pg['redirect']}) à cette adresse", True
+    if pg.get("amazonNow"):
+        # same decision as out of stock (no ordinary offer to order), but the owner is told what the page really shows
+        return ("plus d'offre ordinaire sur Amazon.ae, l'article n'est proposé qu'en Amazon Now (livraison en quelques "
+                "minutes à Dubaï, panier à part)" + seen(pg)), True
     if not pg.get("inStock"):
         return "pas en stock sur Amazon.ae" + seen(pg), True
     if s.low_stock(pg):

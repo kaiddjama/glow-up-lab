@@ -57,6 +57,15 @@ def offer(price="54.00", avail="In Stock", deliveries=(), seller="Padimu", cart=
         f'<a id="sellerProfileTriggerId" href="#">{seller}</a>' if seller else ""])
 
 
+# the Amazon Now buy box as on the real pages of 11 Nov (delivery in minutes, its own basket)
+NOW_OFFER = ('<div id="desktop_almBuyBox"><div id="almDesktopSingleOfferPriceWrapper"><div id="corePrice_feature_div">'
+             '<span class="a-price"><span class="a-offscreen">AED&nbsp;29.35</span></span></div></div><div '
+             'id="almLogoAndDeliveryMessage">FREE 15\u201325 mins delivery on orders over AED15 with Prime</div><div '
+             'id="almAvailability_feature_div"><span id="availability-string"> In Stock </span></div><div '
+             'id="almAddToCart_feature_div"><input name="submit.alm-add-to-cart" type="submit"></div>Dispatched from '
+             "AmazonNow Sold by AmazonNow</div>")
+
+
 def page(asin="B0AAAAAAAA", offers=None, city="Dubai, Ras Al Khor", shown=None, variation="Warm"):
     shown = shown or asin
     offers = offers if offers is not None else [offer(deliveries=[delivery("Tomorrow, 11 November")])]
@@ -167,6 +176,21 @@ def test_page_changes():
     assert read(page(offers=[offer(price="", cart=False, avail="")]))["error"] == "layout: offer"
     gone = read(page(offers=[offer(price="", cart=False, avail="Currently unavailable.")]))
     assert not gone.get("error") and not gone["inStock"] and s.why_out(gone) == "rupture", gone
+    # the "Currently unavailable" box has its own stock line: a normal reading, not a spare one
+    box = ('<div id="outOfStock" class="a-box"><span class="a-color-price a-text-bold">Currently unavailable.</span><br>We '
+           "don't know when or if this item will be back in stock.</div>")
+    pg = read(page(offers=[box]))
+    assert not pg["inStock"] and pg["via"] == [] and pg["availability"] == "Currently unavailable.", pg
+    # Amazon Now featured (delivery in minutes, its own basket, no ordinary "Add to cart"): recognised by its own box,
+    # neither "not read" nor a plain out of stock; not sold, and the reason says so
+    pg = read(page(offers=[NOW_OFFER]))
+    assert not pg.get("error") and pg["amazonNow"] and not pg["inStock"] and pg["aed"] == 29.35 and pg["via"] == [], pg
+    assert pg["availability"] == "In Stock" and not s.sellable(pg) and s.why_out(pg) == "amazon-now", pg
+    assert s.layout_watch({"B0": pg, "B1": ref})[0]["amazonNow"] == 1
+    assert not read(normal)["amazonNow"] and s.why_out(gone) == "rupture"
+    # an ordinary offer shown next to an Amazon Now box is read as usual
+    pg = read(page(offers=[offer(seller="Kuwa", ships="fba", deliveries=both) + NOW_OFFER]))
+    assert pg["inStock"] and not pg["amazonNow"] and s.sellable(pg), pg
     unread = {"B0AAAAAAAA": read(bare.replace('id="corePrice_feature_div"', 'id="x"'))}
     decisions, _ = decide([row()], unread)
     assert not decisions, decisions  # a page not read changes nothing: not hidden, not confirmed
@@ -328,8 +352,62 @@ def test_order_check():
     assert oc.check_item(item, reader(slower, good), {})[0] == "ok"  # the second reading wins
     verdict, why, _, cool = oc.check_item(item, reader(tiny), {})
     assert verdict == "ko" and cool and "2 restant" in why, why  # a stock reason: the variant cools down
+    verdict, why, _, cool = oc.check_item(item, reader({**read(page(offers=[NOW_OFFER])), "hour": 10}), {})
+    assert verdict == "ko" and cool and "Amazon Now" in why, why  # no ordinary offer: the owner is told what is shown
     assert oc.check_item(item, reader({"error": "captcha"}), {})[0] == "unknown"
     assert oc.check_item(item, reader(slower, {"error": "captcha"}), {})[0] == "ko"  # second reading failed: first stands
+
+
+def test_reader_keeps_its_address():
+    """One odd header must not stop a whole reader: the buy box line counts, then the address is set again once; the
+    reader stops only when the city still does not show (a reader stopped after 24 of 163 pages on 11 Nov)."""
+    import browser_fetch as bf
+
+    class Page:
+        def __init__(self, header, buybox, after_reset=None):
+            self.header, self.buybox, self.after_reset, self.loads = header, buybox, after_reset, 0
+
+        def goto(self, url, wait_until=None):
+            self.loads += 1
+
+        def wait_for_selector(self, *a, **k): pass
+        def wait_for_timeout(self, ms): pass
+        def content(self): return "<html>page</html>"
+        def locator(self, sel): return type("L", (), {"count": lambda self: 0})()
+
+        def inner_text(self, sel, timeout=None):
+            if sel == bf.LOCATION_TEXT:
+                return self.header
+            if self.buybox is None:
+                raise RuntimeError("no buy box line")
+            return self.buybox
+
+    def reader(page):
+        r = bf.BrowserReader()
+        r.page, r.count, r.resets = page, bf.CHECK_EVERY - 1, 0
+
+        def again():
+            r.resets += 1
+            if page.after_reset is None:
+                raise bf.LocationLost("delivery location is 'Update location', not Dubai")
+            page.header = page.after_reset
+        r.set_location = again
+        return r
+
+    url = "https://www.amazon.ae/dp/B0AAAAAAAA"
+    r = reader(Page("Dubai, Ras ...", "Deliver to Dubai, Ras Al Khor"))  # the normal page
+    assert r.get(url) and r.resets == 0 and r.page.loads == 1
+    r = reader(Page("Update location", "Deliver to Dubai, Ras Al Khor"))  # odd header, the buy box still says Dubai
+    assert r.get(url) and r.resets == 0 and r.page.loads == 1
+    r = reader(Page("Update location", None, after_reset="Dubai, Ras ..."))  # address lost, set again, page read again
+    assert r.get(url) and r.resets == 1 and r.page.loads == 2
+    for page in (Page("Abu Dhabi", "Deliver to Abu Dhabi", after_reset="Abu Dhabi"), Page("Update location", None)):
+        r = reader(page)  # the city cannot be put back: the reader stops, nothing is read for another address
+        try:
+            r.get(url)
+            raise AssertionError("the reader went on with another address")
+        except bf.LocationLost:
+            pass
 
 
 def test_prices():

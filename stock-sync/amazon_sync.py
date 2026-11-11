@@ -349,8 +349,9 @@ def why_out(page, on_sale=True, blocked=False, cooling=False, hold=None):
     """Why a variant is Épuisé, as a short code kept on the variant (supplier.sync_state "why") and counted in the
     reports and in the audit, so "why are so many products hidden?" has an answer at every check:
     retenue (held by hand), pause-commande (an order just proved it unavailable), prix (price jump waiting for a second
-    reading), fiche-supprimee, autre-article, rupture, stock-bas, sans-date (no delivery date for Dubai: mostly Amazon
-    US / UK imports), delai:3 (one day too slow) or delai:4+."""
+    reading), fiche-supprimee, autre-article, rupture, amazon-now (only the Amazon Now box is offered, no ordinary
+    offer), stock-bas, sans-date (no delivery date for Dubai: mostly Amazon US / UK imports), delai:3 (one day too slow)
+    or delai:4+."""
     if blocked:
         return "retenue"
     if cooling:
@@ -362,7 +363,7 @@ def why_out(page, on_sale=True, blocked=False, cooling=False, hold=None):
     if page.get("redirect"):
         return "autre-article"
     if not page.get("inStock"):
-        return "rupture"
+        return "amazon-now" if page.get("amazonNow") else "rupture"
     if low_stock(page, on_sale):
         return "stock-bas"
     if page.get("sourceDays") is None:
@@ -622,7 +623,8 @@ def layout_watch(pages):
     """What this reading says about the layout of Amazon.ae's pages: (stats for the report, alert lines).
     Changes pages in one case: far more pages "in stock without a delivery date" than Amazon.ae ever has (2 to 4 % are
     imports without a date) is a delivery block that changed, not the truth: those pages become NOT READ."""
-    stats = {"unreadable": {}, "spare": {}, "missing": {}, "noDateInBulk": 0}
+    stats = {"unreadable": {}, "spare": {}, "missing": {}, "noDateInBulk": 0,
+             "amazonNow": sum(1 for p in pages.values() if p.get("amazonNow"))}
     for p in pages.values():
         if p.get("layout"):
             stats["unreadable"][p["layout"]] = stats["unreadable"].get(p["layout"], 0) + 1
@@ -872,7 +874,8 @@ def main():
         f"{len(report['secondSource'])} sold from their second source, {len(report['nameMismatch'])} option names that differ "
         f"(information only).",
         f"Page layout: {sum(layout['unreadable'].values())} pages not understood {layout['unreadable'] or ''}, spare "
-        f"readings used {layout['spare'] or 'on no page'}, facts missing {layout['missing'] or 'on no page'}.",
+        f"readings used {layout['spare'] or 'on no page'}, facts missing {layout['missing'] or 'on no page'}; "
+        f"{layout['amazonNow']} pages offered only through Amazon Now (not sold, reason amazon-now).",
         f"{errors} Shopify errors. Report: {path}"]
     if stopped:
         lines.insert(0, f"::warning::{stopped}")
