@@ -212,6 +212,37 @@ def test_evening():
     assert not s.offer_for(late, False)[1]
 
 
+def test_low_stock_and_reasons():
+    """A stock moving around the threshold no longer puts a variant on sale and off at every check, and every Épuisé
+    variant carries the reason (130 variants changed state twice or more in 24 h on 10-11 Nov)."""
+    def left(n):
+        return read(page(offers=[offer(avail=f"Only {n} left in stock - order soon.",
+                                       deliveries=[delivery("Tomorrow, 11 November")])]))
+    d, _ = decide([row("B0AAAAAAAA"), row("B0AAAAAAAB"), row("B0AAAAAAAC", "DENY"), row("B0AAAAAAAD", "DENY"),
+                   row("B0AAAAAAAE", "DENY")],
+                  {"B0AAAAAAAA": left(3), "B0AAAAAAAB": left(4), "B0AAAAAAAC": left(5), "B0AAAAAAAD": left(6),
+                   "B0AAAAAAAE": read(page())})
+    assert d["B0AAAAAAAA"]["policy"] == "DENY" and d["B0AAAAAAAA"]["state"]["why"] == "stock-bas"
+    assert d["B0AAAAAAAB"]["policy"] == "CONTINUE" and "why" not in d["B0AAAAAAAB"]["state"]  # on sale with 4: stays
+    assert d["B0AAAAAAAC"]["policy"] == "DENY" and d["B0AAAAAAAC"]["why"] == "stock-bas"  # Épuisé with 5: not back yet
+    assert d["B0AAAAAAAD"]["policy"] == "CONTINUE"  # more than LOW_STOCK_BACK: back
+    assert d["B0AAAAAAAE"]["policy"] == "CONTINUE"  # plain "In Stock": back
+    out = read(page(offers=[offer(price="", cart=False, avail="Currently unavailable.")]))
+    late = read(page(offers=[offer(deliveries=[delivery("Friday, 13 November")])]))
+    far = read(page(offers=[offer(deliveries=[delivery("17 - 19 November")])]))
+    future = s.iso(NOW + dt.timedelta(hours=5))
+    d, _ = decide([row("B0AAAAAAAA"), row("B0AAAAAAAB"), row("B0AAAAAAAC"), row("B0AAAAAAAD"), row("B0AAAAAAAE", blocked=True),
+                   row("B0AAAAAAAF", "DENY", state={"cool": future}), row("B0AAAAAAAG"), row("B0AAAAAAAH"),
+                   row("B0AAAAAAAI", state={"why": "rupture"})],
+                  {"B0AAAAAAAA": out, "B0AAAAAAAB": late, "B0AAAAAAAC": far, "B0AAAAAAAD": read(page(offers=[offer()])),
+                   "B0AAAAAAAE": read(page()), "B0AAAAAAAF": read(page()), "B0AAAAAAAG": read(page(shown="B0BBBBBBBB")),
+                   "B0AAAAAAAH": read("<html><head><title>Page Not Found</title></head><body>Sorry</body></html>"),
+                   "B0AAAAAAAI": read(page())})
+    assert [d[f"B0AAAAAAA{x}"]["why"] for x in "ABCDEFGH"] == [
+        "rupture", "delai:3", "delai:4+", "sans-date", "retenue", "pause-commande", "autre-article", "fiche-supprimee"]
+    assert d["B0AAAAAAAI"]["policy"] == "CONTINUE" and "why" not in d["B0AAAAAAAI"]["state"]  # back on sale: reason dropped
+
+
 def test_order_check():
     """The order check decides like the stock check, reads twice before saying "ko", and only keeps a variant Épuisé
     for a day when the reason is about stock."""
@@ -288,6 +319,17 @@ def test_audit_sources():
     assert audit.source_of(prod(isGiftCard=True), {"sku": ""}) == "gift"
     assert audit.stale_limit(prod(), {"sku": "MEDX-some-whey"}) == suppliers.module_of("MEDX-x")[0].STALE_HOURS
     assert audit.stale_limit(prod(), {"sku": "B0AAAAAAAA"}) == audit.STALE_HOURS
+    # why variants are Épuisé and products hidden, counted from the reason kept on each variant
+    def var(why=None, policy="DENY", sku="B0AAAAAAAA"):
+        return {"sku": sku, "inventoryPolicy": policy, "st": {"value": '{"why":"%s"}' % why} if why else None}
+    table = "\n".join(audit.reasons_table([
+        {"status": "DRAFT", "tags": ["epuise-auto"], "isGiftCard": False,
+         "variants": {"nodes": [var("rupture"), var("rupture"), var("stock-bas")]}},
+        {"status": "ACTIVE", "tags": [], "isGiftCard": False,
+         "variants": {"nodes": [var("delai:4+"), var(policy="CONTINUE"), var(sku="MEDX-x"), var(), var(sku="")]}}]))
+    assert "| En rupture sur Amazon.ae | 2 | 1 |" in table and "| Stock presque fini sur Amazon.ae | 1 | 0 |" in table, table
+    assert "| Livraison à Dubaï en 4 jours ou plus | 1 | 0 |" in table and "| Total | 6 | 1 |" in table, table
+    assert "| Variante sans ASIN | 1 | 0 |" in table and "Motif pas encore noté" in table, table
 
 
 if __name__ == "__main__":

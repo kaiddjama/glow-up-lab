@@ -69,6 +69,10 @@ FORWARD_DAYS = (2, 3)  # Dubai -> Djibouti
 # seller shipped by Amazon; once it is gone the offer moves to a seller who delivers the next week (orders #1014, #1040:
 # the robot read "tomorrow", Hoodo saw "next week" and had to buy elsewhere). LOW_STOCK_MAX=0 turns the rule off.
 LOW_STOCK_MAX = int(os.environ.get("LOW_STOCK_MAX", "3"))
+# Since 11 Nov: a variant that is Épuisé only comes back when Amazon.ae shows more than LOW_STOCK_BACK units (or no "Only N
+# left" line at all). With a single threshold, a stock moving between 3 and 4 put the variant on sale and off again at
+# every check: 130 variants changed state twice or more in 24 hours (10-11 Nov), some of them at every single check.
+LOW_STOCK_BACK = int(os.environ.get("LOW_STOCK_BACK", "5"))
 PRICES_ONLY = os.environ.get("PRICES_ONLY") == "1"  # update prices only: no stock, set-aside or delivery-range change
 # Since 5 Nov: a page in stock with NO delivery date for the Dubai address is not sellable (it usually means Amazon.ae
 # does not deliver it there; eos body butter sold out for Hoodo while the robot read "in stock"). NO_DATE_KEEPS=1 restores
@@ -178,7 +182,8 @@ def hours_since(text, now):
 def read_state(meta):
     """supplier.sync_state of a variant, the robot's memory between two runs:
     "pend" {aed, t} = a price jump seen at t, waiting for a second reading; "src" / "src_t" = sold from its second source,
-    last confirmed at src_t; "cool" = not to be put back on sale before that time (an order just proved it unavailable)."""
+    last confirmed at src_t; "cool" = not to be put back on sale before that time (an order just proved it unavailable);
+    "why" = why the variant is Épuisé (why_out), absent when it is on sale."""
     try:
         state = json.loads((meta or {}).get("value") or "{}")
     except ValueError:
@@ -283,10 +288,12 @@ def read_page(asin):
     return choose_offer(page)
 
 
-def low_stock(page):
-    """Only a few units left on Amazon.ae: the offer can switch to a slow seller at any moment."""
+def low_stock(page, on_sale=True):
+    """Only a few units left on Amazon.ae: the offer can switch to a slow seller at any moment. A variant on sale goes
+    out at LOW_STOCK_MAX units or fewer; one that is Épuisé needs more than LOW_STOCK_BACK to come back."""
     left = page.get("stockLeft")
-    return LOW_STOCK_MAX > 0 and left is not None and left <= LOW_STOCK_MAX
+    limit = LOW_STOCK_MAX if on_sale else max(LOW_STOCK_MAX, LOW_STOCK_BACK)
+    return LOW_STOCK_MAX > 0 and left is not None and left <= limit
 
 
 def days_allowed(on_sale, hour):
@@ -296,18 +303,18 @@ def days_allowed(on_sale, hour):
     return MAX_DAYS + (EVENING_SLACK_DAYS if late else 0)
 
 
-def sellable(page, max_days=None):
-    """Can this offer be bought now and reach Dubai in time (max_days, by default the strict MAX_DAYS)? The seller's
-    name plays no part."""
+def sellable(page, max_days=None, on_sale=True):
+    """Can this offer be bought now and reach Dubai in time (max_days, by default the strict MAX_DAYS)? on_sale=False
+    asks more stock of a variant that is Épuisé before it comes back. The seller's name plays no part."""
     if page.get("error") or page.get("held") or page.get("gone") or page.get("redirect"):
         return False
-    if low_stock(page):
+    if low_stock(page, on_sale):
         return False
     days = page.get("sourceDays")
     return bool(page.get("inStock")) and days is not None and days <= (MAX_DAYS if max_days is None else max_days)
 
 
-def choose_offer(page, max_days=None):
+def choose_offer(page, max_days=None, on_sale=True):
     """Some buy boxes list several offers (two sellers, each with its price, stock and date). The first one that can be
     sold is the one we would buy; without any, the featured offer describes the page."""
     if page.get("error") or page.get("gone") or page.get("redirect"):
@@ -315,7 +322,7 @@ def choose_offer(page, max_days=None):
     offers = page.get("offers") or []
     for k, offer in enumerate(offers):
         chosen = {**page, **offer, "offer": k}
-        if sellable(chosen, max_days):
+        if sellable(chosen, max_days, on_sale):
             return chosen
     return {**page, **offers[0], "offer": 0} if offers else page
 
@@ -323,13 +330,38 @@ def choose_offer(page, max_days=None):
 def offer_for(page, on_sale):
     """(the offer we would buy, can it be sold?) for a variant that is on sale or not: a variant on sale gets the evening
     slack, one that is Épuisé must meet the strict rule to come back. An offer inside the strict rule is always preferred."""
-    page = choose_offer(page)
-    if sellable(page):
+    page = choose_offer(page, None, on_sale)
+    if sellable(page, None, on_sale):
         return page, True
     limit = days_allowed(on_sale, page.get("hour"))
     if limit > MAX_DAYS:
-        page = choose_offer(page, limit)
-    return page, sellable(page, limit)
+        page = choose_offer(page, limit, on_sale)
+    return page, sellable(page, limit, on_sale)
+
+
+def why_out(page, on_sale=True, blocked=False, cooling=False, hold=None):
+    """Why a variant is Épuisé, as a short code kept on the variant (supplier.sync_state "why") and counted in the
+    reports and in the audit, so "why are so many products hidden?" has an answer at every check:
+    retenue (held by hand), pause-commande (an order just proved it unavailable), prix (price jump waiting for a second
+    reading), fiche-supprimee, autre-article, rupture, stock-bas, sans-date (no delivery date for Dubai: mostly Amazon
+    US / UK imports), delai:3 (one day too slow) or delai:4+."""
+    if blocked:
+        return "retenue"
+    if cooling:
+        return "pause-commande"
+    if hold == "rise":
+        return "prix"
+    if page.get("gone"):
+        return "fiche-supprimee"
+    if page.get("redirect"):
+        return "autre-article"
+    if not page.get("inStock"):
+        return "rupture"
+    if low_stock(page, on_sale):
+        return "stock-bas"
+    if page.get("sourceDays") is None:
+        return "sans-date"
+    return "delai:3" if page["sourceDays"] <= MAX_DAYS + 1 else "delai:4+"
 
 
 def cost_of(page):
@@ -454,9 +486,10 @@ def plan(rows, pages, now, fetch_other=None, hidden=(), prices_only=False):
         if state.get("cool") and not cooling:
             state.pop("cool")
         # on sale when the run started (policy0: hide_unavailable may have set "policy" to DENY during this very run)
-        page, can_sell = offer_for(page, r["policy0"] == "CONTINUE" and not r["parked"])
+        on_sale = r["policy0"] == "CONTINUE" and not r["parked"]
+        page, can_sell = offer_for(page, on_sale)
         d = {"r": r, "page": page, "sell": False, "src": "amazon", "cost": None, "days": None, "price": None,
-             "hold": None, "wait": False}
+             "hold": None, "wait": False, "why": None}
         if r["blocked"] or cooling:
             pass
         elif can_sell:  # days: never more than MAX_DAYS for the shop's delivery label, also under the evening slack
@@ -485,6 +518,10 @@ def plan(rows, pages, now, fetch_other=None, hidden=(), prices_only=False):
         else:
             state.pop("src", None)
             state.pop("src_t", None)
+        if d["sell"]:
+            state.pop("why", None)
+        else:
+            d["why"] = state["why"] = why_out(page, on_sale, r["blocked"], cooling, d["hold"])
         d["policy"], d["state"] = ("CONTINUE" if d["sell"] else "DENY"), state
         decisions.append(d)
     # Safety net: if too many variants would newly go Épuisé in one run (counting those already hidden during the
@@ -745,6 +782,18 @@ def main():
     report["noDeliveryDate"] = sum(1 for d in decisions if not d["r"]["parked"] and d["page"].get("inStock")
                                    and d["page"].get("sourceDays") is None)
     report["lowStock"] = sum(1 for d in decisions if not d["r"]["parked"] and low_stock(d["page"]))
+    # every Épuisé variant with its reason and what the page showed: the next fine-tuning starts from facts
+    report["out"] = [{"asin": d["r"]["asin"], "handle": d["r"]["handle"], "why": d["why"], "wasOnSale": d["r"]["policy0"] == "CONTINUE",
+                      "days": d["page"].get("sourceDays"), "left": d["page"].get("stockLeft"),
+                      "amazonShips": d["page"].get("amazonShips"), "promises": d["page"].get("promises"),
+                      "hour": d["page"].get("hour")} for d in decisions if not d["sell"]]
+    why_count = {}
+    for d in decisions:
+        if not d["sell"]:
+            why_count[d["why"]] = why_count.get(d["why"], 0) + 1
+    report["outByReason"] = why_count
+    report["eveningSlack"] = sum(1 for d in decisions if d["sell"] and d["src"] == "amazon"
+                                 and (d["page"].get("sourceDays") or 0) > MAX_DAYS)
     tail = (os.environ.get("SHARD") or "all").replace("/", "of")
     path = os.path.join(outdir, f"sync-{now[:13].replace(':', '')}-{tail}.json")
     json.dump(report, open(path, "w"), indent=1, ensure_ascii=False)
@@ -765,6 +814,8 @@ def main():
         f"{len(report['republished'])} hidden products back online, {len(report['stillParked'])} variants still hidden.",
         f"Prices: {prices} changed, {len(report['skipped'])} jumps held until a second reading.",
         f"Delivery days read (None = no date): {days_seen}",
+        f"Épuisé by reason: {dict(sorted(why_count.items(), key=lambda x: -x[1]))}; {report['eveningSlack']} kept on sale "
+        f"by the evening slack.",
         f"{report['noDeliveryDate']} in stock without a delivery date, {report['lowStock']} with {LOW_STOCK_MAX} or fewer "
         f"left, {len(report['gone'])} listings removed, {len(report['redirected'])} pages showing another item, "
         f"{len(report['secondSource'])} sold from their second source, {len(report['nameMismatch'])} option names that differ "

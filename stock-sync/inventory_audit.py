@@ -10,12 +10,15 @@ It reads EVERY product (no sample) and checks, per product and per variant:
     "PSAE-...", read by their own syncs), and its own page was read (variant_checked_at) recently. Gift cards have neither;
   - an active, read, sellable product is published on the Online Store (otherwise its page answers 404);
   - prices are present and positive (the price itself comes from the live Amazon.ae price at each sync).
+It also counts WHY the Amazon.ae variants are Épuisé and why products are hidden (the reason amazon_sync.py keeps on each
+variant, supplier.sync_state "why"), so "why are so many products hidden?" has an answer every 30 minutes.
 Writes a markdown report (REPORT_FILE, and the job summary on GitHub). Exit code 1 = something Hoodo must know about
 is still wrong after the automatic fixes.
 
 Usage: python3 -I inventory_audit.py   (same environment as park_soldout.py; DRY_RUN=1 or FIX=0 reports only)
 """
 import datetime as dt
+import json
 import os
 import sys
 
@@ -33,6 +36,7 @@ Q = """query($after:String,$pub:ID!){ products(first:40, after:$after, query:"-s
     ref: metafield(namespace:"internal", key:"supplier_ref"){value}
     variants(first:100){ nodes{ id title sku price inventoryPolicy availableForSale
       inventoryItem{ id tracked }
+      st: metafield(namespace:"supplier", key:"sync_state"){value}
       vchk: metafield(namespace:"supplier", key:"variant_checked_at"){value} } } } } }"""
 TRACK_M = """mutation($id:ID!){ inventoryItemUpdate(id:$id, input:{tracked:true}){ userErrors{field message} } }"""
 
@@ -68,6 +72,49 @@ def source_of(p, v):
     if suppliers.is_other_source(v.get("sku")):
         return "other"
     return "amazon" if has_asin(p, v) else None
+
+
+REASONS = (("rupture", "En rupture sur Amazon.ae"), ("delai:4+", "Livraison à Dubaï en 4 jours ou plus"),
+           ("delai:3", "Livraison à Dubaï en 3 jours (1 jour de trop)"), ("stock-bas", "Stock presque fini sur Amazon.ae"),
+           ("sans-date", "Pas de date de livraison pour Dubaï (surtout des imports Amazon US / UK)"),
+           ("retenue", "Retenue à la main (étiquette bloque ou seller-hold.json)"),
+           ("pause-commande", "Pause de 24 h après une commande non commandable"),
+           ("prix", "Saut de prix en attente d'une seconde lecture"),
+           ("autre-article", "La page Amazon.ae affiche un autre article"), ("fiche-supprimee", "Fiche supprimée sur Amazon.ae"),
+           ("sans-asin", "Variante sans ASIN"), ("?", "Motif pas encore noté (variante pas relue depuis l'ajout du motif)"))
+
+
+def reason_of(p, v):
+    """Pure: why this Épuisé variant of an Amazon.ae product is not sold, as amazon_sync.why_out wrote it."""
+    if not has_asin(p, v):
+        return "sans-asin"
+    try:
+        why = json.loads((v.get("st") or {}).get("value") or "{}").get("why")
+    except (ValueError, AttributeError):
+        why = None
+    return why if why in dict(REASONS) else "?"
+
+
+def reasons_table(products):
+    """Pure: markdown lines counting the Épuisé Amazon.ae variants by reason, and the hidden products (draft + epuise-auto)
+    by the reason most of their variants share."""
+    by_var, by_prod = {}, {}
+    for p in products:
+        if p.get("isGiftCard"):
+            continue
+        mine = [reason_of(p, v) for v in p["variants"]["nodes"]
+                if v["inventoryPolicy"] == "DENY" and not suppliers.is_other_source(v.get("sku"))]
+        for why in mine:
+            by_var[why] = by_var.get(why, 0) + 1
+        if mine and p["status"] == "DRAFT" and s.OUT_TAG in [t.lower() for t in p.get("tags") or []]:
+            top = max(set(mine), key=mine.count)
+            by_prod[top] = by_prod.get(top, 0) + 1
+    lines = ["## Pourquoi c'est en Épuisé (variantes Amazon.ae) et masqué (produits)", "",
+             "| Motif | Variantes en Épuisé | Produits masqués |", "|---|---|---|"]
+    lines += [f"| {label} | {by_var.get(code, 0)} | {by_prod.get(code, 0)} |" for code, label in REASONS
+              if by_var.get(code) or by_prod.get(code)]
+    lines += [f"| Total | {sum(by_var.values())} | {sum(by_prod.values())} |", ""]
+    return lines
 
 
 def stale_limit(p, v):
@@ -135,6 +182,7 @@ def main():
                 L.append(f"- … et {len(handles) - limit} autres")
             L.append("")
 
+    L.extend(reasons_table(products))
     section("Suivi du stock désactivé (produits)", untracked_products)
     section("Échecs de correction du suivi", [f"{p['handle']}: {e}" for p, _, e in failed])
     section("Épuisé mais encore commandable", {p["handle"] for p, _ in deny_but_orderable})
