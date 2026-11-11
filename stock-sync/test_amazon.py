@@ -57,6 +57,15 @@ def offer(price="54.00", avail="In Stock", deliveries=(), seller="Padimu", cart=
         f'<a id="sellerProfileTriggerId" href="#">{seller}</a>' if seller else ""])
 
 
+# the Amazon Now buy box as on the real pages of 11 Nov (delivery in minutes, its own basket)
+NOW_OFFER = ('<div id="desktop_almBuyBox"><div id="almDesktopSingleOfferPriceWrapper"><div id="corePrice_feature_div">'
+             '<span class="a-price"><span class="a-offscreen">AED&nbsp;29.35</span></span></div></div><div '
+             'id="almLogoAndDeliveryMessage">FREE 15\u201325 mins delivery on orders over AED15 with Prime</div><div '
+             'id="almAvailability_feature_div"><span id="availability-string"> In Stock </span></div><div '
+             'id="almAddToCart_feature_div"><input name="submit.alm-add-to-cart" type="submit"></div>Dispatched from '
+             "AmazonNow Sold by AmazonNow</div>")
+
+
 def page(asin="B0AAAAAAAA", offers=None, city="Dubai, Ras Al Khor", shown=None, variation="Warm"):
     shown = shown or asin
     offers = offers if offers is not None else [offer(deliveries=[delivery("Tomorrow, 11 November")])]
@@ -128,6 +137,81 @@ def test_reading():
     # a seller we never saw, another shade label, another title: still the same ASIN, still sellable (Hoodo, 10 Nov)
     assert s.sellable(read(page(variation="Tan Latte", offers=[offer(seller="Somebody LLC",
                                                                        deliveries=[delivery("Tomorrow, 11 November")])])))
+
+
+def test_page_changes():
+    """Amazon.ae changes its pages. Every fact has a spare reading that gives the same answer; an offer that cannot be
+    understood counts as NOT READ, never as out of stock; one reader raises the alert when it happens on many pages."""
+    form = '<input type="hidden" name="items[0.base][customerVisiblePrice][amount]" value="54.0">'
+    words = ("<div>FREE delivery <b>Friday, 13 November</b> on your first order. Or fastest delivery <b>Tomorrow, "
+             "11 November</b>. Order within 2 hrs 10 mins</div>")
+    both = [delivery("Friday, 13 November", program="ncp"), delivery("Tomorrow, 11 November", "fastest", "DELIVERY")]
+    normal = page(offers=[offer(seller="Kuwa", ships="fba", deliveries=both) + form + words])
+    ref = read(normal)
+    assert ref["via"] == ref["blind"] == ref["pageVia"] == ref["pageBlind"] == [] and ref["sourceDays"] == 1, ref
+    facts = ("aed", "inStock", "stockLeft", "sourceDays", "amazonShips", "deliveryFee", "seller")
+    changes = {"price": ('id="corePrice_feature_div"', 'id="newPrice"'), "delivery": ("data-csa-c-delivery-", "data-new-"),
+               "stock": ('id="availability"', 'id="newAvailability"'), "cart": ('id="add-to-cart-button"', 'id="buy-now-button"'),
+               "shipper": ("InfoFeature_feature_div", "Info_new_div")}
+    everything = normal
+    for fact, (old, new) in changes.items():
+        pg = read(normal.replace(old, new))
+        assert [pg[k] for k in facts] == [ref[k] for k in facts] and pg["via"] == [fact] and s.sellable(pg), (fact, pg)
+        everything = everything.replace(old, new)
+    pg = read(everything.replace('id="productTitle"', 'id="title"').replace('id="desktop_buybox"', 'id="buybox"'))
+    assert [pg[k] for k in facts] == [ref[k] for k in facts] and sorted(pg["via"]) == sorted(changes), pg
+    assert pg["pageVia"] == ["title", "buybox"] and pg["title"] == "e.l.f. Camo Concealer", pg
+    # the low stock line is still seen through the spare reading
+    low = normal.replace("In Stock", "Only 2 left in stock - order soon.").replace('id="availability"', 'id="newAvailability"')
+    assert read(low)["stockLeft"] == 2 and not s.sellable(read(low))
+    # spare delivery reading: a time slot is express and never counts; a seller-shipped offer keeps the free date
+    slot = words.replace("Tomorrow, 11 November", "Today 5 PM - 9 PM")
+    pg = read(page(offers=[offer(seller="Kuwa", ships="fba") + form + slot]))
+    assert pg["sourceDays"] == 3 and pg["via"] == ["delivery"] and not s.sellable(pg), pg
+    assert read(page(offers=[offer(ships="seller") + words]))["sourceDays"] == 3
+    # an offer nobody understands: NOT READ (error), whatever is missing; a page that SAYS unavailable is read as such
+    bare = page(offers=[offer(deliveries=both)])
+    assert read(bare.replace('id="corePrice_feature_div"', 'id="x"'))["error"] == "layout: price"
+    assert read(bare.replace('id="add-to-cart-button"', 'id="x"'))["error"] == "layout: cart"
+    assert read(page(offers=[offer(price="", cart=False, avail="")]))["error"] == "layout: offer"
+    gone = read(page(offers=[offer(price="", cart=False, avail="Currently unavailable.")]))
+    assert not gone.get("error") and not gone["inStock"] and s.why_out(gone) == "rupture", gone
+    # the "Currently unavailable" box has its own stock line: a normal reading, not a spare one
+    box = ('<div id="outOfStock" class="a-box"><span class="a-color-price a-text-bold">Currently unavailable.</span><br>We '
+           "don't know when or if this item will be back in stock.</div>")
+    pg = read(page(offers=[box]))
+    assert not pg["inStock"] and pg["via"] == [] and pg["availability"] == "Currently unavailable.", pg
+    # Amazon Now featured (delivery in minutes, its own basket, no ordinary "Add to cart"): recognised by its own box,
+    # neither "not read" nor a plain out of stock; not sold, and the reason says so
+    pg = read(page(offers=[NOW_OFFER]))
+    assert not pg.get("error") and pg["amazonNow"] and not pg["inStock"] and pg["aed"] == 29.35 and pg["via"] == [], pg
+    assert pg["availability"] == "In Stock" and not s.sellable(pg) and s.why_out(pg) == "amazon-now", pg
+    assert s.layout_watch({"B0": pg, "B1": ref})[0]["amazonNow"] == 1
+    assert not read(normal)["amazonNow"] and s.why_out(gone) == "rupture"
+    # an ordinary offer shown next to an Amazon Now box is read as usual
+    pg = read(page(offers=[offer(seller="Kuwa", ships="fba", deliveries=both) + NOW_OFFER]))
+    assert pg["inStock"] and not pg["amazonNow"] and s.sellable(pg), pg
+    unread = {"B0AAAAAAAA": read(bare.replace('id="corePrice_feature_div"', 'id="x"'))}
+    decisions, _ = decide([row()], unread)
+    assert not decisions, decisions  # a page not read changes nothing: not hidden, not confirmed
+    # facts found by no reading on an offer that can be bought: reported, the offer is still read
+    pg = read(page(city="", offers=[offer(avail="", deliveries=both)]))
+    assert pg["blind"] == ["stock"] and pg["pageBlind"] == ["location"] and s.sellable(pg, 3), pg
+    # one reader: a few odd pages are just read again; many raise the alert, by fact
+    ok, odd, spare = read(normal), read(bare.replace('id="corePrice_feature_div"', 'id="x"')), read(normal.replace(*changes["price"]))
+    stats, alerts = s.layout_watch({**{f"A{k}": ok for k in range(26)}, **{f"B{k}": odd for k in range(4)}})
+    assert stats["unreadable"] == {"price": 4} and not alerts, (stats, alerts)
+    stats, alerts = s.layout_watch({**{f"A{k}": ok for k in range(22)}, **{f"B{k}": odd for k in range(8)}})
+    assert len(alerts) == 1 and "the price (8)" in alerts[0], alerts
+    stats, alerts = s.layout_watch({**{f"A{k}": ok for k in range(18)}, **{f"B{k}": spare for k in range(12)}})
+    assert stats["spare"] == {"price": 12} and len(alerts) == 1 and "spare reading" in alerts[0], (stats, alerts)
+    # far more "in stock without a date" pages than Amazon.ae ever has: a changed delivery block, those pages are not read
+    nodate = read(page(offers=[offer()]))
+    few = {**{f"A{k}": ok for k in range(28)}, **{f"B{k}": dict(nodate) for k in range(2)}}
+    assert s.layout_watch(few)[1] == [] and not few["B0"].get("error")
+    many = {**{f"A{k}": ok for k in range(20)}, **{f"B{k}": dict(nodate) for k in range(10)}}
+    stats, alerts = s.layout_watch(many)
+    assert stats["noDateInBulk"] == 10 and many["B0"]["error"] == "layout: delivery" and len(alerts) == 1, (stats, alerts)
 
 
 def test_not_the_same_item():
@@ -268,8 +352,62 @@ def test_order_check():
     assert oc.check_item(item, reader(slower, good), {})[0] == "ok"  # the second reading wins
     verdict, why, _, cool = oc.check_item(item, reader(tiny), {})
     assert verdict == "ko" and cool and "2 restant" in why, why  # a stock reason: the variant cools down
+    verdict, why, _, cool = oc.check_item(item, reader({**read(page(offers=[NOW_OFFER])), "hour": 10}), {})
+    assert verdict == "ko" and cool and "Amazon Now" in why, why  # no ordinary offer: the owner is told what is shown
     assert oc.check_item(item, reader({"error": "captcha"}), {})[0] == "unknown"
     assert oc.check_item(item, reader(slower, {"error": "captcha"}), {})[0] == "ko"  # second reading failed: first stands
+
+
+def test_reader_keeps_its_address():
+    """One odd header must not stop a whole reader: the buy box line counts, then the address is set again once; the
+    reader stops only when the city still does not show (a reader stopped after 24 of 163 pages on 11 Nov)."""
+    import browser_fetch as bf
+
+    class Page:
+        def __init__(self, header, buybox, after_reset=None):
+            self.header, self.buybox, self.after_reset, self.loads = header, buybox, after_reset, 0
+
+        def goto(self, url, wait_until=None):
+            self.loads += 1
+
+        def wait_for_selector(self, *a, **k): pass
+        def wait_for_timeout(self, ms): pass
+        def content(self): return "<html>page</html>"
+        def locator(self, sel): return type("L", (), {"count": lambda self: 0})()
+
+        def inner_text(self, sel, timeout=None):
+            if sel == bf.LOCATION_TEXT:
+                return self.header
+            if self.buybox is None:
+                raise RuntimeError("no buy box line")
+            return self.buybox
+
+    def reader(page):
+        r = bf.BrowserReader()
+        r.page, r.count, r.resets = page, bf.CHECK_EVERY - 1, 0
+
+        def again():
+            r.resets += 1
+            if page.after_reset is None:
+                raise bf.LocationLost("delivery location is 'Update location', not Dubai")
+            page.header = page.after_reset
+        r.set_location = again
+        return r
+
+    url = "https://www.amazon.ae/dp/B0AAAAAAAA"
+    r = reader(Page("Dubai, Ras ...", "Deliver to Dubai, Ras Al Khor"))  # the normal page
+    assert r.get(url) and r.resets == 0 and r.page.loads == 1
+    r = reader(Page("Update location", "Deliver to Dubai, Ras Al Khor"))  # odd header, the buy box still says Dubai
+    assert r.get(url) and r.resets == 0 and r.page.loads == 1
+    r = reader(Page("Update location", None, after_reset="Dubai, Ras ..."))  # address lost, set again, page read again
+    assert r.get(url) and r.resets == 1 and r.page.loads == 2
+    for page in (Page("Abu Dhabi", "Deliver to Abu Dhabi", after_reset="Abu Dhabi"), Page("Update location", None)):
+        r = reader(page)  # the city cannot be put back: the reader stops, nothing is read for another address
+        try:
+            r.get(url)
+            raise AssertionError("the reader went on with another address")
+        except bf.LocationLost:
+            pass
 
 
 def test_prices():

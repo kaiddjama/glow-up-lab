@@ -74,7 +74,9 @@ def source_of(p, v):
     return "amazon" if has_asin(p, v) else None
 
 
-REASONS = (("rupture", "En rupture sur Amazon.ae"), ("delai:4+", "Livraison à Dubaï en 4 jours ou plus"),
+REASONS = (("rupture", "En rupture sur Amazon.ae"),
+           ("amazon-now", "Seulement en Amazon Now (livraison en minutes à Dubaï, pas d'offre ordinaire)"),
+           ("delai:4+", "Livraison à Dubaï en 4 jours ou plus"),
            ("delai:3", "Livraison à Dubaï en 3 jours (1 jour de trop)"), ("stock-bas", "Stock presque fini sur Amazon.ae"),
            ("sans-date", "Pas de date de livraison pour Dubaï (surtout des imports Amazon US / UK)"),
            ("retenue", "Retenue à la main (étiquette bloque ou seller-hold.json)"),
