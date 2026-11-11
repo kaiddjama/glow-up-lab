@@ -72,6 +72,17 @@ def test_reading():
     pg = read(page(offers=[offer(deliveries=[delivery("Today 5 PM - 9 PM", "fastest", "ARRANGED"),
                                              delivery("Friday, 13 November")])]))
     assert pg["sourceDays"] == 3 and not s.sellable(pg), pg
+    # order #1048 (11 Nov): sold by Amazon.ae, free date in 3 days "on your first order" but "Or fastest delivery
+    # Tomorrow": the fastest date counts; from another seller it does not
+    both = [delivery("Saturday, 13 November", program="ncp"), delivery("Tomorrow, 11 November", "fastest", "DELIVERY")]
+    pg = read(page(offers=[offer(seller="Amazon.ae", deliveries=both)]))
+    assert pg["sourceDays"] == 1 and s.sellable(pg) and pg["deliveryFee"] == 0.0, pg
+    pg = read(page(offers=[offer(seller="Padimu", deliveries=both)]))
+    assert pg["sourceDays"] == 3 and not s.sellable(pg), pg
+    # Rush / same-day stay out, even sold by Amazon.ae
+    pg = read(page(offers=[offer(seller="Amazon.ae", deliveries=[delivery("Today 5 PM - 9 PM", "fastest", "ARRANGED"),
+                                                                  delivery("Friday, 13 November")])]))
+    assert pg["sourceDays"] == 3 and not s.sellable(pg), pg
     # only a paid standard delivery: sellable, and its fee is part of the cost
     pg = read(page(offers=[offer(price="72.00", deliveries=[delivery("Thursday, 12 November", "AED9")])]))
     assert s.sellable(pg) and pg["deliveryFee"] == 9.0 and s.cost_of(pg) == 81.0, pg

@@ -9,7 +9,8 @@ What the page tells us (measured on 23 real pages, 10 Nov 2026, guest session wi
     (id="newAccordionRow_0") and "another way to buy" (newAccordionRow_1...). The old reader only looked at the first 30,000
     characters, so it saw the featured offer's header and nothing else;
   - the delivery promises are tags data-csa-c-delivery-time / -price / -type: FREE standard delivery, a paid standard delivery
-    (e.g. AED 9) and express options ("fastest", "Rush": never counted, they cost extra and are not a promise for every order);
+    (e.g. AED 9), the plain "Or fastest delivery" line (counted only for an offer sold by Amazon.ae, since 11 Nov) and
+    express options ("Rush", same day: never counted, they cost extra and are not a promise for every order);
   - a removed listing answers "Page Not Found" (no product title).
 Hoodo's rule of 10 Nov: the seller, the wording of the title or of the specs never decide anything. Only the ASIN decides
 whether the page is the same item.
@@ -98,8 +99,8 @@ def _attr(tag, name):
 def delivery_options(block):
     """The delivery promises of a fragment: [{"text", "kind": free | paid | express, "fee"}].
     free = FREE standard delivery (also "on your first order": a guest always sees it), paid = a standard delivery with a fee
-    (AED 9...), express = "fastest" / "Rush" / same-day arrangements: never counted, they cost extra and are not offered
-    on every order."""
+    (AED 9...), fastest = the plain "Or fastest delivery <date>" line, express = "Rush" / same-day arrangements: never
+    counted, they cost extra and are not offered on every order."""
     out = []
     for tag in DELIVERY_TAG_RE.findall(block):
         when = _attr(tag, "delivery-time")
@@ -108,8 +109,10 @@ def delivery_options(block):
         price = _attr(tag, "delivery-price").lower()
         mir = _attr(tag, "mir-type").lower()
         program = _attr(tag, "delivery-benefit-program-id").lower()
-        if mir == "arranged" or price in ("fastest", "rush") or program == "express" or program.startswith("sub_same_day"):
+        if mir == "arranged" or price == "rush" or program == "express" or program.startswith("sub_same_day"):
             out.append({"text": when, "kind": "express", "fee": 0.0})
+        elif price == "fastest":
+            out.append({"text": when, "kind": "fastest", "fee": 0.0})
         elif price in ("", "free"):
             out.append({"text": when, "kind": "free", "fee": 0.0})
         else:
@@ -118,10 +121,14 @@ def delivery_options(block):
     return out
 
 
-def pick_delivery(options, today):
+def pick_delivery(options, today, amazon=False):
     """(days to Dubai, text, delivery fee) of the delivery that counts: the earliest FREE one; only when there is none,
-    the earliest paid standard one (its fee is returned so the price can cover it). Express options never count."""
-    free = [o for o in options if o["kind"] == "free"]
+    the earliest paid standard one (its fee is returned so the price can cover it). Express options never count.
+    Since 11 Nov, for an offer SOLD BY Amazon.ae the plain "fastest delivery" date counts too: a guest sees "FREE delivery
+    <in 3 days> on your first order" in the evening, while Hoodo's account gets the fastest date (order #1048: 6 NYX
+    items sold by Amazon.ae read "Saturday 14", Hoodo saw "today or tomorrow"; the page said "Or fastest delivery
+    Tomorrow"). Other sellers keep the free date only (orders #1014, #1040)."""
+    free = [o for o in options if o["kind"] == "free" or (amazon and o["kind"] == "fastest")]
     pool = free or [o for o in options if o["kind"] == "paid"]
     scored = [(days_until(o["text"], today), o) for o in pool]
     scored = [x for x in scored if x[0] is not None]
@@ -171,9 +178,10 @@ def parse_offer(seg, today):
                     avail, re.I)
     q = re.search(r'<select[^>]*\bid="quantity"[^>]*>(.*?)</select>', seg, re.S)
     options = [int(x) for x in re.findall(r'<option[^>]*value="(\d+)"', q.group(1))] if q else []
-    days, text, fee = pick_delivery(delivery_options(seg), today)
+    seller = parse_seller(seg)
+    days, text, fee = pick_delivery(delivery_options(seg), today, amazon=seller == "Amazon.ae")
     return {"aed": price, "inStock": price is not None and cart and not off, "availability": avail[:80],
-            "seller": parse_seller(seg), "stockLeft": int(left.group(1)) if left else None,
+            "seller": seller, "stockLeft": int(left.group(1)) if left else None,
             "maxQty": max(options) if options else None, "deliveryText": text, "sourceDays": days,
             "storeDays": None if days is None else days + EXTRA_DAYS, "deliveryFee": fee}
 
