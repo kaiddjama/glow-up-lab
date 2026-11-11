@@ -73,7 +73,7 @@ Délai affiché en boutique : « 4 à 5 jours » (2 jours jusqu'à Dubaï + 2 à
 | Obstacle | Voie retenue | Statut |
 |---|---|---|
 | Contrôle anti-robot Amazon | Lecture lente, pauses, relectures ; jamais de contournement de la détection | En place |
-| Le robot ne voit pas le compte connecté de Hoodo : dates différentes | Depuis le 11 nov, le robot lit la date « fastest delivery » pour tout ce qu'Amazon expédie lui-même (ce que son compte obtient) ; retenue à la main (`bloque`) pour les cas signalés. À vérifier avec Hoodo : cette date est-elle gratuite sur son compte (Prime) ou facturée quelques AED par commande ? Piste : API officielle Amazon | En place, un point à vérifier |
+| Le robot ne voit pas le compte connecté de Hoodo : dates différentes | Depuis le 11 nov, le robot lit la date « fastest delivery » pour tout ce qu'Amazon expédie lui-même (ce que son compte obtient) ; retenue à la main (`bloque`) pour les cas signalés. Confirmé par Hoodo le 11 nov : son compte Amazon.ae a Prime, donc cette date est gratuite pour elle (0 AED de livraison, comme le robot le compte). Si Prime s'arrête un jour, revenir à la date gratuite ou compter les frais. Piste : API officielle Amazon | En place |
 | Pages sans date de livraison | Relecture lente une fois, puis considérées indisponibles | En place |
 | Variantes sans ASIN (36 produits le 5 nov) | Restent masquées tant qu'elles ne sont pas reliées | À relier |
 | Exécutions GitHub sautées ou en retard | Horloge heartbeat.yml (voir section 4) + tâche de secours 5 fois par jour | En place |
