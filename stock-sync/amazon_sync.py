@@ -31,7 +31,7 @@ import zlib
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # python -I does not add the script folder
 import amazon_page  # noqa: E402,F401  (reading of the Amazon.ae pages, tested offline)
-from amazon_page import ASIN_RE, EXTRA_DAYS, MONTHS, days_until, dubai_today, parse, parse_price, parse_seller  # noqa: E402,F401
+from amazon_page import ASIN_RE, EXTRA_DAYS, MONTHS, days_until, dubai_now, dubai_today, parse, parse_price, parse_seller  # noqa: E402,F401
 import suppliers  # noqa: E402  (the other sources: MedX, PadelShop.ae)
 
 API = "2025-07"
@@ -49,12 +49,21 @@ PRICE_CONFIRM_HOURS = float(os.environ.get("PRICE_CONFIRM_HOURS", "3"))
 # Since 10 Nov: when the only delivery offered to Dubai is a PAID standard one (e.g. AED 9), its fee is added to the Amazon.ae
 # price before the formula, so the margin is not eaten. INCLUDE_DELIVERY_FEE=0 turns it off.
 INCLUDE_DELIVERY_FEE = os.environ.get("INCLUDE_DELIVERY_FEE", "1") == "1"
-# Delivery to Dubai (standard delivery only, never a paid express option) up to MAX_DAYS days is sellable, which gives
-# the "4 to 5 days" shown in the shop (2 + 2-3 days of forwarding to Djibouti); anything later counts as out of stock.
-# Since 2 Nov: 2 days (a guest sees "FREE delivery <in 2 days> on your first order" on almost every page; the paid
-# "fastest delivery tomorrow" option used to be read as 1 day). MAX_DAYS can be changed without touching the code.
+# Delivery to Dubai (never a Rush / same-day express option) up to MAX_DAYS days is sellable, which gives the "4 to 5 days"
+# shown in the shop (2 + 2-3 days of forwarding to Djibouti); anything later counts as out of stock.
+# The date that counts is the one Hoodo's account gets (amazon_page.pick_delivery): for an offer shipped by Amazon itself
+# the "fastest delivery" date, else the free date, else a paid standard one. MAX_DAYS can be changed without touching the code.
 MAX_DAYS = int(os.environ.get("MAX_DAYS", "2"))
 STANDARD_DAYS = MAX_DAYS  # up to this many days to Dubai: standard delay; later (if MAX_DAYS is raised): longer delay shown
+# Since 11 Nov: every evening, once Amazon's dispatch cut-off has passed (about 20:00-21:00 in Dubai), the dates slip by one
+# day until midnight, then come back. Measured on 10-11 Nov on the whole catalogue: 1,469 variants at 1 day at 19:00, none
+# at 21:45 (all at 2 days); the next evening 1,700 variants went from 2 to 3 days. That is the hour the shop sells most, and
+# the order check then flagged a whole order as unbuyable (order #1048; #1039 looks the same). So, from EVENING_FROM_HOUR
+# (Dubai time) to midnight, a variant that is ALREADY ON SALE keeps EVENING_SLACK_DAYS more day(s). A variant that is Épuisé
+# only comes back under the strict rule, at any hour: nothing slow is put on sale by this slack, and a variant that is
+# really slow goes out at the first morning check. EVENING_SLACK_DAYS=0 turns it off.
+EVENING_FROM_HOUR = int(os.environ.get("EVENING_FROM_HOUR", "19"))
+EVENING_SLACK_DAYS = int(os.environ.get("EVENING_SLACK_DAYS", "1"))
 FORWARD_DAYS = (2, 3)  # Dubai -> Djibouti
 # Since 10 Nov: "Only N left in stock" with N <= LOW_STOCK_MAX is not sellable. A tiny stock usually belongs to a small
 # seller shipped by Amazon; once it is gone the offer moves to a seller who delivers the next week (orders #1014, #1040:
@@ -269,6 +278,8 @@ def read_page(asin):
             page = parse(fetch(asin), dubai_today(), asin)
         if page.get("error") == "location":
             raise LocationLost(f"delivery location is '{page.get('location')}', not {amazon_page.CITY}")
+    if not page.get("error"):
+        page["hour"] = dubai_now().hour  # the hour of the reading decides the evening slack (days_allowed)
     return choose_offer(page)
 
 
@@ -278,26 +289,47 @@ def low_stock(page):
     return LOW_STOCK_MAX > 0 and left is not None and left <= LOW_STOCK_MAX
 
 
-def sellable(page, row=None):
-    """Can this offer be bought now and reach Dubai in time? The seller's name plays no part."""
+def days_allowed(on_sale, hour):
+    """Days to Dubai accepted for a variant: MAX_DAYS, plus the evening slack when the variant is already on sale and the
+    page was read between EVENING_FROM_HOUR and midnight in Dubai (hour None = unknown: strict)."""
+    late = on_sale and hour is not None and hour >= EVENING_FROM_HOUR
+    return MAX_DAYS + (EVENING_SLACK_DAYS if late else 0)
+
+
+def sellable(page, max_days=None):
+    """Can this offer be bought now and reach Dubai in time (max_days, by default the strict MAX_DAYS)? The seller's
+    name plays no part."""
     if page.get("error") or page.get("held") or page.get("gone") or page.get("redirect"):
         return False
     if low_stock(page):
         return False
     days = page.get("sourceDays")
-    return bool(page.get("inStock")) and days is not None and days <= MAX_DAYS
+    return bool(page.get("inStock")) and days is not None and days <= (MAX_DAYS if max_days is None else max_days)
 
 
-def choose_offer(page):
+def choose_offer(page, max_days=None):
     """Some buy boxes list several offers (two sellers, each with its price, stock and date). The first one that can be
     sold is the one we would buy; without any, the featured offer describes the page."""
     if page.get("error") or page.get("gone") or page.get("redirect"):
         return page
-    for k, offer in enumerate(page.get("offers") or []):
+    offers = page.get("offers") or []
+    for k, offer in enumerate(offers):
         chosen = {**page, **offer, "offer": k}
-        if sellable(chosen):
+        if sellable(chosen, max_days):
             return chosen
-    return page
+    return {**page, **offers[0], "offer": 0} if offers else page
+
+
+def offer_for(page, on_sale):
+    """(the offer we would buy, can it be sold?) for a variant that is on sale or not: a variant on sale gets the evening
+    slack, one that is Épuisé must meet the strict rule to come back. An offer inside the strict rule is always preferred."""
+    page = choose_offer(page)
+    if sellable(page):
+        return page, True
+    limit = days_allowed(on_sale, page.get("hour"))
+    if limit > MAX_DAYS:
+        page = choose_offer(page, limit)
+    return page, sellable(page, limit)
 
 
 def cost_of(page):
@@ -385,7 +417,7 @@ def hide_unavailable(rows, pages, dry, hidden):
     live = [r for r in rows if not r["parked"] and pages.get(r["asin"]) and not pages[r["asin"]].get("error")]
     out = [r for r in live if r["policy"] == "CONTINUE" and not r["fallback"]
            and not (pages[r["asin"]].get("inStock") and pages[r["asin"]].get("sourceDays") is None)
-           and not sellable(pages[r["asin"]])]
+           and not offer_for(pages[r["asin"]], True)[1]]
     if len(live) < 20 or len(hidden) + len(out) > STOCK_GUARD * len(live):
         return
     by_product = {}
@@ -421,12 +453,14 @@ def plan(rows, pages, now, fetch_other=None, hidden=(), prices_only=False):
         cooling = bool(state.get("cool")) and hours_since(state["cool"], now) < 0
         if state.get("cool") and not cooling:
             state.pop("cool")
+        # on sale when the run started (policy0: hide_unavailable may have set "policy" to DENY during this very run)
+        page, can_sell = offer_for(page, r["policy0"] == "CONTINUE" and not r["parked"])
         d = {"r": r, "page": page, "sell": False, "src": "amazon", "cost": None, "days": None, "price": None,
              "hold": None, "wait": False}
         if r["blocked"] or cooling:
             pass
-        elif sellable(page):
-            d.update(sell=True, cost=cost_of(page), days=page["sourceDays"])
+        elif can_sell:  # days: never more than MAX_DAYS for the shop's delivery label, also under the evening slack
+            d.update(sell=True, cost=cost_of(page), days=min(page["sourceDays"], MAX_DAYS))
         elif r["fallback"] and fetch_other:
             mod, slug, _ = suppliers.module_of(r["fallback"])
             if mod:

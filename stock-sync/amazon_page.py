@@ -9,8 +9,10 @@ What the page tells us (measured on 23 real pages, 10 Nov 2026, guest session wi
     (id="newAccordionRow_0") and "another way to buy" (newAccordionRow_1...). The old reader only looked at the first 30,000
     characters, so it saw the featured offer's header and nothing else;
   - the delivery promises are tags data-csa-c-delivery-time / -price / -type: FREE standard delivery, a paid standard delivery
-    (e.g. AED 9), the plain "Or fastest delivery" line (counted only for an offer sold by Amazon.ae, since 11 Nov) and
+    (e.g. AED 9), the plain "Or fastest delivery" line (counted only for an offer that Amazon ships itself, since 11 Nov) and
     express options ("Rush", same day: never counted, they cost extra and are not a promise for every order);
+  - who ships: the offer says "Fulfilled by Amazon" (another seller's stock held in Amazon's warehouse) or "Shipper / Seller
+    Amazon.ae". "Delivered by Amazon.ae" (the seller hands the parcel over later) and "Amazon US / UK" (import) are not that;
   - a removed listing answers "Page Not Found" (no product title).
 Hoodo's rule of 10 Nov: the seller, the wording of the title or of the specs never decide anything. Only the ASIN decides
 whether the page is the same item.
@@ -38,9 +40,14 @@ def clean(fragment):
     return re.sub(r"\s+", " ", htmllib.unescape(re.sub(r"<[^>]+>", " ", text))).strip()
 
 
+def dubai_now():
+    """Amazon.ae lives on Dubai time (UTC+4)."""
+    return dt.datetime.now(dt.timezone(dt.timedelta(hours=4)))
+
+
 def dubai_today():
-    """Amazon.ae dates are Dubai dates (UTC+4); read per page, because a long run can cross midnight."""
-    return dt.datetime.now(dt.timezone(dt.timedelta(hours=4))).date()
+    """Amazon.ae dates are Dubai dates; read per page, because a long run can cross midnight."""
+    return dubai_now().date()
 
 
 def days_until(text, today):
@@ -99,8 +106,8 @@ def _attr(tag, name):
 def delivery_options(block):
     """The delivery promises of a fragment: [{"text", "kind": free | paid | express, "fee"}].
     free = FREE standard delivery (also "on your first order": a guest always sees it), paid = a standard delivery with a fee
-    (AED 9...), fastest = the plain "Or fastest delivery <date>" line, express = "Rush" / same-day arrangements: never
-    counted, they cost extra and are not offered on every order."""
+    (AED 9...), fastest = the plain "Or fastest delivery <date>" line (counted only when Amazon ships the offer itself),
+    express = "Rush" / same-day arrangements: never counted, they cost extra and are not offered on every order."""
     out = []
     for tag in DELIVERY_TAG_RE.findall(block):
         when = _attr(tag, "delivery-time")
@@ -124,10 +131,12 @@ def delivery_options(block):
 def pick_delivery(options, today, amazon=False):
     """(days to Dubai, text, delivery fee) of the delivery that counts: the earliest FREE one; only when there is none,
     the earliest paid standard one (its fee is returned so the price can cover it). Express options never count.
-    Since 11 Nov, for an offer SOLD BY Amazon.ae the plain "fastest delivery" date counts too: a guest sees "FREE delivery
-    <in 3 days> on your first order" in the evening, while Hoodo's account gets the fastest date (order #1048: 6 NYX
-    items sold by Amazon.ae read "Saturday 14", Hoodo saw "today or tomorrow"; the page said "Or fastest delivery
-    Tomorrow"). Other sellers keep the free date only (orders #1014, #1040)."""
+    amazon=True (the offer is shipped by Amazon itself, see shipped_by_amazon): the plain "Or fastest delivery" date counts
+    too. A guest only gets "FREE delivery <date> on your first order", a slow date that slips by one more day every evening
+    (measured 10-11 Nov: 1 day at 19:00 Dubai, 2 days at 21:45; on 11 Nov 2 days all day and 3 days from about 21:00, for
+    1,700 of 2,000 variants), while Hoodo's account gets the fastest date: order #1048, 6 NYX items read "Saturday 14",
+    she saw "today or tomorrow" and the page said "Or fastest delivery Tomorrow". Offers shipped by the seller keep the
+    free date only."""
     free = [o for o in options if o["kind"] == "free" or (amazon and o["kind"] == "fastest")]
     pool = free or [o for o in options if o["kind"] == "paid"]
     scored = [(days_until(o["text"], today), o) for o in pool]
@@ -136,6 +145,29 @@ def pick_delivery(options, today, amazon=False):
         return None, (pool[0]["text"] if pool else None), 0.0
     days, o = min(scored, key=lambda x: x[0])
     return days, o["text"], o["fee"]
+
+
+def _feature(block, name):
+    """(label, value) of one line of the "seller, shipping and buying option details" box of an offer, e.g.
+    ("Fulfilled by", "Amazon") for fulfillerInfoFeature, ("Sold by", "Padimu") for merchantInfoFeature."""
+    # "<div id=": the same name also appears as data-csa-c-slot-id="..." inside the tag itself
+    m = re.search(rf'<div id="{name}_feature_div"(.*?)(?:<div id="\w+_feature_div"|$)', block, re.S)
+    if not m:
+        return "", ""
+    label = re.search(r'a-color-tertiary">(.*?)</span>', m.group(1), re.S)
+    value = re.search(r'offer-display-feature-text-message">(.*?)</span>', m.group(1), re.S)
+    return (clean(label.group(1)) if label else ""), (clean(value.group(1)) if value else "")
+
+
+def shipped_by_amazon(block):
+    """True when Amazon ships this offer itself from its UAE warehouses: "Fulfilled by Amazon" (whoever sells it) or
+    "Shipper / Seller Amazon.ae". Those are the offers an account gets at the "fastest delivery" date. Not the seller's
+    identity (which never decides anything, Hoodo, 10 Nov): the same seller can have both kinds of offers."""
+    label, who = _feature(block, "fulfillerInfoFeature")
+    if label.lower().startswith("fulfilled") and who.lower().startswith("amazon"):
+        return True
+    label, who = _feature(block, "merchantInfoFeature")
+    return label.lower().startswith("shipper") and who.lower() == "amazon.ae"
 
 
 def parse_seller(block):
@@ -178,12 +210,16 @@ def parse_offer(seg, today):
                     avail, re.I)
     q = re.search(r'<select[^>]*\bid="quantity"[^>]*>(.*?)</select>', seg, re.S)
     options = [int(x) for x in re.findall(r'<option[^>]*value="(\d+)"', q.group(1))] if q else []
-    seller = parse_seller(seg)
-    days, text, fee = pick_delivery(delivery_options(seg), today, amazon=seller == "Amazon.ae")
+    ships = shipped_by_amazon(seg)
+    promises = delivery_options(seg)
+    days, text, fee = pick_delivery(promises, today, amazon=ships)
     return {"aed": price, "inStock": price is not None and cart and not off, "availability": avail[:80],
-            "seller": seller, "stockLeft": int(left.group(1)) if left else None,
+            "seller": parse_seller(seg), "amazonShips": ships, "stockLeft": int(left.group(1)) if left else None,
             "maxQty": max(options) if options else None, "deliveryText": text, "sourceDays": days,
-            "storeDays": None if days is None else days + EXTRA_DAYS, "deliveryFee": fee}
+            "storeDays": None if days is None else days + EXTRA_DAYS, "deliveryFee": fee,
+            # every promise as the page words it ("free: Saturday, 14 November | fastest: Tomorrow, 12 November"), for the
+            # reports and the order alerts: Hoodo can compare with what her account shows
+            "promises": " | ".join(f"{o['kind']}: {o['text']}" for o in promises)[:160]}
 
 
 def page_asin(html):

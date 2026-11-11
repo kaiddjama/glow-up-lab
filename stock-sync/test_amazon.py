@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Offline tests of the Amazon.ae page reading (amazon_page.py) and of the stock decisions (amazon_sync.plan).
 Run: python3 -I test_amazon.py   (no network, no Shopify). The pages are small skeletons carrying the same markers as
-the real pages studied on 10 Nov (ids of the buy box, delivery tags, identity markers)."""
+the real pages studied on 10 and 11 Nov (ids of the buy box, delivery tags, identity markers, who ships the offer)."""
 import datetime as dt
 import os
 import sys
@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 os.environ.pop("PRICE_FORMULA", None)
 import amazon_page as ap  # noqa: E402
 import amazon_sync as s  # noqa: E402
+import order_check as oc  # noqa: E402
 import suppliers  # noqa: E402
 
 TODAY = dt.date(2026, 11, 10)
@@ -22,9 +23,30 @@ def delivery(when, price="FREE", mir="", program=""):
             f'data-csa-c-delivery-benefit-program-id="{program}" data-csa-c-delivery-time="{when}">x</span>')
 
 
-def offer(price="54.00", avail="In Stock", deliveries=(), seller="Padimu", cart=True, qty=10):
+def feature(name, label, value):
+    """One line of the offer's "seller, shipping and buying option details" box, as on the real pages (the id is repeated
+    as data-csa-c-slot-id inside the tag, which once cut the reading short)."""
+    return (f'<div id="{name}_feature_div" class="celwidget" data-csa-c-slot-id="{name}_feature_div">'
+            + (f'<span class="a-size-small a-color-tertiary">{label}</span><span class="a-size-small '
+               f'offer-display-feature-text-message">{value}</span>' if label else "") + "</div>")
+
+
+def shipping(seller, ships):
+    """ships: "fba" = Fulfilled by Amazon (another seller's stock in Amazon's warehouse), "amazon" = Shipper / Seller
+    Amazon.ae, "easyship" = Delivered by Amazon.ae (the seller hands the parcel over), "seller" = shipped by the seller."""
+    if ships == "amazon":
+        return feature("fulfillerInfoFeature", "", "") + feature("merchantInfoFeature", "Shipper / Seller", "Amazon.ae")
+    if ships == "fba":
+        return feature("fulfillerInfoFeature", "Fulfilled by", "Amazon") + feature("merchantInfoFeature", "Sold by", seller)
+    if ships == "easyship":
+        return feature("fulfillerInfoFeature", "Delivered by", "Amazon.ae") + feature("merchantInfoFeature", "Sold by", seller)
+    return feature("fulfillerInfoFeature", "", "") + feature("merchantInfoFeature", "Shipper / Seller", seller)
+
+
+def offer(price="54.00", avail="In Stock", deliveries=(), seller="Padimu", cart=True, qty=10, ships="seller"):
     whole, frac = (price.split(".") + ["00"])[:2] if price else ("", "")
     return "".join([
+        shipping(seller, ships),
         f'<div id="corePrice_feature_div"><span class="a-price"><span class="a-offscreen">AED&nbsp;{price}</span>'
         f'<span class="a-price-whole">{whole}</span><span class="a-price-fraction">{frac}</span></span></div>' if price else "",
         "".join(deliveries),
@@ -72,16 +94,23 @@ def test_reading():
     pg = read(page(offers=[offer(deliveries=[delivery("Today 5 PM - 9 PM", "fastest", "ARRANGED"),
                                              delivery("Friday, 13 November")])]))
     assert pg["sourceDays"] == 3 and not s.sellable(pg), pg
-    # order #1048 (11 Nov): sold by Amazon.ae, free date in 3 days "on your first order" but "Or fastest delivery
-    # Tomorrow": the fastest date counts; from another seller it does not
-    both = [delivery("Saturday, 13 November", program="ncp"), delivery("Tomorrow, 11 November", "fastest", "DELIVERY")]
-    pg = read(page(offers=[offer(seller="Amazon.ae", deliveries=both)]))
-    assert pg["sourceDays"] == 1 and s.sellable(pg) and pg["deliveryFee"] == 0.0, pg
-    pg = read(page(offers=[offer(seller="Padimu", deliveries=both)]))
-    assert pg["sourceDays"] == 3 and not s.sellable(pg), pg
-    # Rush / same-day stay out, even sold by Amazon.ae
-    pg = read(page(offers=[offer(seller="Amazon.ae", deliveries=[delivery("Today 5 PM - 9 PM", "fastest", "ARRANGED"),
-                                                                  delivery("Friday, 13 November")])]))
+    # order #1048 (11 Nov evening): free date in 3 days "on your first order" but "Or fastest delivery Tomorrow". The
+    # fastest date counts when Amazon ships the offer itself: sold by Amazon.ae, or another seller's stock "Fulfilled by
+    # Amazon" (most of the catalogue). Not when the seller ships it, nor "Delivered by Amazon.ae" (seller hands it over).
+    both = [delivery("Friday, 13 November", program="ncp"), delivery("Tomorrow, 11 November", "fastest", "DELIVERY")]
+    for ships, seller in (("amazon", "Amazon.ae"), ("fba", "Kuwa Supplements")):
+        pg = read(page(offers=[offer(seller=seller, ships=ships, deliveries=both)]))
+        assert pg["amazonShips"] and pg["sourceDays"] == 1 and s.sellable(pg) and pg["deliveryFee"] == 0.0, pg
+        assert pg["promises"] == "free: Friday, 13 November | fastest: Tomorrow, 11 November", pg
+    for ships in ("seller", "easyship"):
+        pg = read(page(offers=[offer(seller="Padimu", ships=ships, deliveries=both)]))
+        assert not pg["amazonShips"] and pg["sourceDays"] == 3 and not s.sellable(pg), pg
+    assert not read(page(offers=[offer(seller="Amazon US", ships="seller", deliveries=both)]))["amazonShips"]  # import
+    # Rush / same-day stay out, even shipped by Amazon
+    pg = read(page(offers=[offer(seller="Amazon.ae", ships="amazon",
+                                 deliveries=[delivery("Today 5 PM - 9 PM", "fastest", "ARRANGED"),
+                                             delivery("Overnight by 12:09 AM", "Rush", "ARRANGED", "express"),
+                                             delivery("Friday, 13 November")])]))
     assert pg["sourceDays"] == 3 and not s.sellable(pg), pg
     # only a paid standard delivery: sellable, and its fee is part of the cost
     pg = read(page(offers=[offer(price="72.00", deliveries=[delivery("Thursday, 12 November", "AED9")])]))
@@ -147,6 +176,69 @@ def test_plan():
     # a hidden product comes back when one variant is sellable
     d, info = decide([row(parked=True, policy="DENY")], {"B0AAAAAAAA": ok})
     assert info["revive"] == {"p-B0AAAAAAAA"} and d["B0AAAAAAAA"]["price"] == s.formula(54.0, 200)
+
+
+def test_evening():
+    """From EVENING_FROM_HOUR to midnight (Dubai) the dates slip by a day: a variant on sale keeps one day of slack, a
+    variant that is Épuisé must meet the strict rule to come back (measured 10-11 Nov, order #1048)."""
+    def at(hour, when="Friday, 13 November"):  # 3 days from TODAY, offer shipped by the seller (no fastest date)
+        return {**read(page(offers=[offer(deliveries=[delivery(when)])])), "hour": hour}
+    assert s.days_allowed(True, 21) == 3 and s.days_allowed(True, 10) == 2 and s.days_allowed(False, 21) == 2
+    assert s.days_allowed(True, None) == 2 and s.days_allowed(True, s.EVENING_FROM_HOUR) == 3
+    d, _ = decide([row("B0AAAAAAAA"), row("B0AAAAAAAB", "DENY"), row("B0AAAAAAAC"), row("B0AAAAAAAD"),
+                   row("B0AAAAAAAE", parked=True)],
+                  {"B0AAAAAAAA": at(21), "B0AAAAAAAB": at(21), "B0AAAAAAAC": at(10),
+                   "B0AAAAAAAD": at(21, "Saturday, 14 November"), "B0AAAAAAAE": at(21)})
+    assert d["B0AAAAAAAA"]["policy"] == "CONTINUE"  # on sale, evening, one day late: stays
+    assert d["B0AAAAAAAA"]["days"] == s.MAX_DAYS  # ...and the shop label does not move
+    assert d["B0AAAAAAAB"]["policy"] == "DENY"  # Épuisé: does not come back on an evening date
+    assert d["B0AAAAAAAC"]["policy"] == "DENY"  # morning: the strict rule
+    assert d["B0AAAAAAAD"]["policy"] == "DENY"  # two days late: out, even in the evening
+    assert d["B0AAAAAAAE"]["policy"] == "DENY"  # a hidden product is never brought back by the slack
+    # hidden during this very run (policy already DENY, policy0 still CONTINUE): still counts as on sale
+    r = row("B0AAAAAAAA")
+    r["policy"] = "DENY"
+    assert decide([r], {"B0AAAAAAAA": at(21)})[0]["B0AAAAAAAA"]["policy"] == "CONTINUE"
+    # two offers in the evening: the one inside the strict rule is bought, not the cheaper late one
+    two = {**read(page(offers=[offer(deliveries=[delivery("Friday, 13 November")]),
+                               offer(price="60.50", seller="Amazon.ae", ships="amazon",
+                                     deliveries=[delivery("Thursday, 12 November")])])), "hour": 22}
+    pg, ok = s.offer_for(two, True)
+    assert ok and pg["offer"] == 1 and pg["aed"] == 60.5, pg
+    late = {**read(page(offers=[offer(price="", cart=False, avail="Currently unavailable."),
+                                offer(price="60.50", deliveries=[delivery("Friday, 13 November")])])), "hour": 22}
+    pg, ok = s.offer_for(late, True)
+    assert ok and pg["offer"] == 1, pg
+    assert not s.offer_for(late, False)[1]
+
+
+def test_order_check():
+    """The order check decides like the stock check, reads twice before saying "ko", and only keeps a variant Épuisé
+    for a day when the reason is about stock."""
+    item = {"sku": "B0AAAAAAAA", "quantity": 1, "variant": {"fallback": None}}
+    slow = {**read(page(offers=[offer(deliveries=[delivery("Friday, 13 November")])])), "hour": 21}  # 3 days, evening
+    slower = {**read(page(offers=[offer(deliveries=[delivery("Saturday, 14 November")])])), "hour": 21}
+    tiny = {**read(page(offers=[offer(avail="Only 2 left in stock - order soon.",
+                                      deliveries=[delivery("Tomorrow, 11 November")])])), "hour": 10}
+    good = {**read(page()), "hour": 10}
+    calls = []
+
+    def reader(*answers):
+        answers = list(answers)
+
+        def page_of(asin, again=False):
+            calls.append(again)
+            return answers.pop(0) if len(answers) > 1 else answers[0]
+        return page_of
+    assert oc.check_item(item, reader(slow), {})[0] == "ok"  # evening, one day late: fine (order #1048)
+    verdict, why, _, cool = oc.check_item(item, reader(slower), {})
+    assert verdict == "ko" and not cool and "trop lente" in why and "Saturday, 14 November" in why, why
+    assert calls[-2:] == [False, True]  # read a second time before the verdict
+    assert oc.check_item(item, reader(slower, good), {})[0] == "ok"  # the second reading wins
+    verdict, why, _, cool = oc.check_item(item, reader(tiny), {})
+    assert verdict == "ko" and cool and "2 restant" in why, why  # a stock reason: the variant cools down
+    assert oc.check_item(item, reader({"error": "captcha"}), {})[0] == "unknown"
+    assert oc.check_item(item, reader(slower, {"error": "captcha"}), {})[0] == "ko"  # second reading failed: first stands
 
 
 def test_prices():
