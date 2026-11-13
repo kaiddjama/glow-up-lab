@@ -1,0 +1,55 @@
+name: Order in preparation e-mail
+# Every 10 minutes: an order marked PAID and "En cours" gets the e-mail "Votre commande est en préparation" (once per order,
+# tag prepa-notifiee). Nothing is sent until the repository variable ORDER_NOTIFY_ENABLED is 1 and the secrets SMTP_USER and
+# SMTP_PASSWORD exist; before that, the run only reports who would get it. Text: notifications/messages-commande-2026-11-13.md.
+# First use: run this workflow by hand with mode "baseline" (tags the orders already in progress, sends nothing), then set the variable.
+on:
+  schedule:
+    - cron: "7,17,27,37,47,57 * * * *"  # not on :00 (GitHub drops the busiest minutes most)
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "list = report, baseline = tag the orders already in progress without e-mailing, send = normal run"
+        type: choice
+        options: [list, baseline, send]
+        default: list
+      dry_run:
+        description: "Report only: change nothing on Shopify, send nothing"
+        type: boolean
+        default: true
+permissions:
+  contents: read
+  issues: write   # the alert of last resort
+concurrency:
+  group: order-notify
+  cancel-in-progress: false
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+      SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+      SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+      PRICE_FORMULA: ${{ secrets.PRICE_FORMULA || format('{0},{1},{2}', vars.PRICE_MULT, vars.SHIPPING_AED_PER_KG, vars.AED_TO_FDJ) }}
+      SMTP_HOST: ${{ secrets.SMTP_HOST }}
+      SMTP_USER: ${{ secrets.SMTP_USER }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      ORDER_NOTIFY_ENABLED: ${{ vars.ORDER_NOTIFY_ENABLED }}
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
+      MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'send' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Orders marked paid and in progress
+        working-directory: stock-sync
+        run: python3 -I order_notify.py "$MODE"
+      - name: Alert when the e-mails failed
+        if: ${{ failure() && env.DRY_RUN != '1' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          .github/alert.sh "Alerte commande : e-mail « en préparation » non envoyé" "L'envoi de l'e-mail « en préparation » du $(TZ=Africa/Djibouti date '+%d/%m %Hh%M') (heure de Djibouti) a échoué pour au moins une commande (les autres ne sont pas bloquées, la commande est réessayée au prochain passage). Détail : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
