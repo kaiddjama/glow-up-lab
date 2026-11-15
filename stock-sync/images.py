@@ -12,7 +12,6 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import amazon_sync as a  # noqa: E402
-from families import jsonat  # noqa: E402
 
 
 def clean(t):
@@ -35,9 +34,11 @@ def main():
         try:
             html = a.fetch(asin)
             pg = a.choose_offer(a.parse(html, today, asin))
-            ci = jsonat(html, "colorImages")
-            init = (ci or {}).get("initial") if isinstance(ci, dict) else None
-            imgs = [x.get("hiRes") or x.get("large") for x in (init or []) if isinstance(x, dict)]
+            i0 = html.find("'colorImages'")
+            seg = html[i0:i0 + 30000] if i0 >= 0 else html
+            imgs = list(dict.fromkeys(re.findall(r'"hiRes":"(https:[^"]+)"', seg)))
+            if not imgs:
+                imgs = list(dict.fromkeys(re.findall(r'data-old-hires="(https:[^"]+)"', html)))
             m = re.search(r'id="productTitle"[^>]*>(.*?)</span>', html, re.S)
             bl = re.search(r'id="feature-bullets"(.*?)</ul>', html, re.S)
             bullets = [clean(x) for x in re.findall(r"<li[^>]*>(.*?)</li>", bl.group(1), re.S)] if bl else []
