@@ -1,18 +1,19 @@
 name: Amazon.ae browser probe
-# Test only: reads a few Amazon.ae pages with a real headless browser set to Dubai. No secrets, nothing is changed.
+# Test only (shade audit of the NYX, e.l.f. and Huda Beauty names): reads Amazon.ae pages with a real headless browser
+# set to Dubai, one shard per runner. Reads Shopify, writes nothing anywhere.
 on:
   workflow_dispatch:
     inputs:
       asins:
-        description: "ASINs to read, separated by spaces"
+        description: "unused (kept for compatibility)"
         type: string
-        default: "B0CR9LFM72 B0DHVLFR2V B0CWS5QP8F B0BGMGWP14 B015PL0HG0 B06XH28C1K B0019LVGPC B07NWMVMT1 B0013G6FSG B001GCU6KA"
+        default: ""
       district:
         description: "Delivery district in the Deliver-to pop-up (empty = first suggestion)"
         type: string
         default: ""
       facts:
-        description: "Also print the raw page markers and keep the pages (artifact probe-pages, 3 days)"
+        description: "unused (kept for compatibility)"
         type: boolean
         default: false
 permissions:
@@ -20,7 +21,15 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5]
+    env:
+      SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+      SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+      SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -32,16 +41,13 @@ jobs:
         env:
           DELAY: "8"
           BROWSER_DISTRICT: ${{ inputs.district }}
-          ASINS: ${{ inputs.asins || 'B0CR9LFM72 B0DHVLFR2V B0CWS5QP8F B0BGMGWP14 B015PL0HG0 B06XH28C1K B0019LVGPC B07NWMVMT1 B0013G6FSG B001GCU6KA' }}
-          FACTS: ${{ inputs.facts && '1' || '0' }}
-          DUMP_DIR: ${{ inputs.facts && 'dump' || '' }}
+          VENDORS: "vendor:NYX*,vendor:e.l.f.*,vendor:elf*,vendor:Huda*,title:Huda*,title:NYX*,title:e.l.f.*"
           PYTHONUNBUFFERED: "1"
-        run: python3 probe_browser.py $ASINS
-      - name: Keep the pages
-        if: ${{ always() && inputs.facts }}
-        uses: actions/upload-artifact@v4
+        run: python3 -I shade_audit.py ${{ matrix.shard }} 6 out
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: probe-pages
-          path: stock-sync/dump/
+          name: shade-audit-${{ matrix.shard }}
+          path: stock-sync/out/
           if-no-files-found: ignore
           retention-days: 3
