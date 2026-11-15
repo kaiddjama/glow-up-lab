@@ -20,6 +20,12 @@
                                       (supplier.fallback): the order is fine, alert.md says where to buy it (tag source-2)
                                     - more units ordered than Amazon.ae shows or allows per order: tag amazon-qte, a
                                       line in alert.md, nothing hidden
+                                    - since 15 Nov, the PRICE: when Amazon.ae now asks clearly more than the price the
+                                      customer paid was computed on (the formula on today's Amazon.ae price is above the
+                                      price paid by more than ORDER_PRICE_GAP and by 100 Fdj at least), tag amazon-prix
+                                      and a line in alert.md with both amounts, nothing hidden. What Amazon.ae asked for
+                                      every item when the order arrived is kept on the order (metafield
+                                      internal.amazon_prices), so the margin of an order is computed on real costs
                                     - a page that could not be read: the order is left alone and tried again at the next
                                       run, until it is ORDER_MAX_AGE_H old (then amazon-incertain)
 An order stays in the list until it carries one of these tags, for WINDOW_H hours: a check that was down for a night
@@ -46,11 +52,14 @@ Q = """query($q:String!,$after:String){ orders(first:20, after:$after, query:$q,
   pageInfo{hasNextPage endCursor}
   nodes{ id name createdAt tags
   lineItems(first:50){ nodes{ title variantTitle sku quantity
+    originalUnitPriceSet{ shopMoney{ amount } }
     variant{ id inventoryPolicy
+      inventoryItem{ measurement{ weight{ value unit } } }
       state: metafield(namespace:"supplier", key:"sync_state"){value}
       fallback: metafield(namespace:"supplier", key:"fallback"){value}
       product{ id handle vendor isGiftCard tags
         ref: metafield(namespace:"internal", key:"supplier_ref"){value}
+        weight: metafield(namespace:"internal", key:"weight_g"){value}
         spreadr: metafield(namespace:"global", key:"spreadr-asin"){value}
         variantsCount{ count } } } } } } } }"""
 TAGS_ADD_ORDER_M = """mutation($id:ID!,$t:[String!]!){tagsAdd(id:$id, tags:$t){userErrors{field message}}}"""
@@ -125,6 +134,36 @@ def quantity_note(pg, wanted):
     return None
 
 
+def price_note(it, pg, costs=None):
+    """A warning when Amazon.ae now asks clearly more than the price the customer paid was computed on, else None.
+    costs (a list) receives what Amazon.ae asks for this item right now, kept on the order by main().
+    Orders #1048, #1050, #1055, #1061 (11-13 Nov): NYX items ordered while Amazon.ae showed 11 to 22 AED, at 28 to 42 AED
+    a few hours later. The stock check no longer follows a price down at once (amazon_sync.guard_price); this is the
+    second layer, at the moment the money is at stake."""
+    if pg.get("aed") is None:
+        return None
+    v = it.get("variant") or {}
+    qty = it.get("quantity") or 1
+    cost = s.cost_of(pg)
+    try:
+        paid = float(((it.get("originalUnitPriceSet") or {}).get("shopMoney") or {}).get("amount"))
+    except (TypeError, ValueError):
+        paid = None
+    if costs is not None:
+        costs.append({"sku": it.get("sku") or "", "asin": asin_of(it), "qty": qty, "paid": paid, "aed": round(cost, 2)})
+    if not paid or not s.AED_TO_FDJ or not s.MARGIN_CUSTOMS:
+        return None
+    grams = s.grams_of(v.get("product") or {}, v)
+    today = s.formula(cost, grams)
+    if today - paid < max(100.0, s.ORDER_PRICE_GAP * paid):
+        return None
+    used = max(0.0, (paid / s.AED_TO_FDJ - grams / 1000 * s.SHIPPING_AED_PER_KG) / s.MARGIN_CUSTOMS)
+    extra = int(round((cost - used) * s.AED_TO_FDJ * qty / 50.0)) * 50
+    return (f"prix : Amazon.ae demande maintenant {cost:.2f} AED, alors que le prix payé par la cliente ({paid:.0f} Fdj) "
+            f"était calculé sur environ {used:.2f} AED. Cela fait environ {extra} Fdj de plus à l'achat pour {qty} "
+            f"unité(s), hors douane : vérifie le prix sur ton compte avant d'acheter" + seen(pg))
+
+
 def other_source(pages, ref):
     """(page, module, display name) of a MEDX-/PSAE- reference, read once per run."""
     mod, slug, name = suppliers.module_of(ref)
@@ -135,10 +174,10 @@ def other_source(pages, ref):
     return pages[ref], mod, name
 
 
-def check_item(it, amazon_page_of, other_pages):
+def check_item(it, amazon_page_of, other_pages, costs=None):
     """("ok" | "ko" | "unknown", reason or None, notes, cool). notes = [(tag, text)] to tell the owner without blocking;
     cool = the variant must stay Épuisé for COOL_HOURS (a stock reason). amazon_page_of(asin, again=False) reads a page
-    (again=True: a fresh reading)."""
+    (again=True: a fresh reading). costs (a list) receives today's Amazon.ae price of the item (price_note)."""
     for mod, name in ((medx, "MedX"), (padelshop, "PadelShop.ae")):
         if mod.slug_of(it.get("sku")):
             pg, _, _ = other_source(other_pages, it["sku"].strip())
@@ -164,8 +203,12 @@ def check_item(it, amazon_page_of, other_pages):
         if not again.get("error"):
             pg, ok = s.offer_for(again, True, ext)
     if ok:
-        note = quantity_note(pg, it.get("quantity") or 1)
-        return "ok", None, [("amazon-qte", note)] if note else [], False
+        note, dear = quantity_note(pg, it.get("quantity") or 1), None
+        try:  # the price comparison is an extra: it never turns a checked order into an unchecked one
+            dear = price_note(it, pg, costs)
+        except Exception as e:
+            print(f"::warning::price not compared ({type(e).__name__}: {str(e)[:120]})")
+        return "ok", None, ([("amazon-qte", note)] if note else []) + ([("amazon-prix", dear)] if dear else []), False
     why, cool = why_not(pg)
     ref = ((it["variant"].get("fallback") or {}).get("value") or "").strip()
     if ref:  # Amazon.ae cannot sell it: is the second source able to?
@@ -224,7 +267,7 @@ def main():
     try:
         for o in orders:
             try:
-                bad, unknown, notes = [], [], []
+                bad, unknown, notes, costs = [], [], [], []
                 for it in o["lineItems"]["nodes"]:
                     if (it.get("variant") or {}).get("product", {}).get("isGiftCard"):
                         continue  # gift card: nothing to buy
@@ -232,7 +275,7 @@ def main():
                     if not it.get("variant"):
                         bad.append((it, label, "article sans fiche dans la boutique (supprimée ?), impossible à vérifier", False))
                         continue
-                    verdict, why, extra, cool_it = check_item(it, page_of, other_pages)
+                    verdict, why, extra, cool_it = check_item(it, page_of, other_pages, costs)
                     notes += [(tag, f"{label} : {text}") for tag, text in extra]
                     if verdict == "ko":
                         bad.append((it, label, why, cool_it))
@@ -257,6 +300,8 @@ def main():
                 for _, text in notes:
                     print(f"  note: {text}")
                     alerts.append(f"- Commande {o['name']}: {text}")
+                if costs:
+                    print(f"  Amazon.ae prices when checked: {json.dumps(costs, ensure_ascii=False)}")
                 if dry:
                     continue
                 tags = [tag] + sorted({t for t, _ in notes})
@@ -286,6 +331,15 @@ def main():
                     errs = s.gql(s.META_M, {"m": cool})["metafieldsSet"]["userErrors"]
                     if errs:
                         print("cool-down error:", errs)
+                if costs:  # what every item costs on Amazon.ae now, kept on the order: its margin is known for good.
+                    try:   # Last step and on its own: a note for later sums, never a reason to fail the order check
+                        kept = json.dumps({"t": s.iso(now), "lines": costs}, separators=(",", ":"), ensure_ascii=False)
+                        errs = s.gql(s.META_M, {"m": [s.field(o["id"], "amazon_prices", "json", kept, "internal")]}
+                                     )["metafieldsSet"]["userErrors"]
+                        if errs:
+                            print("price note error:", errs)
+                    except Exception as e:
+                        print(f"price note error: {type(e).__name__}: {str(e)[:150]}")
             except Exception as e:  # one order that cannot be handled must not stop the others
                 problems += 1
                 print(f"::warning::{o.get('name')}: not checked ({type(e).__name__}: {str(e)[:150]}), tried again at the next run")

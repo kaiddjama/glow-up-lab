@@ -47,6 +47,21 @@ MAX_CHANGE = 1.50  # a price that would rise by more than this share (+150 %) is
 # later gives the same amount (about 5 % tolerance). A held rise puts the variant to Épuisé meanwhile: its real cost is unknown.
 PRICE_DROP_MAX = float(os.environ.get("PRICE_DROP_MAX", "0.4"))
 PRICE_CONFIRM_HOURS = float(os.environ.get("PRICE_CONFIRM_HOURS", "3"))
+# Since 15 Nov (Hoodo: "the stock check is supposed to make me always sell at a profit"): the shop price no longer follows
+# Amazon.ae down at once. Measured on the 34 full checks of 10-15 Nov: the Amazon.ae price of 214 items moved by 40 % or
+# more, 80 of them back and forth (two sellers taking turns in the buy box: NYX blush 21.67 AED, 39 the next morning,
+# 21.67 at noon, 38 in the afternoon). A customer ordered at the low price and the item cost twice as much a few hours
+# later, when it was bought (orders #1048, #1050, #1055, #1061). So: a RISE is applied at once, as before; a FALL is applied
+# only once every reading for PRICE_DROP_HOURS has been below the shop price (at least PRICE_DROP_READS readings), and the
+# price then goes down to the HIGHEST of those readings. One reading back at the shop price or above starts the wait again.
+# In short, the shop price is the formula on the highest Amazon.ae price of the last two days. PRICE_DROP_HOURS=0 restores
+# the rule of 10 Nov (falls applied at once, beyond PRICE_DROP_MAX after a second reading).
+PRICE_DROP_HOURS = float(os.environ.get("PRICE_DROP_HOURS", "48"))
+PRICE_DROP_READS = int(os.environ.get("PRICE_DROP_READS", "4"))
+# Since 15 Nov: the order check compares what Amazon.ae asks when the order arrives with the price the customer paid. When
+# the formula on today's Amazon.ae price is above the price paid by more than this share (and by 100 Fdj at least), the
+# order gets the tag amazon-prix and the alert gives both amounts: buy at once, or check before buying.
+ORDER_PRICE_GAP = float(os.environ.get("ORDER_PRICE_GAP", "0.05"))
 # Since 10 Nov: when the only delivery offered to Dubai is a PAID standard one (e.g. AED 9), its fee is added to the Amazon.ae
 # price before the formula, so the margin is not eaten. INCLUDE_DELIVERY_FEE=0 turns it off.
 INCLUDE_DELIVERY_FEE = os.environ.get("INCLUDE_DELIVERY_FEE", "1") == "1"
@@ -108,6 +123,7 @@ PRODUCTS_Q = """query($after:String,$q:String!){ products(first:50, after:$after
     spreadr: metafield(namespace:"global", key:"spreadr-asin"){value}
     weight: metafield(namespace:"internal", key:"weight_g"){value}
     variants(first:100){ nodes{ id title sku price inventoryPolicy
+      cost: metafield(namespace:"internal", key:"cost_aed"){value}
       range: metafield(namespace:"supplier", key:"delivery_range"){value}
       state: metafield(namespace:"supplier", key:"sync_state"){value}
       fallback: metafield(namespace:"supplier", key:"fallback"){value}
@@ -191,7 +207,9 @@ def hours_since(text, now):
 
 def read_state(meta):
     """supplier.sync_state of a variant, the robot's memory between two runs:
-    "pend" {aed, t} = a price jump seen at t, waiting for a second reading; "src" / "src_t" = sold from its second source,
+    "pend" {aed, t} = a price jump seen at t, waiting for a second reading; "low" {t, fdj, n} = Amazon.ae has been cheaper
+    than the shop price since t, on n readings, fdj being the highest price the formula gave on them (guard_price);
+    "src" / "src_t" = sold from its second source,
     last confirmed at src_t; "cool" = not to be put back on sale before that time (an order just proved it unavailable);
     "why" = why the variant is Épuisé (why_out), absent when it is on sale."""
     try:
@@ -223,6 +241,23 @@ def load_variants(held=()):
     return rows
 
 
+def grams_of(p, v):
+    """Shipping weight the formula uses for a variant: the product's internal.weight_g, else the variant's own weight,
+    else DEFAULT_WEIGHT_G. The order check uses the same one to compare a price paid with today's Amazon.ae price."""
+    grams = None
+    if p.get("weight"):
+        try:
+            grams = float(p["weight"]["value"])
+        except (TypeError, ValueError):
+            grams = None
+    else:
+        w = ((v.get("inventoryItem") or {}).get("measurement") or {}).get("weight") or {}
+        factor = {"GRAMS": 1, "KILOGRAMS": 1000, "POUNDS": 453.6, "OUNCES": 28.35}.get(w.get("unit"))
+        if factor and w.get("value"):
+            grams = float(w["value"]) * factor
+    return grams or DEFAULT_WEIGHT_G
+
+
 def load_rows(search, parked, held=()):
     rows, after = [], None
     while True:
@@ -245,19 +280,12 @@ def load_rows(search, parked, held=()):
                 asin = m.group(1) if m else (product_asin if total == 1 else None)
                 if not asin:
                     continue
-                grams = None
-                if p.get("weight"):
-                    grams = float(p["weight"]["value"])
-                else:
-                    w = ((v.get("inventoryItem") or {}).get("measurement") or {}).get("weight") or {}
-                    factor = {"GRAMS": 1, "KILOGRAMS": 1000, "POUNDS": 453.6, "OUNCES": 28.35}.get(w.get("unit"))
-                    if factor and w.get("value"):
-                        grams = float(w["value"]) * factor
+                grams = grams_of(p, v)
                 rows.append({"productId": p["id"], "handle": p["handle"], "vendor": p.get("vendor") or "",
                              "variantId": v["id"], "variant": v["title"], "asin": asin, "price": float(v["price"]),
                              "policy": v["inventoryPolicy"], "policy0": v["inventoryPolicy"],
-                             "grams": grams or DEFAULT_WEIGHT_G, "range": (v.get("range") or {}).get("value"),
-                             "state": read_state(v.get("state")),
+                             "grams": grams, "range": (v.get("range") or {}).get("value"),
+                             "state": read_state(v.get("state")), "cost0": (v.get("cost") or {}).get("value"),
                              "fallback": ((v.get("fallback") or {}).get("value") or "").strip(),
                              "blocked": BLOCK_TAG in tags or f"{BLOCK_TAG}:{asin.lower()}" in tags or asin in held,
                              "parked": parked, "nvariants": total, "ext": EXT_TAG in tags})
@@ -389,22 +417,47 @@ def formula(aed, grams):
 
 
 def guard_price(old, new, aed, state, now):
-    """(price to set or None, "rise" / "drop" when the change is held, new state).
-    A jump beyond the limits is not applied at once: the amount and the time are remembered ("pend") and the change goes
-    through when a reading at least PRICE_CONFIRM_HOURS later gives the same amount. Normal changes clear the memory."""
-    rest = {k: v for k, v in state.items() if k != "pend"}
+    """(price to set or None, "rise" / "drop" / "wait" when the change is not applied now, new state).
+    A rise is applied at once, unless it is beyond MAX_CHANGE: then the amount and the time are remembered ("pend") and it
+    goes through when a reading at least PRICE_CONFIRM_HOURS later gives the same amount ("rise": not sold meanwhile).
+    A fall waits ("wait"): "low" remembers since when Amazon.ae has been cheaper than the shop price, on how many readings,
+    and the highest price the formula gave on them. Once that has lasted PRICE_DROP_HOURS on at least PRICE_DROP_READS
+    readings, the price goes down to that highest reading. Any reading at the shop price or above forgets "low": a price
+    that is low for a few hours never reaches the shop. With PRICE_DROP_HOURS=0 a fall is applied at once, or, beyond
+    PRICE_DROP_MAX, after a second reading ("drop"), as before 15 Nov."""
+    rest = {k: v for k, v in state.items() if k not in ("pend", "low")}
     if not old or old <= 0:
         return new, None, rest
-    kind = "rise" if new > old * (1 + MAX_CHANGE) else "drop" if new < old * (1 - PRICE_DROP_MAX) else None
-    if not kind:
-        return new, None, rest
-    pend = state.get("pend") if isinstance(state.get("pend"), dict) else {}
-    same = bool(pend.get("aed")) and abs(pend["aed"] - aed) <= 0.05 * aed
-    if same and hours_since(pend.get("t"), now) >= PRICE_CONFIRM_HOURS:
-        return new, None, rest
-    if same:
-        return None, kind, dict(state)
-    return None, kind, {**rest, "pend": {"aed": round(aed, 2), "t": iso(now)}}
+    if new >= old or PRICE_DROP_HOURS <= 0:
+        kind = "rise" if new > old * (1 + MAX_CHANGE) else "drop" if new < old * (1 - PRICE_DROP_MAX) else None
+        if not kind:
+            return new, None, rest
+        pend = state.get("pend") if isinstance(state.get("pend"), dict) else {}
+        same = bool(pend.get("aed")) and abs(pend["aed"] - aed) <= 0.05 * aed
+        if same and hours_since(pend.get("t"), now) >= PRICE_CONFIRM_HOURS:
+            return new, None, rest
+        if same:
+            return None, kind, {**rest, "pend": pend}
+        return None, kind, {**rest, "pend": {"aed": round(aed, 2), "t": iso(now)}}
+    low = state.get("low") if isinstance(state.get("low"), dict) else {}
+    try:
+        seen, reads, since = int(low["fdj"]), int(low["n"]), str(low["t"])
+        if seen >= old or hours_since(since, now) > 1e8:  # the shop price changed by hand, or an unreadable time: start again
+            raise ValueError
+    except (KeyError, TypeError, ValueError):
+        seen, reads, since = 0, 0, iso(now)
+    seen, reads = max(seen, int(new)), reads + 1
+    if reads >= PRICE_DROP_READS and hours_since(since, now) >= PRICE_DROP_HOURS:
+        return seen, None, rest
+    return None, "wait", {**rest, "low": {"t": since, "fdj": seen, "n": reads}}
+
+
+def cost_text(value):
+    """A stored cost as the robot writes it ("54.00"), or None when it is absent or unreadable."""
+    try:
+        return f"{float(value):.2f}"
+    except (TypeError, ValueError):
+        return None
 
 
 def no_date(page):
@@ -523,8 +576,9 @@ def plan(rows, pages, now, fetch_other=None, hidden=(), prices_only=False):
             new = formula(d["cost"], r["grams"])
             if r["parked"] or abs(new - r["price"]) >= 50:  # a republished product always gets a fresh price
                 d["price"], d["hold"], state = guard_price(r["price"], new, d["cost"], state, now)
-            else:
+            else:  # Amazon.ae is back at the shop price: nothing is waiting any more
                 state.pop("pend", None)
+                state.pop("low", None)
             if d["hold"] == "rise":  # the real cost is unknown until the second reading: not sold meanwhile
                 d["sell"] = False
         if d["sell"] and d["src"] != "amazon":
@@ -748,7 +802,8 @@ def main():
     revive = info["revive"]
     report = {"checkedAt": now, "dryRun": dry, "shard": os.environ.get("SHARD"), "pagesAsked": len(asins),
               "pagesRead": sum(1 for p in pages.values() if not p.get("error")), "changes": [], "skipped": [],
-              "errors": [], "republished": [], "stillParked": [], "gone": [], "redirected": [], "secondSource": [],
+              "waiting": [], "costUpdates": 0, "costErrors": 0, "errors": [], "republished": [], "stillParked": [], "gone": [], "redirected": [],
+              "secondSource": [],
               "nameMismatch": [], "blocked": len(skip), "hiddenDuringRun": len(hidden),
               "stockGuardTripped": info["guard"], "stoppedEarly": stopped, "layout": layout,
               "layoutAlerts": layout_alerts}
@@ -758,7 +813,7 @@ def main():
             report["errors"].append({"asin": r["asin"], "handle": r["handle"], "error": page["error"]})
     if info["guard"]:
         print(f"Stock guard: {info['newlyOut']} of {info['live']} variants would newly go Épuisé, no stock change made.")
-    by_product, stamps, agg, second = {}, {}, {}, set()
+    by_product, stamps, agg, second, costs = {}, {}, {}, set(), {}
     for d in decisions:
         r, page = d["r"], d["page"]
         who = {"handle": r["handle"], "variant": r["variant"], "asin": r["asin"]}
@@ -771,7 +826,11 @@ def main():
         if r["parked"] and r["productId"] not in revive:
             report["stillParked"].append({**who, "aed": page.get("aed"), "inStock": page.get("inStock"),
                                           "delivery": page.get("deliveryText"), "days": page.get("sourceDays")})
-        if d["hold"]:
+        if d["hold"] == "wait":  # Amazon.ae is cheaper than the shop price, not for long enough yet (guard_price)
+            low = d["state"].get("low") or {}
+            report["waiting"].append({**who, "aed": d["cost"], "now": r["price"], "formula": formula(d["cost"], r["grams"]),
+                                      "since": low.get("t"), "reads": low.get("n")})
+        elif d["hold"]:
             report["skipped"].append({**who, "aed": d["cost"], "now": r["price"], "formula": formula(d["cost"], r["grams"]),
                                       "kind": d["hold"]})
         upd = {"id": r["variantId"]}
@@ -785,6 +844,11 @@ def main():
             mine.append(field(r["variantId"], "variant_checked_at", "date_time", now))  # coverage.py checks it
             if d["state"] != r["state"]:
                 mine.append(field(r["variantId"], "sync_state", "json", json.dumps(d["state"], separators=(",", ":"))))
+            # Since 15 Nov: what the item costs on Amazon.ae (or at its second source) today is kept on the variant, so a
+            # margin is computed on the real cost. It used to be written once, when the product was created.
+            if d["sell"] and d["cost"] and f"{d['cost']:.2f}" != cost_text(r.get("cost0")):
+                costs.setdefault(r["productId"], []).append(
+                    field(r["variantId"], "cost_aed", "number_decimal", f"{d['cost']:.2f}", "internal"))
             if d["policy"] == "CONTINUE":
                 mine.append(field(r["variantId"], "delivery_eta", "single_line_text_field", eta_of(d["days"])))
                 rng = "standard" if d["days"] <= STANDARD_DAYS else "3-10"
@@ -837,7 +901,22 @@ def main():
             errors += len(res)
             for e in res[:3]:
                 print("metafield error:", e)
+        # The cost notes go last and apart: a note that Shopify refuses must never keep a "verified" stamp from being
+        # written (one refused value cancels its whole batch), nor turn a good check into an alert.
+        notes = [f for pid, fs in costs.items() if pid not in failed for f in fs]
+        for i in range(0, len(notes), 25):
+            try:
+                res = gql(META_M, {"m": notes[i:i + 25]})["metafieldsSet"]["userErrors"]
+            except Exception as e:
+                res = [f"{type(e).__name__}: {str(e)[:150]}"]
+            if res:
+                report["costErrors"] += 1
+                print("::warning::cost note not written:", res[:2])
+            else:
+                report["costUpdates"] += len(notes[i:i + 25])
 
+    if dry:
+        report["costUpdates"] = sum(len(fs) for fs in costs.values())
     report["republished"] = sorted({r["handle"] for r in rows if r["productId"] in revive - failed})
     report["noDeliveryDate"] = sum(1 for d in decisions if not d["r"]["parked"] and d["page"].get("inStock")
                                    and d["page"].get("sourceDays") is None)
@@ -872,7 +951,9 @@ def main():
         f"whose page was not read" + (f" ({reasons})" if reasons else ""),
         f"Stock: {to_out} to Épuisé ({len(hidden)} of them during the reading), {back} back on sale, "
         f"{len(report['republished'])} hidden products back online, {len(report['stillParked'])} variants still hidden.",
-        f"Prices: {prices} changed, {len(report['skipped'])} jumps held until a second reading.",
+        f"Prices: {prices} changed, {len(report['waiting'])} falls waiting ({PRICE_DROP_HOURS:g} h below the shop price before "
+        f"they are applied), {len(report['skipped'])} jumps held until a second reading; cost on Amazon.ae noted on "
+        f"{report['costUpdates']} variants.",
         f"Delivery days read (None = no date): {days_seen}",
         f"Épuisé by reason: {dict(sorted(why_count.items(), key=lambda x: -x[1]))}; {report['eveningSlack']} kept on sale "
         f"by the evening slack.",

@@ -258,8 +258,11 @@ def test_plan():
     d, info = decide(rows, pages)
     assert not info["guard"]  # already Épuisé before the run: not "newly" out
     # a hidden product comes back when one variant is sellable
-    d, info = decide([row(parked=True, policy="DENY")], {"B0AAAAAAAA": ok})
+    d, info = decide([row(parked=True, policy="DENY", price=5000.0)], {"B0AAAAAAAA": ok})
     assert info["revive"] == {"p-B0AAAAAAAA"} and d["B0AAAAAAAA"]["price"] == s.formula(54.0, 200)
+    # ...at its old price when Amazon.ae is cheaper than before: a fall waits, for a product that comes back too
+    d, info = decide([row(parked=True, policy="DENY")], {"B0AAAAAAAA": ok})
+    assert info["revive"] == {"p-B0AAAAAAAA"} and d["B0AAAAAAAA"]["price"] is None and d["B0AAAAAAAA"]["hold"] == "wait"
 
 
 def test_evening():
@@ -413,16 +416,75 @@ def test_reader_keeps_its_address():
 def test_prices():
     ok = read(page())
     fair = s.formula(54.0, 200)
-    d, _ = decide([row(price=fair + 400.0)], {"B0AAAAAAAA": ok})  # a normal change is applied
+    d, _ = decide([row(price=fair - 400.0)], {"B0AAAAAAAA": ok})  # a rise is applied at once
     assert d["B0AAAAAAAA"]["price"] == fair and d["B0AAAAAAAA"]["hold"] is None
-    d, _ = decide([row(price=fair * 3.0)], {"B0AAAAAAAA": ok})  # a fall of two thirds is held, the old price stays
-    x = d["B0AAAAAAAA"]
-    assert x["price"] is None and x["hold"] == "drop" and x["policy"] == "CONTINUE" and x["state"]["pend"]["aed"] == 54.0
-    later = NOW + dt.timedelta(hours=4)  # the same amount read again 4 h later: applied
-    d = s.plan([row(price=fair * 3.0, state=x["state"])], {"B0AAAAAAAA": ok}, later)[0][0]
-    assert d["price"] == fair and "pend" not in d["state"]
     d, _ = decide([row(price=fair / 4.0)], {"B0AAAAAAAA": ok})  # a rise beyond +150 %: held and not sold meanwhile
     assert d["B0AAAAAAAA"]["hold"] == "rise" and d["B0AAAAAAAA"]["policy"] == "DENY"
+    held = d["B0AAAAAAAA"]["state"]
+    d = s.plan([row(price=fair / 4.0, state=held)], {"B0AAAAAAAA": ok}, NOW + dt.timedelta(hours=4))[0][0]
+    assert d["price"] == fair and d["policy"] == "CONTINUE" and "pend" not in d["state"]  # read again 4 h later: applied
+
+    # Since 15 Nov: a fall is not followed at once (orders #1048, #1050, #1055, #1061: NYX prices low for a few hours).
+    def at(hours, shop, state, aed="54.00"):
+        pg = read(page(offers=[offer(price=aed, deliveries=[delivery("Tomorrow, 11 November")])]))
+        return s.plan([row(price=float(shop), state=state)], {"B0AAAAAAAA": pg}, NOW + dt.timedelta(hours=hours))[0][0]
+    shop = fair + 400
+    x = at(0, shop, {})  # Amazon.ae is cheaper than the shop price: nothing changes, the variant stays on sale
+    assert x["price"] is None and x["hold"] == "wait" and x["policy"] == "CONTINUE" and x["state"]["low"]["n"] == 1
+    x = at(5, shop, x["state"], "50.00")  # still cheaper (and cheaper still): the highest reading is remembered
+    assert x["price"] is None and x["state"]["low"] == {"t": s.iso(NOW), "fdj": fair, "n": 2}
+    x = at(47, shop, at(30, shop, x["state"])["state"])  # four readings but not two days yet
+    assert x["price"] is None and x["hold"] == "wait" and x["state"]["low"]["n"] == 4
+    y = at(49, shop, x["state"], "50.00")  # two days below the shop price: down to the HIGHEST of those readings
+    assert y["price"] == fair and y["hold"] is None and "low" not in y["state"]
+    few = at(49, shop, {"low": {"t": s.iso(NOW), "fdj": fair, "n": 1}})  # two days, but only two readings: not enough
+    assert few["price"] is None and few["state"]["low"]["n"] == 2
+    back = at(20, fair, {"low": {"t": s.iso(NOW), "fdj": fair - 500, "n": 3}})  # back at the shop price: forgotten
+    assert back["price"] is None and back["hold"] is None and "low" not in back["state"]
+    up = at(20, fair - 500, {"low": {"t": s.iso(NOW), "fdj": fair - 900, "n": 3}})  # a rise meanwhile: applied, forgotten
+    assert up["price"] == fair and "low" not in up["state"]
+    # the NYX blush of 12-13 Nov: 21.67 AED, 39 the next morning, 21.67 at noon, 38 in the afternoon. The shop stays at 39.
+    high, state, prices = s.formula(39.0, 200), {}, []
+    for hours, aed in ((0, "21.67"), (16, "39.00"), (23, "21.67"), (26, "38.00"), (35, "39.00"), (60, "21.67")):
+        x = at(hours, high, state, aed)
+        state, prices = x["state"], prices + [x["price"]]
+        assert x["policy"] == "CONTINUE"
+    assert prices == [None] * 6 and state["low"]["n"] == 1  # never sold below the price it costs most of the time
+    hand = at(0, fair - 50, {"low": {"t": s.iso(NOW - dt.timedelta(hours=60)), "fdj": fair + 200, "n": 9}}, "50.00")
+    assert hand["price"] is None and hand["state"]["low"]["n"] == 1  # shop price lowered by hand meanwhile: starts again
+
+    # PRICE_DROP_HOURS=0 gives the rule of 10 Nov back: falls applied at once, beyond 40 % after a second reading
+    s.PRICE_DROP_HOURS = 0
+    try:
+        d, _ = decide([row(price=fair + 400.0)], {"B0AAAAAAAA": ok})
+        assert d["B0AAAAAAAA"]["price"] == fair and d["B0AAAAAAAA"]["hold"] is None
+        d, _ = decide([row(price=fair * 3.0)], {"B0AAAAAAAA": ok})  # a fall of two thirds is held, the old price stays
+        x = d["B0AAAAAAAA"]
+        assert x["price"] is None and x["hold"] == "drop" and x["policy"] == "CONTINUE" and x["state"]["pend"]["aed"] == 54.0
+        d = s.plan([row(price=fair * 3.0, state=x["state"])], {"B0AAAAAAAA": ok}, NOW + dt.timedelta(hours=4))[0][0]
+        assert d["price"] == fair and "pend" not in d["state"]
+    finally:
+        s.PRICE_DROP_HOURS = 48.0
+
+
+def test_order_price():
+    """Since 15 Nov the order check compares the price the customer paid with what Amazon.ae asks when the order arrives."""
+    def item(paid, qty=1, grams=200):
+        return {"sku": "B0AAAAAAAA", "quantity": qty, "originalUnitPriceSet": {"shopMoney": {"amount": str(paid)}},
+                "variant": {"fallback": None, "product": {"weight": {"value": str(grams)}, "tags": []}}}
+    good = {**read(page()), "hour": 10}  # 54 AED today
+    fair, costs = s.formula(54.0, 200), []
+    verdict, _, notes, _ = oc.check_item(item(float(fair)), lambda a, again=False: good, {}, costs)
+    assert verdict == "ok" and notes == [] and costs == [{"sku": "B0AAAAAAAA", "asin": "B0AAAAAAAA", "qty": 1,
+                                                            "paid": float(fair), "aed": 54.0}]
+    assert oc.check_item(item(fair + 2000.0), lambda a, again=False: good, {})[2] == []  # Amazon.ae cheaper: nothing to say
+    assert oc.check_item(item(fair - 100.0), lambda a, again=False: good, {})[2] == []  # a small gap (under 5 %): nothing
+    low = s.formula(21.67, 200)  # paid on a price of 21.67 AED, Amazon.ae at 54 AED when the order arrives
+    verdict, _, notes, _ = oc.check_item(item(float(low), qty=2), lambda a, again=False: good, {})
+    assert verdict == "ok" and [t for t, _ in notes] == ["amazon-prix"], notes
+    assert "54.00 AED" in notes[0][1] and "22.00 AED" in notes[0][1] and "3200 Fdj" in notes[0][1], notes
+    broken = {**item(float(low)), "originalUnitPriceSet": None}  # no price on the line: no comparison, the order is fine
+    assert oc.check_item(broken, lambda a, again=False: good, {})[::2] == ("ok", [])
 
 
 def test_second_source():
