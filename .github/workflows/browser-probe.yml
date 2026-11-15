@@ -16,6 +16,10 @@ on:
         description: "unused (kept for compatibility)"
         type: boolean
         default: false
+      mode:
+        description: "audit = shop names vs Amazon.ae pages, discover = search the brands' current catalogue"
+        type: string
+        default: "audit"
 permissions:
   contents: read
 jobs:
@@ -43,7 +47,9 @@ jobs:
           BROWSER_DISTRICT: ${{ inputs.district }}
           VENDORS: "vendor:NYX*,vendor:e.l.f.*,vendor:elf*,vendor:Huda*,title:Huda*,title:NYX*,title:e.l.f.*"
           PYTHONUNBUFFERED: "1"
-        run: python3 -I shade_audit.py ${{ matrix.shard }} 6 out
+        run: |
+          if [ "${{ inputs.mode }}" = "discover" ]; then python3 -I discover.py ${{ matrix.shard }} 6 out
+          else python3 -I shade_audit.py ${{ matrix.shard }} 6 out; fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
