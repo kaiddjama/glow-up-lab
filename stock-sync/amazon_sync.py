@@ -55,6 +55,10 @@ INCLUDE_DELIVERY_FEE = os.environ.get("INCLUDE_DELIVERY_FEE", "1") == "1"
 # The date that counts is the one Hoodo's account gets (amazon_page.pick_delivery): for an offer shipped by Amazon itself
 # the "fastest delivery" date, else the free date, else a paid standard one. MAX_DAYS can be changed without touching the code.
 MAX_DAYS = int(os.environ.get("MAX_DAYS", "2"))
+# Since 15 Nov (Hoodo's decision for the makeup best-sellers): a product carrying the tag EXT_TAG may be sold up to EXT_MAX_DAYS
+# days to Dubai instead of MAX_DAYS. Its variants then show the long delay ("3 to 10 days"), see delivery_range.
+EXT_TAG = "delai-etendu"
+EXT_MAX_DAYS = int(os.environ.get("EXT_MAX_DAYS", "4"))
 STANDARD_DAYS = MAX_DAYS  # up to this many days to Dubai: standard delay; later (if MAX_DAYS is raised): longer delay shown
 # Since 11 Nov: every evening, once Amazon's dispatch cut-off has passed (about 20:00-21:00 in Dubai), the dates slip by one
 # day until midnight, then come back. Measured on 10-11 Nov on the whole catalogue: 1,469 variants at 1 day at 19:00, none
@@ -256,7 +260,7 @@ def load_rows(search, parked, held=()):
                              "state": read_state(v.get("state")),
                              "fallback": ((v.get("fallback") or {}).get("value") or "").strip(),
                              "blocked": BLOCK_TAG in tags or f"{BLOCK_TAG}:{asin.lower()}" in tags or asin in held,
-                             "parked": parked, "nvariants": total})
+                             "parked": parked, "nvariants": total, "ext": EXT_TAG in tags})
         if not data["pageInfo"]["hasNextPage"]:
             return rows
         after = data["pageInfo"]["endCursor"]
@@ -333,13 +337,15 @@ def choose_offer(page, max_days=None, on_sale=True):
     return {**page, **offers[0], "offer": 0} if offers else page
 
 
-def offer_for(page, on_sale):
+def offer_for(page, on_sale, ext=False):
     """(the offer we would buy, can it be sold?) for a variant that is on sale or not: a variant on sale gets the evening
     slack, one that is Épuisé must meet the strict rule to come back. An offer inside the strict rule is always preferred."""
     page = choose_offer(page, None, on_sale)
     if sellable(page, None, on_sale):
         return page, True
     limit = days_allowed(on_sale, page.get("hour"))
+    if ext:  # product tagged EXT_TAG: longer delay accepted
+        limit = max(limit, EXT_MAX_DAYS)
     if limit > MAX_DAYS:
         page = choose_offer(page, limit, on_sale)
     return page, sellable(page, limit, on_sale)
@@ -456,7 +462,7 @@ def hide_unavailable(rows, pages, dry, hidden):
     live = [r for r in rows if not r["parked"] and pages.get(r["asin"]) and not pages[r["asin"]].get("error")]
     out = [r for r in live if r["policy"] == "CONTINUE" and not r["fallback"]
            and not (pages[r["asin"]].get("inStock") and pages[r["asin"]].get("sourceDays") is None)
-           and not offer_for(pages[r["asin"]], True)[1]]
+           and not offer_for(pages[r["asin"]], True, r.get("ext"))[1]]
     if len(live) < 20 or len(hidden) + len(out) > STOCK_GUARD * len(live):
         return
     by_product = {}
@@ -494,13 +500,14 @@ def plan(rows, pages, now, fetch_other=None, hidden=(), prices_only=False):
             state.pop("cool")
         # on sale when the run started (policy0: hide_unavailable may have set "policy" to DENY during this very run)
         on_sale = r["policy0"] == "CONTINUE" and not r["parked"]
-        page, can_sell = offer_for(page, on_sale)
+        page, can_sell = offer_for(page, on_sale, r.get("ext"))
         d = {"r": r, "page": page, "sell": False, "src": "amazon", "cost": None, "days": None, "price": None,
              "hold": None, "wait": False, "why": None}
         if r["blocked"] or cooling:
             pass
         elif can_sell:  # days: never more than MAX_DAYS for the shop's delivery label, also under the evening slack
-            d.update(sell=True, cost=cost_of(page), days=min(page["sourceDays"], MAX_DAYS))
+            d.update(sell=True, cost=cost_of(page),
+                     days=min(page["sourceDays"], EXT_MAX_DAYS if r.get("ext") else MAX_DAYS))
         elif r["fallback"] and fetch_other:
             mod, slug, _ = suppliers.module_of(r["fallback"])
             if mod:

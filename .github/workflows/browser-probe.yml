@@ -1,26 +1,60 @@
 name: Amazon.ae browser probe
-# Test only: reads a few Amazon.ae pages with a real headless browser set to Dubai. No secrets, nothing is changed.
+# Test only (shade audit of the NYX, e.l.f. and Huda Beauty names): reads Amazon.ae pages with a real headless browser
+# set to Dubai, one shard per runner. Reads Shopify, writes nothing anywhere.
 on:
   workflow_dispatch:
     inputs:
       asins:
-        description: "ASINs to read, separated by spaces"
+        description: "dump mode: ASINs separated by spaces"
         type: string
-        default: "B0CR9LFM72 B0DHVLFR2V B0CWS5QP8F B0BGMGWP14 B015PL0HG0 B06XH28C1K B0019LVGPC B07NWMVMT1 B0013G6FSG B001GCU6KA"
+        default: ""
       district:
         description: "Delivery district in the Deliver-to pop-up (empty = first suggestion)"
         type: string
         default: ""
       facts:
-        description: "Also print the raw page markers and keep the pages (artifact probe-pages, 3 days)"
+        description: "unused (kept for compatibility)"
         type: boolean
         default: false
+      brands:
+        description: "discover mode: brand keys, comma-separated (huda,nyx,elf,essence)"
+        type: string
+        default: "huda,nyx,elf,essence"
+      vendors:
+        description: "audit mode: Shopify product searches, comma-separated"
+        type: string
+        default: "vendor:NYX*,vendor:e.l.f.*,vendor:elf*,vendor:Huda*,title:Huda*,title:NYX*,title:e.l.f.*"
+      mode:
+        description: "audit = shop names vs Amazon.ae pages, discover = search the brands' current catalogue"
+        type: string
+        default: "audit"
+      terms:
+        description: "discover mode: search terms, comma-separated (empty = the makeup list)"
+        type: string
+        default: ""
+      dry_run:
+        description: "create / publish modes: list only, change nothing on Shopify"
+        type: boolean
+        default: true
+      handles:
+        description: "create mode: comma-separated handles (empty = whole selection)"
+        type: string
+        default: ""
 permissions:
   contents: read
 jobs:
   probe:
+    if: ${{ inputs.mode != 'create' && inputs.mode != 'publish' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ inputs.mode == 'dump' && fromJSON('[0]') || (inputs.mode == 'families' || inputs.mode == 'read') && fromJSON('[0,1,2,3,4,5,6,7,8,9]') || fromJSON('[0, 1, 2, 3, 4, 5]') }}
+    env:
+      SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+      SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+      SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -28,20 +62,51 @@ jobs:
           python-version: "3.12"
       - run: .github/install-browser.sh
       - name: Read pages
+        timeout-minutes: 44
         working-directory: stock-sync
         env:
           DELAY: "8"
           BROWSER_DISTRICT: ${{ inputs.district }}
-          ASINS: ${{ inputs.asins || 'B0CR9LFM72 B0DHVLFR2V B0CWS5QP8F B0BGMGWP14 B015PL0HG0 B06XH28C1K B0019LVGPC B07NWMVMT1 B0013G6FSG B001GCU6KA' }}
-          FACTS: ${{ inputs.facts && '1' || '0' }}
-          DUMP_DIR: ${{ inputs.facts && 'dump' || '' }}
+          VENDORS: ${{ inputs.vendors }}
+          BRAND_KEYS: ${{ inputs.brands }}
+          TERMS: ${{ inputs.terms }}
           PYTHONUNBUFFERED: "1"
-        run: python3 probe_browser.py $ASINS
-      - name: Keep the pages
-        if: ${{ always() && inputs.facts }}
-        uses: actions/upload-artifact@v4
+          ASINS: ${{ inputs.asins }}
+          MODE: ${{ inputs.mode }}
+        run: |
+          if [ "$MODE" = "dump" ]; then python3 -I dump_pages.py out $ASINS
+          elif [ "$MODE" = "images" ]; then python3 -I images.py ${{ matrix.shard }} 6 out
+          elif [ "$MODE" = "read" ]; then python3 -I read_asins.py ${{ matrix.shard }} 10 out
+          elif [ "$MODE" = "families" ]; then python3 -I families.py ${{ matrix.shard }} 8 out
+          elif [ "$MODE" = "discover" ]; then python3 -I discover.py ${{ matrix.shard }} 6 out
+          else python3 -I shade_audit.py ${{ matrix.shard }} 6 out; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: probe-pages
-          path: stock-sync/dump/
+          name: shade-audit-${{ matrix.shard }}
+          path: stock-sync/out/
           if-no-files-found: ignore
           retention-days: 3
+  amz:
+    # create: adds stock-sync/amz/selection.json as hidden drafts tagged epuise-auto; publish: puts on the Online Store the
+    # selection products that the targeted check made ACTIVE.
+    if: ${{ inputs.mode == 'create' || inputs.mode == 'publish' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+      SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+      SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+      PRICE_FORMULA: ${{ secrets.PRICE_FORMULA || format('{0},{1},{2}', vars.PRICE_MULT, vars.SHIPPING_AED_PER_KG, vars.AED_TO_FDJ) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pillow
+      - name: ${{ inputs.mode }} products
+        working-directory: stock-sync
+        env:
+          DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
+          ONLY_HANDLES: ${{ inputs.handles }}
+        run: python3 -I amz_create.py ${{ inputs.mode == 'publish' && 'publish' || '' }}

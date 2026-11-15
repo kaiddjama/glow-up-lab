@@ -470,6 +470,23 @@ def test_audit_sources():
     assert "| Variante sans ASIN | 1 | 0 |" in table and "Motif pas encore noté" in table, table
 
 
+def test_extended_days():
+    """A product tagged delai-etendu (makeup best-sellers, 15 Nov) is sold up to EXT_MAX_DAYS days to Dubai and shows the
+    long delay; the other products keep the strict MAX_DAYS."""
+    four = read(page(offers=[offer(deliveries=[delivery("Saturday, 14 November")])]))
+    five = read(page(offers=[offer(deliveries=[delivery("Sunday, 15 November")])]))
+    assert four["sourceDays"] == 4 and five["sourceDays"] == 5
+    d, _ = decide([row("B0AAAAAAAA"), row("B0AAAAAAAB", ext=True), row("B0AAAAAAAC", "DENY", ext=True),
+                   row("B0AAAAAAAD", ext=True)],
+                  {"B0AAAAAAAA": four, "B0AAAAAAAB": four, "B0AAAAAAAC": four, "B0AAAAAAAD": five})
+    assert d["B0AAAAAAAA"]["policy"] == "DENY"  # no tag: strict rule
+    assert d["B0AAAAAAAB"]["policy"] == "CONTINUE" and d["B0AAAAAAAB"]["days"] == 4  # tagged: sold, true delay kept
+    assert d["B0AAAAAAAC"]["policy"] == "CONTINUE"  # tagged and Épuisé: comes back inside the extended rule
+    assert d["B0AAAAAAAD"]["policy"] == "DENY"  # five days: out even when tagged
+    assert not s.offer_for(four, True)[1] and s.offer_for(four, True, True)[1]
+    assert 4 > s.STANDARD_DAYS  # a tagged variant at 4 days is labelled "3-10" (delivery_range)
+
+
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

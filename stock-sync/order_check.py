@@ -49,7 +49,7 @@ Q = """query($q:String!,$after:String){ orders(first:20, after:$after, query:$q,
     variant{ id inventoryPolicy
       state: metafield(namespace:"supplier", key:"sync_state"){value}
       fallback: metafield(namespace:"supplier", key:"fallback"){value}
-      product{ id handle vendor isGiftCard
+      product{ id handle vendor isGiftCard tags
         ref: metafield(namespace:"internal", key:"supplier_ref"){value}
         spreadr: metafield(namespace:"global", key:"spreadr-asin"){value}
         variantsCount{ count } } } } } } } }"""
@@ -157,11 +157,12 @@ def check_item(it, amazon_page_of, other_pages):
     pg = amazon_page_of(asin)
     if pg.get("error"):
         return "unknown", None, [], False
-    pg, ok = s.offer_for(pg, True)  # the item was on sale when it was ordered: same rule as the stock check
+    ext = s.EXT_TAG in {x.lower() for x in ((it.get("variant") or {}).get("product") or {}).get("tags") or []}
+    pg, ok = s.offer_for(pg, True, ext)  # the item was on sale when it was ordered: same rule as the stock check
     if not ok:  # a serious verdict is checked twice: a second, fresh reading
         again = amazon_page_of(asin, True)
         if not again.get("error"):
-            pg, ok = s.offer_for(again, True)
+            pg, ok = s.offer_for(again, True, ext)
     if ok:
         note = quantity_note(pg, it.get("quantity") or 1)
         return "ok", None, [("amazon-qte", note)] if note else [], False
