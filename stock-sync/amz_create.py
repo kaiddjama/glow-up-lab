@@ -100,7 +100,7 @@ def variant_input(p, v, now, bulk=False):
     grams = v.get("weight_g", p["weight_g"])
     price = s.formula(v["aed"], grams)
     out = {
-        "optionValues": [{"optionName": "Teinte", "name": v["label"]}], "sku": v["asin"], "price": str(price),
+        "optionValues": [{"optionName": p.get("option", "Teinte"), "name": v["label"]}], "sku": v["asin"], "price": str(price),
         "inventoryPolicy": "CONTINUE",  # the targeted check puts it to DENY (Épuisé) when stock / delay are not right
         "inventoryItem": {"tracked": True, "measurement": {"weight": {"value": grams / 1000, "unit": "KILOGRAMS"}}},
         "metafields": [{"namespace": "internal", "key": "cost_aed", "type": "number_decimal", "value": f"{v['aed']:.2f}"}]}
@@ -166,12 +166,42 @@ def extend(p, prod, now, dry):
     return errors
 
 
+PUBLICATION = os.environ.get("ONLINE_STORE_PUBLICATION", "gid://shopify/Publication/338148819125")  # Online Store channel
+STATE_Q = """query($q:String!){ products(first:5, query:$q){ nodes{ id handle status } } }"""
+PUBLISH_M = """mutation($id:ID!,$p:ID!){ publishablePublish(id:$id, input:[{publicationId:$p}]){ userErrors{ field message } } }"""
+
+
+def publish(dry):
+    """Puts on the Online Store channel the products of the selection that the targeted check made ACTIVE (idempotent)."""
+    selection = json.load(open(os.path.join(HERE, "amz", "selection.json"), encoding="utf-8"))
+    done = 0
+    for p in selection:
+        handle = p.get("extend") or p["handle"]
+        found = [x for x in s.gql(STATE_Q, {"q": f"handle:{handle}"})["products"]["nodes"] if x["handle"] == handle]
+        if not found:
+            print("not in the shop:", handle)
+            continue
+        if found[0]["status"] != "ACTIVE":
+            print("stays hidden (draft, nothing sellable now):", handle)
+            continue
+        print(("DRY RUN: would publish " if dry else "publishing ") + handle)
+        if not dry:
+            errs = s.gql(PUBLISH_M, {"id": found[0]["id"], "p": PUBLICATION})["publishablePublish"]["userErrors"]
+            if errs:
+                print("error:", handle, errs)
+            else:
+                done += 1
+    print(f"{done} products published.")
+
+
 def main():
     if not s.have_credentials():
         return
     if not s.AED_TO_FDJ:
         sys.exit("ALERTE: PRICE_FORMULA is not set.")
     dry = os.environ.get("DRY_RUN") == "1"
+    if len(sys.argv) > 1 and sys.argv[1] == "publish":
+        return publish(dry)
     only = set(filter(None, os.environ.get("ONLY_HANDLES", "").split(",")))
     selection = json.load(open(os.path.join(HERE, "amz", "selection.json"), encoding="utf-8"))
     now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -208,7 +238,7 @@ def main():
             "title": p["title"], "handle": p["handle"], "vendor": p["vendor"], "productType": PRODUCT_TYPE, "status": "DRAFT",
             "tags": tags_of(p), "descriptionHtml": html(p),
             "seo": {"title": p.get("seo_title") or p["title"][:60], "description": p["seo_desc"]},
-            "productOptions": [{"name": "Teinte", "values": [{"name": v["label"]} for v in p["variants"]]}],
+            "productOptions": [{"name": p.get("option", "Teinte"), "values": [{"name": v["label"]} for v in p["variants"]]}],
             "variants": [variant_input(p, v, now) for v in p["variants"]], "files": files,
             "metafields": [
                 {"namespace": "internal", "key": "supplier", "type": "single_line_text_field", "value": "Amazon.ae"},
