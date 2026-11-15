@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       asins:
-        description: "unused (kept for compatibility)"
+        description: "dump mode: ASINs separated by spaces"
         type: string
         default: ""
       district:
@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3, 4, 5]
+        shard: ${{ inputs.mode == 'dump' && fromJSON('[0]') || fromJSON('[0, 1, 2, 3, 4, 5]') }}
     env:
       SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
       SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
@@ -56,8 +56,11 @@ jobs:
           VENDORS: ${{ inputs.vendors }}
           BRAND_KEYS: ${{ inputs.brands }}
           PYTHONUNBUFFERED: "1"
+          ASINS: ${{ inputs.asins }}
+          MODE: ${{ inputs.mode }}
         run: |
-          if [ "${{ inputs.mode }}" = "discover" ]; then python3 -I discover.py ${{ matrix.shard }} 6 out
+          if [ "$MODE" = "dump" ]; then python3 -I dump_pages.py out $ASINS
+          elif [ "$MODE" = "discover" ]; then python3 -I discover.py ${{ matrix.shard }} 6 out
           else python3 -I shade_audit.py ${{ matrix.shard }} 6 out; fi
       - uses: actions/upload-artifact@v4
         if: always()
