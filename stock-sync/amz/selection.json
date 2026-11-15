@@ -2759,5 +2759,104 @@
     "img": "https://m.media-amazon.com/images/I/41NWIkxNVIL._AC_SL1000_.jpg"
    }
   ]
+ },
+ {
+  "handle": "e-l-f-hydrating-camo-concealer",
+  "extend": "e-l-f-hydrating-camo-concealer",
+  "title": "e.l.f. Hydrating Camo correcteur couvrant",
+  "vendor": "e.l.f.",
+  "rayon": "rayon:maquillage-anticernes",
+  "sub": "sub:mk-correcteurs",
+  "weight_g": 200,
+  "option": "Teinte",
+  "intro": "",
+  "points": [],
+  "seo_desc": "",
+  "variants": [
+   {
+    "asin": "B07ZR19DJC",
+    "label": "Light Beige",
+    "aed": 41.06,
+    "img": "https://m.media-amazon.com/images/I/51rmFxAo9pL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B07ZQZVMRW",
+    "label": "Light Ivory",
+    "aed": 48.6,
+    "img": "https://m.media-amazon.com/images/I/51boP0bIF4L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B07ZR14WBZ",
+    "label": "Light Sand",
+    "aed": 48.99,
+    "img": "https://m.media-amazon.com/images/I/51HHN1HGgFL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B07ZR1DXGX",
+    "label": "Fair Warm",
+    "aed": 49.0,
+    "img": "https://m.media-amazon.com/images/I/511GYrzUABL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B085P3CCPQ",
+    "label": "Tan Sand",
+    "aed": 42.0,
+    "img": "https://m.media-amazon.com/images/I/61WxTGviNML._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "elf-16hr-camo-concealer-correcteur-6-ml",
+  "title": "e.l.f. 16HR Camo Concealer correcteur couvrant mat, 6 ml",
+  "vendor": "e.l.f.",
+  "rayon": "rayon:maquillage-anticernes",
+  "sub": "sub:mk-correcteurs",
+  "weight_g": 200,
+  "option": "Teinte",
+  "intro": "Le correcteur couvrant e.l.f. au fini mat, très pigmenté, pour cacher cernes, rougeurs et imperfections jusqu'à 16 heures.",
+  "points": [
+   "Couvrance totale, très pigmenté",
+   "Fini mat longue tenue (16 h)",
+   "Corrige, contourne et illumine"
+  ],
+  "seo_desc": "Le correcteur couvrant e.l.f. au fini mat, très pigmenté, pour cacher cernes, rougeurs et imperfections. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B07ZR1CQHS",
+    "label": "Light Ivory",
+    "aed": 48.23,
+    "img": "https://m.media-amazon.com/images/I/41YKOWgEpLS._AC_SL1000_.jpg"
+   },
+   {
+    "asin": "B07V78WB6B",
+    "label": "Light Sand",
+    "aed": 48.89,
+    "img": "https://m.media-amazon.com/images/I/61hV0ogNLoL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B07MWSRNQB",
+    "label": "Light Peach",
+    "aed": 54.0,
+    "img": "https://m.media-amazon.com/images/I/51oWnZQFZuL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B07MWSX7J3",
+    "label": "Medium Sand",
+    "aed": 44.0,
+    "img": "https://m.media-amazon.com/images/I/61tWx4O6AAL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B08LHGJW76",
+    "label": "Tan Neutral",
+    "aed": 48.0,
+    "img": "https://m.media-amazon.com/images/I/41Rn9+WOkfS._AC_SL1000_.jpg"
+   },
+   {
+    "asin": "B07ZVWYPG6",
+    "label": "Tan Sand",
+    "aed": 44.0,
+    "img": "https://m.media-amazon.com/images/I/511jFJJ41YL._AC_SL1500_.jpg"
+   }
+  ]
  }
 ]
