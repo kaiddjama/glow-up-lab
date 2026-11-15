@@ -2218,5 +2218,65 @@
     "img": "https://m.media-amazon.com/images/I/61mUX+xVm6L._AC_SL1500_.jpg"
    }
   ]
+ },
+ {
+  "handle": "huda-beauty-easy-blur-natural-airbrush-foundation-30-ml",
+  "extend": "huda-beauty-easy-blur-natural-airbrush-foundation-30-ml",
+  "title": "Huda Beauty Easy Blur fond de teint effet flouté, 30 ml",
+  "vendor": "Huda Beauty",
+  "rayon": "rayon:maquillage-fonds-de-teint",
+  "sub": "sub:mk-teint",
+  "weight_g": 90,
+  "option": "Teinte",
+  "intro": "",
+  "points": [],
+  "seo_desc": "",
+  "variants": [
+   {
+    "asin": "B0DGD3C7NT",
+    "label": "230N Macaroon",
+    "aed": 75.75,
+    "img": "https://m.media-amazon.com/images/I/51UcqtXQIiL._AC_SL1437_.jpg"
+   },
+   {
+    "asin": "B0DHLZ6KHD",
+    "label": "140G Cashew",
+    "aed": 99.25,
+    "img": "https://m.media-amazon.com/images/I/51vq7wHjsWL._AC_SL1458_.jpg"
+   },
+   {
+    "asin": "B0DG13T5T2",
+    "label": "255B Apple Pie",
+    "aed": 78.25,
+    "img": "https://m.media-amazon.com/images/I/61dOG8XXc2L._AC_SL1446_.jpg"
+   },
+   {
+    "asin": "B0DMPLWZ2R",
+    "label": "500G Mocha",
+    "aed": 95.0,
+    "img": "https://m.media-amazon.com/images/I/51ShyR5OE7L._AC_SL1286_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "huda-beauty-faux-filler-lip-gloss-3-9-ml",
+  "extend": "huda-beauty-faux-filler-lip-gloss-3-9-ml",
+  "title": "Huda Beauty Faux Filler gloss repulpant, 3,9 ml",
+  "vendor": "Huda Beauty",
+  "rayon": "rayon:maquillage-gloss-levres",
+  "sub": "sub:mk-levres",
+  "weight_g": 30,
+  "option": "Teinte",
+  "intro": "",
+  "points": [],
+  "seo_desc": "",
+  "variants": [
+   {
+    "asin": "B0DLLH3JD3",
+    "label": "She Fire",
+    "aed": 99.0,
+    "img": "https://m.media-amazon.com/images/I/61G+MrkLOTL._AC_SL1500_.jpg"
+   }
+  ]
  }
 ]
