@@ -143,13 +143,36 @@ def tags_of(p):
     return base + [t for t in p.get("tags", []) if t not in base]
 
 
+NOPHOTO_Q = """query($id:ID!){ product(id:$id){ variants(first:100){ nodes{ id sku media(first:1){ nodes{ id } } } } } }"""
+
+
+def fix_photos(p, prod):
+    """Variants of the selection that exist but have no photo yet (an interrupted run): uploads and links the photos."""
+    want = {v["asin"]: v for v in p["variants"]}
+    nodes = s.gql(NOPHOTO_Q, {"id": prod["id"]})["product"]["variants"]["nodes"]
+    todo = [(n, want[n["sku"]]) for n in nodes if n["sku"] in want and not n["media"]["nodes"]]
+    if not todo:
+        return 0
+    print(f"adding the missing photos of {prod['handle']}: {len(todo)}")
+    files = [photo_file(p, v) for _, v in todo]
+    media = [{"originalSource": f["originalSource"], "alt": f["alt"], "mediaContentType": "IMAGE"} for f in files]
+    errs = s.gql(UPDATE_M, {"i": {"id": prod["id"]}, "m": media})["productUpdate"]["userErrors"]
+    if errs:
+        print("update error:", p["handle"], errs)
+        return 1
+    by_alt = wait_media(prod["id"], [f["alt"] for f in files])
+    return link_photos(p, prod["id"], [v for _, v in todo], {n["sku"]: n["id"] for n, _ in todo}, by_alt)
+
+
 def extend(p, prod, now, dry):
     have = {v["sku"] for v in prod["variants"]["nodes"]}
     new = [v for v in p["variants"] if v["asin"] not in have]
     print(("DRY RUN: would extend " if dry else "extending ") + f"{prod['handle']} with {len(new)} variants: "
           + ", ".join(v["label"] for v in new))
-    if dry or not new:
+    if dry:
         return 0
+    if not new:
+        return fix_photos(p, prod)
     errors = 0
     files = [photo_file(p, v) for v in new]
     media = [{"originalSource": f["originalSource"], "alt": f["alt"], "mediaContentType": "IMAGE"} for f in files]
