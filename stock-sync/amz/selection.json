@@ -2279,5 +2279,485 @@
     "img": "https://m.media-amazon.com/images/I/61G+MrkLOTL._AC_SL1500_.jpg"
    }
   ]
+ },
+ {
+  "handle": "real-techniques-eponges-miracle-complexion",
+  "title": "Real Techniques éponges de maquillage Miracle",
+  "vendor": "Real Techniques",
+  "rayon": "rayon:maquillage-pinceaux-eponges",
+  "sub": "sub:mk-accessoires",
+  "weight_g": 40,
+  "option": "Modèle",
+  "intro": "Les éponges Miracle de Real Techniques pour fondre le fond de teint, l'anticerne et la poudre.",
+  "points": [
+   "Une éponge par modèle, au choix",
+   "Sans latex, s'utilise humide ou sèche",
+   "Application uniforme sans traces"
+  ],
+  "seo_desc": "Les éponges Miracle de Real Techniques pour fondre le fond de teint, l'anticerne et la poudre. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B00EUBPHR6",
+    "label": "Miracle Complexion (orange)",
+    "aed": 24.0,
+    "img": "https://m.media-amazon.com/images/I/71-gXRUepFL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B07V2J6YKM",
+    "label": "Miracle Powder (poudre)",
+    "aed": 33.4,
+    "img": "https://m.media-amazon.com/images/I/71VAToET2+L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B01N5Y9YB7",
+    "label": "Expert double embout",
+    "aed": 35.0,
+    "img": "https://m.media-amazon.com/images/I/51uZFq0J7YL._AC_SL1000_.jpg"
+   },
+   {
+    "asin": "B0C63N4PJQ",
+    "label": "Miracle Powder Puff 2-en-1",
+    "aed": 27.5,
+    "img": "https://m.media-amazon.com/images/I/81z+ahcbDxL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DKL6LL8T",
+    "label": "Miracle Fingerprint",
+    "aed": 39.09,
+    "img": "https://m.media-amazon.com/images/I/71n8w2sezSL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "real-techniques-pinceaux-teint",
+  "title": "Real Techniques pinceaux fond de teint et teint",
+  "vendor": "Real Techniques",
+  "rayon": "rayon:maquillage-pinceaux-eponges",
+  "sub": "sub:mk-accessoires",
+  "weight_g": 60,
+  "option": "Modèle",
+  "intro": "Des pinceaux Real Techniques pour appliquer le fond de teint, l'anticerne et les produits crème avec un fini lisse.",
+  "points": [
+   "Un pinceau par modèle, au choix",
+   "Poils synthétiques doux",
+   "Fini lisse et uniforme"
+  ],
+  "seo_desc": "Des pinceaux Real Techniques pour appliquer le fond de teint, l'anticerne et les produits crème avec un fini lisse. Disponible chez Aimé Essentials à Djibo",
+  "variants": [
+   {
+    "asin": "B007O7AZBG",
+    "label": "Expert Face Brush",
+    "aed": 30.5,
+    "img": "https://m.media-amazon.com/images/I/71Gg-ei5VQL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B075RY88DT",
+    "label": "Complexion Blender",
+    "aed": 39.0,
+    "img": "https://m.media-amazon.com/images/I/51SYee2sPzL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B07NLGM96X",
+    "label": "Foundation Blender",
+    "aed": 39.99,
+    "img": "https://m.media-amazon.com/images/I/715VkQ5gf1L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B08S8PV695",
+    "label": "Seamless Complexion",
+    "aed": 45.0,
+    "img": "https://m.media-amazon.com/images/I/61TtX2cB7RL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B00TXB66SW",
+    "label": "101 Triangle Foundation",
+    "aed": 29.0,
+    "img": "https://m.media-amazon.com/images/I/41X8Vmkq9QL._AC_SL1000_.jpg"
+   },
+   {
+    "asin": "B0CLYQLHVX",
+    "label": "Bubble Blending",
+    "aed": 49.0,
+    "img": "https://m.media-amazon.com/images/I/71RfOQd6zuL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0CLYRV9B9",
+    "label": "Glow Round Base",
+    "aed": 62.1,
+    "img": "https://m.media-amazon.com/images/I/71Gxtyx1r6L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B09PCBLR78",
+    "label": "Everything Face",
+    "aed": 42.0,
+    "img": "https://m.media-amazon.com/images/I/61BAhnWKWGL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B08P2JZBLM",
+    "label": "Cover & Conceal double embout",
+    "aed": 78.9,
+    "img": "https://m.media-amazon.com/images/I/51B3C72HRaL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0CZ2QZRWP",
+    "label": "Extra Big Stippling",
+    "aed": 72.8,
+    "img": "https://m.media-amazon.com/images/I/61agiiZVydL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B07B7T2CFD",
+    "label": "Mini Expert Face",
+    "aed": 22.5,
+    "img": "https://m.media-amazon.com/images/I/517YUemy2DL._AC_SL1080_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "real-techniques-pinceaux-poudre-joues-contour",
+  "title": "Real Techniques pinceaux poudre, blush et contour",
+  "vendor": "Real Techniques",
+  "rayon": "rayon:maquillage-pinceaux-eponges",
+  "sub": "sub:mk-accessoires",
+  "weight_g": 60,
+  "option": "Modèle",
+  "intro": "Des pinceaux Real Techniques pour la poudre, le blush, le contour et l'illuminateur.",
+  "points": [
+   "Un pinceau par modèle, au choix",
+   "Poils synthétiques doux",
+   "Pour poudre, blush, contour et illuminateur"
+  ],
+  "seo_desc": "Des pinceaux Real Techniques pour la poudre, le blush, le contour et l'illuminateur. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B00TXB6592",
+    "label": "100 Arched Powder",
+    "aed": 39.0,
+    "img": "https://m.media-amazon.com/images/I/41zGntrSsvL._AC_SL1000_.jpg"
+   },
+   {
+    "asin": "B01BOY206W",
+    "label": "1413M Setting Brush",
+    "aed": 49.99,
+    "img": "https://m.media-amazon.com/images/I/617rRnit3QL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0CZ2YG2M1",
+    "label": "Extra Big Powder",
+    "aed": 45.5,
+    "img": "https://m.media-amazon.com/images/I/71+HWIOj2zL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0CZ2YDZH3",
+    "label": "Extra Big Finishing",
+    "aed": 58.0,
+    "img": "https://m.media-amazon.com/images/I/71+OJtH1CSL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B073ZG5GCW",
+    "label": "Blush Brush",
+    "aed": 47.62,
+    "img": "https://m.media-amazon.com/images/I/51gQdB1goBL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B09PCC9RCR",
+    "label": "Tapered Cheek",
+    "aed": 49.99,
+    "img": "https://m.media-amazon.com/images/I/61car2WnmdL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B08S8LLZJB",
+    "label": "Filtered Cheek",
+    "aed": 39.0,
+    "img": "https://m.media-amazon.com/images/I/41pJJ5cENGL._AC_SL1000_.jpg"
+   },
+   {
+    "asin": "B085DGMHZN",
+    "label": "Instapop Cheek",
+    "aed": 39.99,
+    "img": "https://m.media-amazon.com/images/I/61jvIo9G64L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DPLJR627",
+    "label": "Vivid Escape Color Pop Blush",
+    "aed": 45.76,
+    "img": "https://m.media-amazon.com/images/I/619gSlpIecL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B004TSFB1M",
+    "label": "1404 Shading Brush",
+    "aed": 25.0,
+    "img": "https://m.media-amazon.com/images/I/51hoMidyMVL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0745DMMQ9",
+    "label": "Shading Brush",
+    "aed": 29.0,
+    "img": "https://m.media-amazon.com/images/I/51zt8vIdGfL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0D53MBHLW",
+    "label": "Hyperbrights Sculpt Lock Contour",
+    "aed": 39.99,
+    "img": "https://m.media-amazon.com/images/I/71fpLInuCcL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0D7HVMS49",
+    "label": "Solar Power Soft Shadow Contour",
+    "aed": 49.99,
+    "img": "https://m.media-amazon.com/images/I/612OZmOxDIL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0BYTJDS87",
+    "label": "Nectar Pop Surreal Sheen Powder",
+    "aed": 70.0,
+    "img": "https://m.media-amazon.com/images/I/519OQtDpqzL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B07B7S82X3",
+    "label": "Mini Multitask",
+    "aed": 22.5,
+    "img": "https://m.media-amazon.com/images/I/61Al4RtGyVL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "real-techniques-pinceaux-yeux-anticerne",
+  "title": "Real Techniques pinceaux yeux et anticerne",
+  "vendor": "Real Techniques",
+  "rayon": "rayon:maquillage-pinceaux-eponges",
+  "sub": "sub:mk-accessoires",
+  "weight_g": 50,
+  "option": "Modèle",
+  "intro": "Des pinceaux Real Techniques pour l'anticerne, les fards à paupières, le trait et les sourcils.",
+  "points": [
+   "Un pinceau ou un set par modèle, au choix",
+   "Poils synthétiques doux",
+   "Pour un maquillage des yeux précis"
+  ],
+  "seo_desc": "Des pinceaux Real Techniques pour l'anticerne, les fards à paupières, le trait et les sourcils. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B01N0L42FZ",
+    "label": "Expert Concealer Brush",
+    "aed": 32.88,
+    "img": "https://m.media-amazon.com/images/I/51LxjkLsdGL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B08S8NGQ3J",
+    "label": "Brightening Concealer",
+    "aed": 27.0,
+    "img": "https://m.media-amazon.com/images/I/6148dB+U52L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0D7HVY2JF",
+    "label": "Solar Power Light Lift Concealer",
+    "aed": 49.99,
+    "img": "https://m.media-amazon.com/images/I/61E69njOhiL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B01N1MKXEM",
+    "label": "Eye Shade + Blend (trio)",
+    "aed": 33.5,
+    "img": "https://m.media-amazon.com/images/I/61CidlX9H8L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B01MZZJ3O2",
+    "label": "Enhanced Eye Set",
+    "aed": 49.99,
+    "img": "https://m.media-amazon.com/images/I/71EcDOsSWFL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B08BX1V7CS",
+    "label": "Everyday Eye Essentials",
+    "aed": 45.9,
+    "img": "https://m.media-amazon.com/images/I/81j6JEo5jnL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B09VCM1PCR",
+    "label": "Eye Love Drama",
+    "aed": 49.99,
+    "img": "https://m.media-amazon.com/images/I/71y8fKU+haL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B09VCLXVF7",
+    "label": "Naturally Beautiful (plats)",
+    "aed": 61.4,
+    "img": "https://m.media-amazon.com/images/I/51QRf2jpdJL._AC_SL1010_.jpg"
+   },
+   {
+    "asin": "B0D1SVKFQ8",
+    "label": "Starlit Gaze Eye Lash",
+    "aed": 32.0,
+    "img": "https://m.media-amazon.com/images/I/81pYMx1a1VL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0D538VDFG",
+    "label": "Hyper Brights Bold Type",
+    "aed": 39.0,
+    "img": "https://m.media-amazon.com/images/I/81OvqPZNkxL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0C69WCQGM",
+    "label": "Nectar Pop Fine Line + Fill",
+    "aed": 73.5,
+    "img": "https://m.media-amazon.com/images/I/51N6Y0L0FtL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0G4V9BTCZ",
+    "label": "Eye-Conic Essentials (5 pièces)",
+    "aed": 61.87,
+    "img": "https://m.media-amazon.com/images/I/71qK4EfSVCL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0BLT2MZS9",
+    "label": "Brow Shaping Set",
+    "aed": 40.0,
+    "img": "https://m.media-amazon.com/images/I/61OEHDydj3L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0BLT4WFKW",
+    "label": "Brow Styling Set",
+    "aed": 51.68,
+    "img": "https://m.media-amazon.com/images/I/61UEUtrSilL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0D7HXHPP9",
+    "label": "Smolder Eye + Brow (duo)",
+    "aed": 38.28,
+    "img": "https://m.media-amazon.com/images/I/5168SbfvnYL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "real-techniques-sets-de-pinceaux",
+  "title": "Real Techniques sets de pinceaux et éponges",
+  "vendor": "Real Techniques",
+  "rayon": "rayon:maquillage-pinceaux-eponges",
+  "sub": "sub:mk-accessoires",
+  "weight_g": 200,
+  "option": "Modèle",
+  "intro": "Les sets de pinceaux et d'éponges Real Techniques pour avoir tout le nécessaire en un seul achat.",
+  "points": [
+   "Un set par modèle, au choix",
+   "Pinceaux et éponges assortis",
+   "Idéal pour débuter ou voyager"
+  ],
+  "seo_desc": "Les sets de pinceaux et d'éponges Real Techniques pour avoir tout le nécessaire en un seul achat. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B099KZGYQC",
+    "label": "Natural Glow Mini Kit",
+    "aed": 26.5,
+    "img": "https://m.media-amazon.com/images/I/71f-YbiEhNL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DXVYBSSM",
+    "label": "Cherry on Top Marshmallow (3 puffs)",
+    "aed": 36.0,
+    "img": "https://m.media-amazon.com/images/I/812efcrjpYL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B07FTXBNVL",
+    "label": "Everyday Essentials (5 pièces)",
+    "aed": 46.59,
+    "img": "https://m.media-amazon.com/images/I/81byWsc0lYL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0BLT4LT1K",
+    "label": "Face Base Kit (4 pièces)",
+    "aed": 49.99,
+    "img": "https://m.media-amazon.com/images/I/81tNXEFUBYL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0F8VTKNYS",
+    "label": "Cherry on Top MesmerEYES (trio)",
+    "aed": 53.06,
+    "img": "https://m.media-amazon.com/images/I/71VhmbJgtVL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0BNT1NSBL",
+    "label": "Level Up (pinceaux + éponge)",
+    "aed": 64.7,
+    "img": "https://m.media-amazon.com/images/I/71Fg9d8UKzL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B07V3N78F7",
+    "label": "Artist Essentials (5 pièces)",
+    "aed": 68.0,
+    "img": "https://m.media-amazon.com/images/I/71RnGrA8tdL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0D5R7SCGS",
+    "label": "Glowstorm (mini pinceau + éponge)",
+    "aed": 52.38,
+    "img": "https://m.media-amazon.com/images/I/71X+osEv55L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0D1TB2FV8",
+    "label": "Sleigh the Night (mini, 4 pièces)",
+    "aed": 75.24,
+    "img": "https://m.media-amazon.com/images/I/71danVEiDhL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B09VCK62XY",
+    "label": "Endless Summer (6 pièces)",
+    "aed": 79.0,
+    "img": "https://m.media-amazon.com/images/I/71iBV9lmN7L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B09VCPB6DT",
+    "label": "The Wanderer (9 pièces)",
+    "aed": 80.11,
+    "img": "https://m.media-amazon.com/images/I/81SylyZGMeL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0FCY6SYKK",
+    "label": "Blend + Jet (4 pièces)",
+    "aed": 79.0,
+    "img": "https://m.media-amazon.com/images/I/81Ag13L-0dL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0FJRDRM1T",
+    "label": "New Nudes On The Glow (mini, 6 pièces)",
+    "aed": 84.0,
+    "img": "https://m.media-amazon.com/images/I/71UG+JE6+pL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "real-techniques-nettoyage-pinceaux-soin-visage",
+  "title": "Real Techniques nettoyants pinceaux et accessoires soin",
+  "vendor": "Real Techniques",
+  "rayon": "rayon:maquillage-pinceaux-eponges",
+  "sub": "sub:mk-accessoires",
+  "weight_g": 150,
+  "option": "Modèle",
+  "intro": "De quoi nettoyer ses pinceaux et éponges Real Techniques, et un pinceau pour appliquer ses soins.",
+  "points": [
+   "Un produit par modèle, au choix",
+   "Garde pinceaux et éponges propres",
+   "Application hygiénique des soins"
+  ],
+  "seo_desc": "De quoi nettoyer ses pinceaux et éponges Real Techniques, et un pinceau pour appliquer ses soins. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B07V3N7LQF",
+    "label": "Brush Cleansing Palette",
+    "aed": 30.51,
+    "img": "https://m.media-amazon.com/images/I/51vUHwZOQ5L._AC_SL1000_.jpg"
+   },
+   {
+    "asin": "B08S8S2J6F",
+    "label": "Brush Cleansing Gel",
+    "aed": 52.42,
+    "img": "https://m.media-amazon.com/images/I/41LGU+iSS5L._AC_SL1000_.jpg"
+   },
+   {
+    "asin": "B09VCK5PN5",
+    "label": "Brosse soin + spatule inox",
+    "aed": 33.0,
+    "img": "https://m.media-amazon.com/images/I/41NWIkxNVIL._AC_SL1000_.jpg"
+   }
+  ]
  }
 ]
