@@ -47,6 +47,8 @@ def main():
     seeds = [x.strip() for x in open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "seeds.txt")) if x.strip()]
     size = -(-len(seeds) // n)
     mine = seeds[shard * size:(shard + 1) * size]
+    if not mine:
+        return
     os.makedirs(outdir, exist_ok=True)
     out = open(os.path.join(outdir, f"families-{shard}.jsonl"), "w", encoding="utf-8")
     delay = float(os.environ.get("DELAY", "7"))
