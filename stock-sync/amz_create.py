@@ -152,12 +152,13 @@ def extend(p, prod, now, dry):
         return 0
     errors = 0
     files = [photo_file(p, v) for v in new]
+    media = [{"originalSource": f["originalSource"], "alt": f["alt"], "mediaContentType": "IMAGE"} for f in files]
     res = s.gql(VARIANTS_M, {"p": prod["id"], "v": [variant_input(p, v, now, bulk=True) for v in new]})["productVariantsBulkCreate"]
     if res["userErrors"]:
         print("error:", p["handle"], res["userErrors"])
         return 1
     sku_to_id = {v["sku"]: v["id"] for v in res["productVariants"]}
-    errs = s.gql(UPDATE_M, {"i": {"id": prod["id"]}, "m": files})["productUpdate"]["userErrors"]
+    errs = s.gql(UPDATE_M, {"i": {"id": prod["id"]}, "m": media})["productUpdate"]["userErrors"]
     if errs:
         print("update error:", p["handle"], errs)
         return 1
