@@ -2858,5 +2858,1472 @@
     "img": "https://m.media-amazon.com/images/I/511jFJJ41YL._AC_SL1500_.jpg"
    }
   ]
+ },
+ {
+  "handle": "e-l-f-halo-glow-liquid-filter-31-5-ml",
+  "extend": "e-l-f-halo-glow-liquid-filter-31-5-ml",
+  "title": "e.l.f. Halo Glow Liquid Filter enlumineur teinté, 31,5 ml",
+  "vendor": "e.l.f.",
+  "rayon": "rayon:maquillage-bronzer-eclat",
+  "sub": "sub:mk-teint",
+  "weight_g": 100,
+  "option": "Teinte",
+  "intro": "",
+  "points": [],
+  "seo_desc": "",
+  "variants": [
+   {
+    "asin": "B0C7WQ9MVD",
+    "label": "3.5 Medium",
+    "aed": 72.0,
+    "img": "https://m.media-amazon.com/images/I/613G1CS4vGL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0CL1H6W3L",
+    "label": "0 Fair",
+    "aed": 82.8,
+    "img": "https://m.media-amazon.com/images/I/61VJ4KtPIML._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0C7WXB4K5",
+    "label": "0.5 Fair",
+    "aed": 78.0,
+    "img": "https://m.media-amazon.com/images/I/61p+tdb0gQL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0F3J5DJ15",
+    "label": "6.5 Deep",
+    "aed": 79.0,
+    "img": "https://m.media-amazon.com/images/I/61V1m76nDPL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0C7W329LP",
+    "label": "8.5 Rich",
+    "aed": 71.74,
+    "img": "https://m.media-amazon.com/images/I/61cB6l8pngL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-skin-silk-serum-fond-de-teint-23-ml",
+  "title": "Revolution Skin Silk Serum fond de teint sérum, 23 ml",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-fonds-de-teint",
+  "sub": "sub:mk-teint",
+  "weight_g": 100,
+  "option": "Teinte",
+  "intro": "Un fond de teint sérum léger à l'acide hyaluronique, pour un teint lumineux et naturel à couvrance légère à moyenne.",
+  "points": [
+   "Fini lumineux et confortable",
+   "Acide hyaluronique pour hydrater la peau",
+   "Teintes moyennes à foncées"
+  ],
+  "seo_desc": "Un fond de teint sérum léger à l'acide hyaluronique, pour un teint lumineux et naturel à couvrance légère à moyenne. Disponible chez Aimé Essentials à Djib",
+  "variants": [
+   {
+    "asin": "B0CRVSNPTW",
+    "label": "F7",
+    "aed": 79.0,
+    "img": "https://m.media-amazon.com/images/I/61tVr4Wr6BL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0FK5V3HM6",
+    "label": "F8.2N",
+    "aed": 75.24,
+    "img": "https://m.media-amazon.com/images/I/61K-P+xUQUL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DZNDYTYV",
+    "label": "F9.2N",
+    "aed": 58.41,
+    "img": "https://m.media-amazon.com/images/I/61dEDdWVRnL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DZN2PGH2",
+    "label": "F9.7W",
+    "aed": 75.24,
+    "img": "https://m.media-amazon.com/images/I/51H8yFl8O1L._AC_SL1080_.jpg"
+   },
+   {
+    "asin": "B0DZNT9KN8",
+    "label": "F11.5C",
+    "aed": 50.0,
+    "img": "https://m.media-amazon.com/images/I/61wKQTCec4L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DZND78GQ",
+    "label": "F12.7NC",
+    "aed": 100.0,
+    "img": "https://m.media-amazon.com/images/I/518Mw6KJlvL._AC_SL1440_.jpg"
+   },
+   {
+    "asin": "B0CRVS1GT9",
+    "label": "F13.5",
+    "aed": 55.3,
+    "img": "https://m.media-amazon.com/images/I/610a+NydgmL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-relove-super-serum-fond-de-teint",
+  "title": "Revolution Relove Super Serum fond de teint",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-fonds-de-teint",
+  "sub": "sub:mk-teint",
+  "weight_g": 100,
+  "option": "Teinte",
+  "intro": "Un fond de teint sérum Relove pour un teint unifié et frais, au fini naturel.",
+  "points": [
+   "Texture sérum légère",
+   "Fini naturel et frais",
+   "Teintes moyennes à foncées"
+  ],
+  "seo_desc": "Un fond de teint sérum Relove pour un teint unifié et frais, au fini naturel. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B095HZRHXQ",
+    "label": "F10.5",
+    "aed": 42.0,
+    "img": "https://m.media-amazon.com/images/I/71lmLJbQwvL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B095J13Q9Z",
+    "label": "F11.2",
+    "aed": 27.56,
+    "img": "https://m.media-amazon.com/images/I/71JvFRNmy6L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B095HYVFM1",
+    "label": "F13.2",
+    "aed": 42.0,
+    "img": "https://m.media-amazon.com/images/I/51CHyUYr9kL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-conceal-define-fond-de-teint-tube",
+  "title": "Revolution Conceal & Define fond de teint haute couvrance, tube",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-fonds-de-teint",
+  "sub": "sub:mk-teint",
+  "weight_g": 90,
+  "option": "Teinte",
+  "intro": "Un fond de teint haute couvrance en tube pour unifier le teint et camoufler les imperfections.",
+  "points": [
+   "Couvrance haute et modulable",
+   "Texture crémeuse facile à étaler",
+   "Teintes moyennes à foncées"
+  ],
+  "seo_desc": "Un fond de teint haute couvrance en tube pour unifier le teint et camoufler les imperfections. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0FSDY2XH8",
+    "label": "F7NC",
+    "aed": 38.3,
+    "img": "https://m.media-amazon.com/images/I/613q161+2KL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0FSDT32Y9",
+    "label": "9.5NC",
+    "aed": 42.86,
+    "img": "https://m.media-amazon.com/images/I/61XnJVbl+EL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0FSDXSL2Z",
+    "label": "F13.7NW",
+    "aed": 42.86,
+    "img": "https://m.media-amazon.com/images/I/61ZEGER-15L._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-conceal-define-fond-de-teint-poudre",
+  "title": "Revolution Conceal & Define fond de teint poudre, 7 g",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-fonds-de-teint",
+  "sub": "sub:mk-teint",
+  "weight_g": 50,
+  "option": "Teinte",
+  "intro": "Un fond de teint en poudre compacte pour un teint mat et uniforme, à retoucher dans la journée.",
+  "points": [
+   "Poudre compacte facile à emporter",
+   "Fini mat et uniforme",
+   "Teintes moyennes à foncées"
+  ],
+  "seo_desc": "Un fond de teint en poudre compacte pour un teint mat et uniforme, à retoucher dans la journée. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0B5PQGNQH",
+    "label": "P9.5",
+    "aed": 90.45,
+    "img": "https://m.media-amazon.com/images/I/71p8aGKNmbL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0B5PR3CH1",
+    "label": "P10",
+    "aed": 52.0,
+    "img": "https://m.media-amazon.com/images/I/51t5Z8S2ISL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-skin-silk-glow-tint-stick",
+  "title": "Revolution Skin Silk Glow Tint fond de teint stick",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-fonds-de-teint",
+  "sub": "sub:mk-teint",
+  "weight_g": 60,
+  "option": "Teinte",
+  "intro": "Un fond de teint stick transparent pour un teint lumineux, à estomper du doigt ou au pinceau.",
+  "points": [
+   "Fini lumineux et léger",
+   "Format stick pratique",
+   "Teintes claires à foncées"
+  ],
+  "seo_desc": "Un fond de teint stick transparent pour un teint lumineux, à estomper du doigt ou au pinceau. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0FY3D29DS",
+    "label": "Light Neutral",
+    "aed": 55.3,
+    "img": "https://m.media-amazon.com/images/I/61orJzbKMVL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0FY3GKHDB",
+    "label": "Medium Neutral",
+    "aed": 55.3,
+    "img": "https://m.media-amazon.com/images/I/618onWllyvL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0FY3KR69F",
+    "label": "Medium Tan Neutral",
+    "aed": 55.3,
+    "img": "https://m.media-amazon.com/images/I/61H06BIF-pL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0FY3DPJ8N",
+    "label": "Dark Neutral Warm",
+    "aed": 55.3,
+    "img": "https://m.media-amazon.com/images/I/61YlPWwzxBL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-teints-superdewy-bright-light",
+  "title": "Revolution teints Superdewy et Bright Light",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-fonds-de-teint",
+  "sub": "sub:mk-teint",
+  "weight_g": 80,
+  "option": "Modèle",
+  "intro": "Des soins teintés Revolution pour un teint hydraté et lumineux, à couvrance légère.",
+  "points": [
+   "Un produit par modèle, au choix",
+   "Fini lumineux et naturel",
+   "Couvrance légère"
+  ],
+  "seo_desc": "Des soins teintés Revolution pour un teint hydraté et lumineux, à couvrance légère. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0B5S65FTM",
+    "label": "Superdewy Tinted Moisturiser Caramel",
+    "aed": 79.2,
+    "img": "https://m.media-amazon.com/images/I/51lOz7se2yL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0GVK52XMS",
+    "label": "Superdewy Cushion Light Neutral",
+    "aed": 75.0,
+    "img": "https://m.media-amazon.com/images/I/51Ys-4x4W2L._AC_SL1080_.jpg"
+   },
+   {
+    "asin": "B0CH3J24ST",
+    "label": "Bright Light Face Glow Medium",
+    "aed": 59.0,
+    "img": "https://m.media-amazon.com/images/I/615k+oZG7PL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0CH3GZDGW",
+    "label": "Bright Light Face Glow Lustre Medium Light",
+    "aed": 60.01,
+    "img": "https://m.media-amazon.com/images/I/6184Zr6C5oL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-anticernes-conceal-define-irl-filter",
+  "title": "Revolution anticernes Conceal & Define et IRL Filter Finish",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-anticernes",
+  "sub": "sub:mk-correcteurs",
+  "weight_g": 30,
+  "option": "Modèle",
+  "intro": "Des anticernes Revolution à couvrance haute pour camoufler cernes et imperfections, en teintes moyennes à foncées.",
+  "points": [
+   "Couvrance haute et durable",
+   "Une teinte par modèle, au choix",
+   "Teintes moyennes à foncées"
+  ],
+  "seo_desc": "Des anticernes Revolution à couvrance haute pour camoufler cernes et imperfections, en teintes moyennes à foncées. Disponible chez Aimé Essentials à Djibou",
+  "variants": [
+   {
+    "asin": "B079DRPNXF",
+    "label": "Conceal & Define C5",
+    "aed": 37.23,
+    "img": "https://m.media-amazon.com/images/I/51+LosUuY7L._AC_SL1000_.jpg"
+   },
+   {
+    "asin": "B079DRPNXG",
+    "label": "Conceal & Define C8",
+    "aed": 31.0,
+    "img": "https://m.media-amazon.com/images/I/71FczLJyvwS._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0BQWR32B9",
+    "label": "IRL Filter Finish C8",
+    "aed": 41.0,
+    "img": "https://m.media-amazon.com/images/I/61-Y801AAgL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0BQWTTF81",
+    "label": "IRL Filter Finish C10",
+    "aed": 38.5,
+    "img": "https://m.media-amazon.com/images/I/61E4Ccb0pcL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-pout-bomb-gloss-repulpant",
+  "title": "Revolution Pout Bomb gloss repulpant",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-gloss-levres",
+  "sub": "sub:mk-levres",
+  "weight_g": 30,
+  "option": "Teinte",
+  "intro": "Un gloss repulpant ultra brillant qui donne du volume aux lèvres, à l'acide hyaluronique.",
+  "points": [
+   "Effet repulpant et très brillant",
+   "Acide hyaluronique et vitamine E",
+   "Formule vegan"
+  ],
+  "seo_desc": "Un gloss repulpant ultra brillant qui donne du volume aux lèvres, à l'acide hyaluronique. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B09157BRD9",
+    "label": "Cookie Deep Nude",
+    "aed": 54.99,
+    "img": "https://m.media-amazon.com/images/I/71Yae6NPZuL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0915KCSLC",
+    "label": "Sauce Dusty Pink",
+    "aed": 34.3,
+    "img": "https://m.media-amazon.com/images/I/61e69QklTxL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DHDFB4VM",
+    "label": "Wild Mauve Pink",
+    "aed": 34.3,
+    "img": "https://m.media-amazon.com/images/I/711sB5hKaPL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DBZLS87N",
+    "label": "Melba Warm Peach",
+    "aed": 46.67,
+    "img": "https://m.media-amazon.com/images/I/71Q5wM2I0UL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DK9GZ2PZ",
+    "label": "Berry Lustre (irisé)",
+    "aed": 34.3,
+    "img": "https://m.media-amazon.com/images/I/718a07MZb1L._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-pout-lip-gloss-et-stick",
+  "title": "Revolution Pout gloss à lèvres et gloss stick",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-gloss-levres",
+  "sub": "sub:mk-levres",
+  "weight_g": 30,
+  "option": "Teinte",
+  "intro": "Un gloss haute brillance pigmenté, en tube ou en stick, à l'acide hyaluronique et à la vitamine E.",
+  "points": [
+   "Brillance intense et couleur pigmentée",
+   "Acide hyaluronique et vitamine E",
+   "Formule vegan"
+  ],
+  "seo_desc": "Un gloss haute brillance pigmenté, en tube ou en stick, à l'acide hyaluronique et à la vitamine E. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0F94GJNW9",
+    "label": "Gloss Crème Brûlée Mauve",
+    "aed": 38.5,
+    "img": "https://m.media-amazon.com/images/I/61-MEAGz5QL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0F94H5WXX",
+    "label": "Gloss Mauve",
+    "aed": 38.5,
+    "img": "https://m.media-amazon.com/images/I/61oXYnAe+DL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0F94JCCKQ",
+    "label": "Stick Sweet Rose",
+    "aed": 38.5,
+    "img": "https://m.media-amazon.com/images/I/61bi9amUTvL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0F94KDBQF",
+    "label": "Stick Toffee Nude",
+    "aed": 38.5,
+    "img": "https://m.media-amazon.com/images/I/61QYUpgGcCL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-relove-baby-gloss",
+  "title": "Revolution Relove Baby Gloss",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-gloss-levres",
+  "sub": "sub:mk-levres",
+  "weight_g": 20,
+  "option": "Teinte",
+  "intro": "Un gloss Relove à la texture confortable pour des lèvres brillantes et douces.",
+  "points": [
+   "Brillance confortable",
+   "Format mini facile à emporter",
+   "Formule vegan"
+  ],
+  "seo_desc": "Un gloss Relove à la texture confortable pour des lèvres brillantes et douces. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B095J119RS",
+    "label": "Cream",
+    "aed": 25.0,
+    "img": "https://m.media-amazon.com/images/I/417um3ExwLL._AC_SL1024_.jpg"
+   },
+   {
+    "asin": "B095J2Q4TN",
+    "label": "Glam",
+    "aed": 17.5,
+    "img": "https://m.media-amazon.com/images/I/51Q8P1WJhIL._AC_SL1080_.jpg"
+   },
+   {
+    "asin": "B095J1CRHF",
+    "label": "Super",
+    "aed": 11.6,
+    "img": "https://m.media-amazon.com/images/I/41kjW0NZhzL._AC_SL1000_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-pout-bomb-crayon-levres-repulpant",
+  "title": "Revolution Pout Bomb crayon à lèvres repulpant",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-rouges-levres",
+  "sub": "sub:mk-levres",
+  "weight_g": 15,
+  "option": "Teinte",
+  "intro": "Un crayon à lèvres repulpant pour définir le contour et sublimer la couleur, à l'acide hyaluronique.",
+  "points": [
+   "Tracé précis et confortable",
+   "Longue tenue",
+   "Formule vegan"
+  ],
+  "seo_desc": "Un crayon à lèvres repulpant pour définir le contour et sublimer la couleur, à l'acide hyaluronique. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0DD5PS451",
+    "label": "Cookie Warm Brown",
+    "aed": 24.5,
+    "img": "https://m.media-amazon.com/images/I/51jHAW-mYsL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DD5R3L7M",
+    "label": "Burnt Cherry Red",
+    "aed": 27.76,
+    "img": "https://m.media-amazon.com/images/I/51nr7bKaneL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DD5QKRLD",
+    "label": "Doll Cool Nude",
+    "aed": 24.5,
+    "img": "https://m.media-amazon.com/images/I/51WvvrFBddL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-pout-lip-oil-huile-levres-teintee",
+  "title": "Revolution Pout Lip Oil huile à lèvres teintée",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-gloss-levres",
+  "sub": "sub:mk-levres",
+  "weight_g": 30,
+  "option": "Teinte",
+  "intro": "Une huile à lèvres teintée et nourrissante pour un effet brillant non collant.",
+  "points": [
+   "Brillance non collante",
+   "Nourrit et adoucit les lèvres",
+   "Formule vegan"
+  ],
+  "seo_desc": "Une huile à lèvres teintée et nourrissante pour un effet brillant non collant. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0DMQH8YXF",
+    "label": "Cherry Red",
+    "aed": 37.0,
+    "img": "https://m.media-amazon.com/images/I/71kMM8mAaCL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DMQ79P3R",
+    "label": "Lychee Clear",
+    "aed": 37.0,
+    "img": "https://m.media-amazon.com/images/I/61ctRZVjL5L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DMPZQJ6X",
+    "label": "Glam Pink Shimmer",
+    "aed": 46.67,
+    "img": "https://m.media-amazon.com/images/I/61y0XjCSfVL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-glaze-lip-oil-4-6-ml",
+  "title": "Revolution Glaze Lip Oil huile à lèvres, 4,6 ml",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-gloss-levres",
+  "sub": "sub:mk-levres",
+  "weight_g": 30,
+  "option": "Teinte",
+  "intro": "Une huile à lèvres nourrissante pour des lèvres brillantes et douces.",
+  "points": [
+   "Brillance et douceur",
+   "Nourrit les lèvres",
+   "Format 4,6 ml"
+  ],
+  "seo_desc": "Une huile à lèvres nourrissante pour des lèvres brillantes et douces. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0BQWT2G7C",
+    "label": "Lust Clear",
+    "aed": 21.55,
+    "img": "https://m.media-amazon.com/images/I/51HbGBKhJCL._AC_SL1080_.jpg"
+   },
+   {
+    "asin": "B0BQWTDHFB",
+    "label": "Glam Pink",
+    "aed": 28.94,
+    "img": "https://m.media-amazon.com/images/I/51lGVIBqGnL._AC_SL1080_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-air-blur-rouge-levres-liquide-mat",
+  "title": "Revolution Air Blur rouge à lèvres liquide mat",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-rouges-levres",
+  "sub": "sub:mk-levres",
+  "weight_g": 30,
+  "option": "Teinte",
+  "intro": "Un rouge à lèvres liquide mat au fini flou, léger et confortable, longue tenue.",
+  "points": [
+   "Fini mat flou et léger",
+   "Longue tenue",
+   "Formule vegan"
+  ],
+  "seo_desc": "Un rouge à lèvres liquide mat au fini flou, léger et confortable, longue tenue. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0DSWM222H",
+    "label": "Black Cherry",
+    "aed": 38.5,
+    "img": "https://m.media-amazon.com/images/I/61BA3+TYf4L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DSWM6VCR",
+    "label": "Sultry",
+    "aed": 38.5,
+    "img": "https://m.media-amazon.com/images/I/61iMx+93u2L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DZNYRSVV",
+    "label": "Whisper",
+    "aed": 35.0,
+    "img": "https://m.media-amazon.com/images/I/5126yLca3CL._AC_SL1080_.jpg"
+   },
+   {
+    "asin": "B0DZP29TQL",
+    "label": "Fawn",
+    "aed": 52.38,
+    "img": "https://m.media-amazon.com/images/I/51Mskt2MzDL._AC_SL1080_.jpg"
+   },
+   {
+    "asin": "B0DSWLY9L3",
+    "label": "Chauffeur Nude",
+    "aed": 51.86,
+    "img": "https://m.media-amazon.com/images/I/61jqn-7SFjL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DSWND86F",
+    "label": "Siren Brown Nude",
+    "aed": 38.5,
+    "img": "https://m.media-amazon.com/images/I/614re6Fg9+L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DZP3P2WF",
+    "label": "Coco",
+    "aed": 52.38,
+    "img": "https://m.media-amazon.com/images/I/51RxPEHlGTL._AC_SL1080_.jpg"
+   },
+   {
+    "asin": "B0DSWMBGJL",
+    "label": "Fiery",
+    "aed": 32.65,
+    "img": "https://m.media-amazon.com/images/I/614LqgS0J4L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DSWX79RP",
+    "label": "Cool Natural Nude",
+    "aed": 47.43,
+    "img": "https://m.media-amazon.com/images/I/61gIptB1j5L._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-matte-bomb-rouge-levres-liquide",
+  "title": "Revolution Matte Bomb rouge à lèvres liquide mat",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-rouges-levres",
+  "sub": "sub:mk-levres",
+  "weight_g": 30,
+  "option": "Teinte",
+  "intro": "Un rouge à lèvres liquide mat à la couleur intense et au fini velouté.",
+  "points": [
+   "Couleur intense",
+   "Fini mat velouté",
+   "Formule vegan"
+  ],
+  "seo_desc": "Un rouge à lèvres liquide mat à la couleur intense et au fini velouté. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0B5DJZ192",
+    "label": "Delicate Brown",
+    "aed": 33.0,
+    "img": "https://m.media-amazon.com/images/I/31zoz0+0fmL._AC_SL1024_.jpg"
+   },
+   {
+    "asin": "B0B5DLJ1MW",
+    "label": "Burgundy Star",
+    "aed": 33.0,
+    "img": "https://m.media-amazon.com/images/I/41LJkPeZp2L._AC_SL1024_.jpg"
+   },
+   {
+    "asin": "B0B5DL1PCC",
+    "label": "Clueless Fuchsia",
+    "aed": 33.0,
+    "img": "https://m.media-amazon.com/images/I/41oak1irBqL._AC_SL1000_.jpg"
+   },
+   {
+    "asin": "B0B5DLMCVX",
+    "label": "Fancy Pink",
+    "aed": 33.0,
+    "img": "https://m.media-amazon.com/images/I/41RN003AHqL._AC_SL1200_.jpg"
+   },
+   {
+    "asin": "B0B5DP59D4",
+    "label": "Coral Cheer",
+    "aed": 55.0,
+    "img": "https://m.media-amazon.com/images/I/71zKtklEaXL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-rouges-levres-lip-allure-mats",
+  "title": "Revolution rouges à lèvres Lip Allure et mats",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-rouges-levres",
+  "sub": "sub:mk-levres",
+  "weight_g": 30,
+  "option": "Teinte",
+  "intro": "Des rouges à lèvres Revolution, satinés ou mats, pour une couleur riche et confortable.",
+  "points": [
+   "Un rouge à lèvres par teinte, au choix",
+   "Couleur riche et pigmentée",
+   "Formule vegan"
+  ],
+  "seo_desc": "Des rouges à lèvres Revolution, satinés ou mats, pour une couleur riche et confortable. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0CH3HWBFH",
+    "label": "Lip Allure Dusky Pink",
+    "aed": 49.0,
+    "img": "https://m.media-amazon.com/images/I/51sEcgJz+0L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0CH3FTJ64",
+    "label": "Lip Allure Queen Pink",
+    "aed": 34.3,
+    "img": "https://m.media-amazon.com/images/I/51NIx+pn3UL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B084V8PCFJ",
+    "label": "Heart Race 113 (mat)",
+    "aed": 34.0,
+    "img": "https://m.media-amazon.com/images/I/71hzSIVDb2L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B084V863W7",
+    "label": "Gone Rogue 124 (mat)",
+    "aed": 31.0,
+    "img": "https://m.media-amazon.com/images/I/51mNQW2UqBL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-pout-tint-3-ml",
+  "title": "Revolution Pout Tint teinte à lèvres, 3 ml",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-gloss-levres",
+  "sub": "sub:mk-levres",
+  "weight_g": 25,
+  "option": "Teinte",
+  "intro": "Une teinte à lèvres légère et hydratante, à l'effet gloss puis tenue colorée.",
+  "points": [
+   "Couleur modulable",
+   "Formule hydratante",
+   "Fini gloss qui tient comme une teinte"
+  ],
+  "seo_desc": "Une teinte à lèvres légère et hydratante, à l'effet gloss puis tenue colorée. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0CT474XG1",
+    "label": "Nude Dreams",
+    "aed": 46.0,
+    "img": "https://m.media-amazon.com/images/I/71FG1kl75hL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0CT45NLBP",
+    "label": "Sizzlin Red",
+    "aed": 34.3,
+    "img": "https://m.media-amazon.com/images/I/71vtBhsy6SL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0CT49R535",
+    "label": "Sweetie Coral",
+    "aed": 37.0,
+    "img": "https://m.media-amazon.com/images/I/714JA19mfEL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-kiss-drip-lip-tint-3-ml",
+  "title": "Revolution Kiss Drip teinte à lèvres effet eau, 3 ml",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-gloss-levres",
+  "sub": "sub:mk-levres",
+  "weight_g": 25,
+  "option": "Teinte",
+  "intro": "Une teinte à lèvres effet eau, légère et brillante, au beurre de karité et à l'acide hyaluronique.",
+  "points": [
+   "Fini frais et brillant",
+   "Hydratant et léger",
+   "Couleur modulable"
+  ],
+  "seo_desc": "Une teinte à lèvres effet eau, légère et brillante, au beurre de karité et à l'acide hyaluronique. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0GQBH7J2V",
+    "label": "Melon Mist",
+    "aed": 45.5,
+    "img": "https://m.media-amazon.com/images/I/611dlnYg9bL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0GQB8CGM3",
+    "label": "Cherry Glace",
+    "aed": 45.5,
+    "img": "https://m.media-amazon.com/images/I/61Q350plejL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0GQBGK153",
+    "label": "Strawberry Drizzle",
+    "aed": 45.5,
+    "img": "https://m.media-amazon.com/images/I/61pfo+yr5+L._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-relove-baby-tint-levres-joues",
+  "title": "Revolution Relove Baby Tint lèvres et joues",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-blush",
+  "sub": "sub:mk-joues",
+  "weight_g": 15,
+  "option": "Teinte",
+  "intro": "Une teinte à lèvres et à joues, légère et facile à estomper, pour une jolie couleur naturelle.",
+  "points": [
+   "S'utilise sur les lèvres et les joues",
+   "Couleur naturelle modulable",
+   "Format mini"
+  ],
+  "seo_desc": "Une teinte à lèvres et à joues, légère et facile à estomper, pour une jolie couleur naturelle. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B09NGXZ75B",
+    "label": "Coral",
+    "aed": 14.7,
+    "img": "https://m.media-amazon.com/images/I/51h0DxKChAL._AC_SL1024_.jpg"
+   },
+   {
+    "asin": "B0BS41MFP6",
+    "label": "Fuchsia",
+    "aed": 14.7,
+    "img": "https://m.media-amazon.com/images/I/61Y19xdKsvL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-blush-sticks",
+  "title": "Revolution blush sticks Fast Base et Blush & Highlight",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-blush",
+  "sub": "sub:mk-joues",
+  "weight_g": 40,
+  "option": "Teinte",
+  "intro": "Des blush en stick crémeux faciles à estomper, pour des joues colorées en un geste.",
+  "points": [
+   "Texture crème facile à estomper",
+   "Application au doigt ou au pinceau",
+   "Plusieurs teintes au choix"
+  ],
+  "seo_desc": "Des blush en stick crémeux faciles à estomper, pour des joues colorées en un geste. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0B1X47KTM",
+    "label": "Fast Base Rose",
+    "aed": 44.0,
+    "img": "https://m.media-amazon.com/images/I/41GzN3oG3wL._AC_SL1000_.jpg"
+   },
+   {
+    "asin": "B0B1X7594V",
+    "label": "Fast Base Peach",
+    "aed": 45.0,
+    "img": "https://m.media-amazon.com/images/I/519Zfa3G6sL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0BS42JWS2",
+    "label": "Fast Base Spice",
+    "aed": 41.3,
+    "img": "https://m.media-amazon.com/images/I/71kPjBrZ1rL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0BQWV2JDX",
+    "label": "Blush & Highlight Flushing Pink",
+    "aed": 38.5,
+    "img": "https://m.media-amazon.com/images/I/61JoTg3IQ0L._AC_SL1080_.jpg"
+   },
+   {
+    "asin": "B0BQWT1ZPR",
+    "label": "Blush & Highlight Champagne Shine",
+    "aed": 38.5,
+    "img": "https://m.media-amazon.com/images/I/51F+fyA+DRL._AC_SL1080_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-superdewy-blush-liquide",
+  "title": "Revolution Superdewy blush liquide",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-blush",
+  "sub": "sub:mk-joues",
+  "weight_g": 40,
+  "option": "Teinte",
+  "intro": "Un blush liquide Superdewy pour un teint frais et lumineux, facile à fondre sur les joues.",
+  "points": [
+   "Fini frais et lumineux",
+   "Texture liquide qui se fond",
+   "Couleur modulable"
+  ],
+  "seo_desc": "Un blush liquide Superdewy pour un teint frais et lumineux, facile à fondre sur les joues. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B09CYYP6GV",
+    "label": "Superdewy Liquid Blusher Flushing For You",
+    "aed": 44.99,
+    "img": "https://m.media-amazon.com/images/I/51A3gASqzLL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0F4Y17CCJ",
+    "label": "Blush Plump Serum Rose All Day Dusty Pink",
+    "aed": 38.5,
+    "img": "https://m.media-amazon.com/images/I/61ISL82AXSL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-blush-palettes",
+  "title": "Revolution palettes de blush",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-blush",
+  "sub": "sub:mk-joues",
+  "weight_g": 70,
+  "option": "Modèle",
+  "intro": "Des palettes de blush Revolution aux teintes mates et irisées pour varier les looks.",
+  "points": [
+   "Plusieurs teintes dans une palette",
+   "Mat et irisé",
+   "Très pigmentées"
+  ],
+  "seo_desc": "Des palettes de blush Revolution aux teintes mates et irisées pour varier les looks. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0DXL3R8YY",
+    "label": "Blush Icon Aura Points Rose",
+    "aed": 45.5,
+    "img": "https://m.media-amazon.com/images/I/61iQHKHmO-L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DXL4SFDV",
+    "label": "Blush Icon 3-en-1 Hot Pink Flag",
+    "aed": 45.5,
+    "img": "https://m.media-amazon.com/images/I/81K3kfvqjLL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0DSWHJ265",
+    "label": "Ultra Blush Sunset Burst",
+    "aed": 52.5,
+    "img": "https://m.media-amazon.com/images/I/713SU5Ox-fL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B00SJRS8OQ",
+    "label": "Ultra Blush Hot Spice",
+    "aed": 49.0,
+    "img": "https://m.media-amazon.com/images/I/6149KS6aYFL._AC_SL1080_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-contour-bronzer",
+  "title": "Revolution contour et bronzer",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-bronzer-eclat",
+  "sub": "sub:mk-joues",
+  "weight_g": 50,
+  "option": "Modèle",
+  "intro": "Des produits de contour et de bronzage Revolution pour sculpter le visage et donner du relief.",
+  "points": [
+   "Un produit par modèle, au choix",
+   "Sculpte et réchauffe le teint",
+   "Teintes moyennes à foncées"
+  ],
+  "seo_desc": "Des produits de contour et de bronzage Revolution pour sculpter le visage et donner du relief. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0B5PR6MMJ",
+    "label": "Fast Base Contour Stick Dark",
+    "aed": 55.0,
+    "img": "https://m.media-amazon.com/images/I/5193ZFrSi-L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0D6C115KK",
+    "label": "Precise Contour & Highlight Stick Medium",
+    "aed": 34.3,
+    "img": "https://m.media-amazon.com/images/I/51z6OA7J9sL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B07QLMWGJD",
+    "label": "Mega Bronzer 02 Warm",
+    "aed": 34.3,
+    "img": "https://m.media-amazon.com/images/I/81LSUtJXvIL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0B7Y1KKHY",
+    "label": "Relove Cream Contour Duo Medium",
+    "aed": 14.7,
+    "img": "https://m.media-amazon.com/images/I/61aouU8+5zL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0130O3CWA",
+    "label": "Ultra Contour Palette",
+    "aed": 55.72,
+    "img": "https://m.media-amazon.com/images/I/71Y27tAoFJL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-enlumineurs",
+  "title": "Revolution enlumineurs",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-bronzer-eclat",
+  "sub": "sub:mk-joues",
+  "weight_g": 40,
+  "option": "Modèle",
+  "intro": "Des enlumineurs Revolution pour illuminer les pommettes et donner de l'éclat au visage.",
+  "points": [
+   "Un enlumineur par modèle, au choix",
+   "Éclat lumineux",
+   "Formats stick, liquide et palette"
+  ],
+  "seo_desc": "Des enlumineurs Revolution pour illuminer les pommettes et donner de l'éclat au visage. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0C5HSS7KR",
+    "label": "Lustre Wand Obsessed Bronze",
+    "aed": 39.0,
+    "img": "https://m.media-amazon.com/images/I/51VAmG51KnL._AC_SL1080_.jpg"
+   },
+   {
+    "asin": "B0C5HTGWS1",
+    "label": "Lustre Wand Gold Flare",
+    "aed": 39.0,
+    "img": "https://m.media-amazon.com/images/I/51XcSTNItDL._AC_SL1080_.jpg"
+   },
+   {
+    "asin": "B0BS424KDP",
+    "label": "Relove Glow Up Lit Up (liquide)",
+    "aed": 19.6,
+    "img": "https://m.media-amazon.com/images/I/61p+ompo1iL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0BKH7YZ6G",
+    "label": "Bright Light Highlighter Divine Dark Pink",
+    "aed": 65.0,
+    "img": "https://m.media-amazon.com/images/I/51whpYycBoL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0GQBH294P",
+    "label": "Highlight Icon Pink Posse",
+    "aed": 65.0,
+    "img": "https://m.media-amazon.com/images/I/71v4B6kcUML._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-poudres-fixation",
+  "title": "Revolution poudres de fixation",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-poudres",
+  "sub": "sub:mk-correcteurs",
+  "weight_g": 60,
+  "option": "Modèle",
+  "intro": "Des poudres Revolution pour fixer le maquillage et matifier le teint.",
+  "points": [
+   "Une poudre par modèle, au choix",
+   "Fixe le maquillage",
+   "Fini mat et lisse"
+  ],
+  "seo_desc": "Des poudres Revolution pour fixer le maquillage et matifier le teint. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0BKZY3R3D",
+    "label": "Reloaded Pressed Powder Vanilla",
+    "aed": 20.3,
+    "img": "https://m.media-amazon.com/images/I/51PSBCJioVL._AC_SL1080_.jpg"
+   },
+   {
+    "asin": "B095J3S6HX",
+    "label": "Relove Super HD Setting Powder",
+    "aed": 14.7,
+    "img": "https://m.media-amazon.com/images/I/71nxTwT0n+L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0G7KL2KND",
+    "label": "Powder Pops Banana Light",
+    "aed": 37.0,
+    "img": "https://m.media-amazon.com/images/I/61bRi3tcR+L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0BBWM7W1M",
+    "label": "Banana Brighten Baking Powder",
+    "aed": 55.0,
+    "img": "https://m.media-amazon.com/images/I/61h9JscJA6L._AC_SL1080_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-palettes-fards-paupieres",
+  "title": "Revolution palettes de fards à paupières",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-palettes",
+  "sub": "sub:mk-yeux",
+  "weight_g": 120,
+  "option": "Modèle",
+  "intro": "Des palettes de fards Revolution aux teintes mates et irisées pour tous les looks.",
+  "points": [
+   "Une palette par modèle, au choix",
+   "Mates et irisées",
+   "Très pigmentées"
+  ],
+  "seo_desc": "Des palettes de fards Revolution aux teintes mates et irisées pour tous les looks. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B08V485PF8",
+    "label": "Ultimate Nudes Dark",
+    "aed": 55.33,
+    "img": "https://m.media-amazon.com/images/I/61+00bDfqDL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B08V49R6WF",
+    "label": "Ultimate Nudes Light",
+    "aed": 52.0,
+    "img": "https://m.media-amazon.com/images/I/51uCWRSayxL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B093HL7P7Q",
+    "label": "Maxi Reloaded Monster Mattes",
+    "aed": 69.0,
+    "img": "https://m.media-amazon.com/images/I/61KeeMxCAyL._AC_SL1200_.jpg"
+   },
+   {
+    "asin": "B07FZK5B3P",
+    "label": "Re-Loaded Velvet Rose",
+    "aed": 45.5,
+    "img": "https://m.media-amazon.com/images/I/81li0dMrmDL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0915R9BB7",
+    "label": "Reloaded Marvellous Mattes",
+    "aed": 29.0,
+    "img": "https://m.media-amazon.com/images/I/61pGv2FRcvL._AC_SL1080_.jpg"
+   },
+   {
+    "asin": "B00WX841MK",
+    "label": "Ultra 32 Shades Beyond Flawless",
+    "aed": 75.0,
+    "img": "https://m.media-amazon.com/images/I/817D3yaRAJL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B01ATPR0XK",
+    "label": "New-Trals vs Neutrals",
+    "aed": 65.0,
+    "img": "https://m.media-amazon.com/images/I/81yQESf0stL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-mascaras",
+  "title": "Revolution mascaras",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-mascaras",
+  "sub": "sub:mk-yeux",
+  "weight_g": 40,
+  "option": "Modèle",
+  "intro": "Des mascaras Revolution pour allonger, épaissir et recourber les cils.",
+  "points": [
+   "Un mascara par modèle, au choix",
+   "Volume et longueur",
+   "Formules classiques et waterproof"
+  ],
+  "seo_desc": "Des mascaras Revolution pour allonger, épaissir et recourber les cils. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0952TCJNP",
+    "label": "5D Lash",
+    "aed": 48.42,
+    "img": "https://m.media-amazon.com/images/I/51sm99mRqbL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0C5HXPNMP",
+    "label": "Big Lash Reloaded Volume",
+    "aed": 45.0,
+    "img": "https://m.media-amazon.com/images/I/51-KMi7rpXL._AC_SL1080_.jpg"
+   },
+   {
+    "asin": "B0B1QPD7DZ",
+    "label": "5D Lash Lift & Define waterproof",
+    "aed": 56.0,
+    "img": "https://m.media-amazon.com/images/I/71GeGH99zjL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B095J2H9CN",
+    "label": "Relove Power Lash Volume",
+    "aed": 14.7,
+    "img": "https://m.media-amazon.com/images/I/41Bcot+t-8L._AC_SL1024_.jpg"
+   },
+   {
+    "asin": "B09J2LHZZH",
+    "label": "Power Lash waterproof",
+    "aed": 14.7,
+    "img": "https://m.media-amazon.com/images/I/41ItMuE5jbL._AC_SL1024_.jpg"
+   },
+   {
+    "asin": "B09J2M3RYM",
+    "label": "Relove Long Lash",
+    "aed": 17.5,
+    "img": "https://m.media-amazon.com/images/I/41d7oTpytEL._AC_SL1000_.jpg"
+   },
+   {
+    "asin": "B0GPNGTT91",
+    "label": "Fierce Lash Volume",
+    "aed": 25.0,
+    "img": "https://m.media-amazon.com/images/I/61eCqoAlMWL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0CRVS2WM1",
+    "label": "Wispify False Lash",
+    "aed": 52.5,
+    "img": "https://m.media-amazon.com/images/I/61nvDuOsJdL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0F2TLB7JN",
+    "label": "Wrap Lash Tubing noir",
+    "aed": 59.5,
+    "img": "https://m.media-amazon.com/images/I/61MNEnCgsCL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0F2TL9Z7C",
+    "label": "Wrap Lash Tubing marron",
+    "aed": 59.5,
+    "img": "https://m.media-amazon.com/images/I/6159B5Yt3YL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-eyeliners",
+  "title": "Revolution eyeliners",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-eyeliners-sourcils",
+  "sub": "sub:mk-yeux",
+  "weight_g": 20,
+  "option": "Modèle",
+  "intro": "Des eyeliners Revolution pour un trait précis, du plus fin au plus graphique.",
+  "points": [
+   "Un eyeliner par modèle, au choix",
+   "Trait précis",
+   "Longue tenue"
+  ],
+  "seo_desc": "Des eyeliners Revolution pour un trait précis, du plus fin au plus graphique. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0CRVVK29W",
+    "label": "Super Flick noir",
+    "aed": 27.0,
+    "img": "https://m.media-amazon.com/images/I/61g38-D54+L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0CRVTCN1B",
+    "label": "Super Flick marron",
+    "aed": 52.35,
+    "img": "https://m.media-amazon.com/images/I/61TO54IxqLL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0G6F7BVVZ",
+    "label": "Fierce Flick feutre",
+    "aed": 17.5,
+    "img": "https://m.media-amazon.com/images/I/61vdyidztWL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0B7WL849S",
+    "label": "Relove Water Activated Agile",
+    "aed": 22.26,
+    "img": "https://m.media-amazon.com/images/I/71kq4sBis6L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0B7WLKXFR",
+    "label": "Relove Water Activated Double Up",
+    "aed": 42.0,
+    "img": "https://m.media-amazon.com/images/I/71+aaKedrdL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-duo-brow-definer-crayon-sourcils",
+  "title": "Revolution Duo Brow Definer crayon à sourcils",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-eyeliners-sourcils",
+  "sub": "sub:mk-sourcils",
+  "weight_g": 15,
+  "option": "Teinte",
+  "intro": "Un crayon à sourcils avec brosse pour définir et structurer les sourcils.",
+  "points": [
+   "Crayon et brosse intégrée",
+   "Tracé précis",
+   "Trois teintes au choix"
+  ],
+  "seo_desc": "Un crayon à sourcils avec brosse pour définir et structurer les sourcils. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B07KWXP9SV",
+    "label": "Light Brown",
+    "aed": 25.9,
+    "img": "https://m.media-amazon.com/images/I/51oIjKazsjL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B07KWN17RQ",
+    "label": "Medium Brown",
+    "aed": 25.9,
+    "img": "https://m.media-amazon.com/images/I/51qklPqJU6L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B07KWVKJPN",
+    "label": "Dark Brown",
+    "aed": 25.9,
+    "img": "https://m.media-amazon.com/images/I/51FUO5fqT-L._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-fluffy-brow-filter-duo",
+  "title": "Revolution Fluffy Brow Filter Duo crayon et gel sourcils",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-eyeliners-sourcils",
+  "sub": "sub:mk-sourcils",
+  "weight_g": 25,
+  "option": "Teinte",
+  "intro": "Un duo crayon et gel pour des sourcils fournis et bien dessinés.",
+  "points": [
+   "Crayon et gel en un seul produit",
+   "Effet sourcils fournis",
+   "Plusieurs teintes au choix"
+  ],
+  "seo_desc": "Un duo crayon et gel pour des sourcils fournis et bien dessinés. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0CRVTRF3R",
+    "label": "Medium Brown",
+    "aed": 17.55,
+    "img": "https://m.media-amazon.com/images/I/611qVNHzdsL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0CRVT3PZV",
+    "label": "Ash Brown",
+    "aed": 41.0,
+    "img": "https://m.media-amazon.com/images/I/61lFsNoE4HL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0CRVQK9LZ",
+    "label": "Dark Brown",
+    "aed": 48.3,
+    "img": "https://m.media-amazon.com/images/I/61Xh-HkWOrL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-relove-blade-brow-pencil",
+  "title": "Revolution Relove Blade Brow Pencil crayon à sourcils",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-eyeliners-sourcils",
+  "sub": "sub:mk-sourcils",
+  "weight_g": 15,
+  "option": "Teinte",
+  "intro": "Un crayon à sourcils à pointe fine pour dessiner des poils précis.",
+  "points": [
+   "Pointe fine pour un tracé précis",
+   "Format pratique",
+   "Deux teintes au choix"
+  ],
+  "seo_desc": "Un crayon à sourcils à pointe fine pour dessiner des poils précis. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B095J1JL3K",
+    "label": "Brown",
+    "aed": 9.8,
+    "img": "https://m.media-amazon.com/images/I/41PIA5jSiaL._AC_SL1200_.jpg"
+   },
+   {
+    "asin": "B0BHJ1C1FW",
+    "label": "Granite",
+    "aed": 9.8,
+    "img": "https://m.media-amazon.com/images/I/31AtCGDu3PL._AC_SL1024_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-brow-powder-stamp-stencil-kit",
+  "title": "Revolution Brow Powder Stamp & Stencil Kit",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-eyeliners-sourcils",
+  "sub": "sub:mk-sourcils",
+  "weight_g": 25,
+  "option": "Teinte",
+  "intro": "Un kit tampon et pochoirs pour dessiner des sourcils nets et réguliers en quelques secondes.",
+  "points": [
+   "Tampon et pochoirs inclus",
+   "Résultat régulier",
+   "Trois teintes au choix"
+  ],
+  "seo_desc": "Un kit tampon et pochoirs pour dessiner des sourcils nets et réguliers en quelques secondes. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0BS43RRJV",
+    "label": "Medium Brown",
+    "aed": 49.0,
+    "img": "https://m.media-amazon.com/images/I/51YJFbcr+5L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0BS41XZDF",
+    "label": "Ash Brown",
+    "aed": 43.66,
+    "img": "https://m.media-amazon.com/images/I/61cCNPPhpdL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0BS3XZXBF",
+    "label": "Dark Brown",
+    "aed": 27.62,
+    "img": "https://m.media-amazon.com/images/I/61BylK4zdbL._AC_SL1500_.jpg"
+   }
+  ]
+ },
+ {
+  "handle": "revolution-sprays-fixateurs-bases",
+  "title": "Revolution sprays fixateurs et bases de teint",
+  "vendor": "Revolution",
+  "rayon": "rayon:maquillage-sprays-fixateurs",
+  "sub": "sub:mk-correcteurs",
+  "weight_g": 150,
+  "option": "Modèle",
+  "intro": "Des sprays fixateurs et des bases Revolution pour préparer la peau et faire tenir le maquillage.",
+  "points": [
+   "Un produit par modèle, au choix",
+   "Maquillage qui tient plus longtemps",
+   "Sprays et primers"
+  ],
+  "seo_desc": "Des sprays fixateurs et des bases Revolution pour préparer la peau et faire tenir le maquillage. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0976Q1YCS",
+    "label": "Superfix Misting Spray",
+    "aed": 66.5,
+    "img": "https://m.media-amazon.com/images/I/61Gcz+9Pb6L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B01F93GC6I",
+    "label": "Oil Control Fixing Spray 100 ml",
+    "aed": 53.2,
+    "img": "https://m.media-amazon.com/images/I/51EzzvJa0KL._AC_SL1080_.jpg"
+   },
+   {
+    "asin": "B0DSWK2G9S",
+    "label": "Superfix Grip Primer 24 ml",
+    "aed": 45.5,
+    "img": "https://m.media-amazon.com/images/I/610NdXdP+6L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B095J1QNX9",
+    "label": "Relove Pore Vanish Primer",
+    "aed": 35.0,
+    "img": "https://m.media-amazon.com/images/I/41so3GdIRNL._AC_SL1080_.jpg"
+   },
+   {
+    "asin": "B08YHT369B",
+    "label": "Fix & Glow Spray 100 ml",
+    "aed": 75.08,
+    "img": "https://m.media-amazon.com/images/I/51LyT767zXL._AC_SL1080_.jpg"
+   },
+   {
+    "asin": "B015Z7UG3S",
+    "label": "Base Fix Spray 100 ml",
+    "aed": 79.0,
+    "img": "https://m.media-amazon.com/images/I/61W9lq-Wn0L._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B07QPY3MS3",
+    "label": "Mattify Primer matifiant",
+    "aed": 80.0,
+    "img": "https://m.media-amazon.com/images/I/51obX9cbCDL._AC_SL1080_.jpg"
+   }
+  ]
  }
 ]
