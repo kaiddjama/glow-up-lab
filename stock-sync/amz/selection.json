@@ -2858,5 +2858,44 @@
     "img": "https://m.media-amazon.com/images/I/511jFJJ41YL._AC_SL1500_.jpg"
    }
   ]
+ },
+ {
+  "handle": "e-l-f-halo-glow-liquid-filter-31-5-ml",
+  "extend": "e-l-f-halo-glow-liquid-filter-31-5-ml",
+  "title": "e.l.f. Halo Glow Liquid Filter enlumineur teinté, 31,5 ml",
+  "vendor": "e.l.f.",
+  "rayon": "rayon:maquillage-bronzer-eclat",
+  "sub": "sub:mk-teint",
+  "weight_g": 100,
+  "option": "Teinte",
+  "intro": "",
+  "points": [],
+  "seo_desc": "",
+  "variants": [
+   {
+    "asin": "B0CL1H6W3L",
+    "label": "0 Fair",
+    "aed": 82.8,
+    "img": "https://m.media-amazon.com/images/I/61VJ4KtPIML._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0C7WXB4K5",
+    "label": "0.5 Fair",
+    "aed": 78.0,
+    "img": "https://m.media-amazon.com/images/I/61p+tdb0gQL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0F3J5DJ15",
+    "label": "6.5 Deep",
+    "aed": 79.0,
+    "img": "https://m.media-amazon.com/images/I/61V1m76nDPL._AC_SL1500_.jpg"
+   },
+   {
+    "asin": "B0C7W329LP",
+    "label": "8.5 Rich",
+    "aed": 71.74,
+    "img": "https://m.media-amazon.com/images/I/61cB6l8pngL._AC_SL1500_.jpg"
+   }
+  ]
  }
 ]
