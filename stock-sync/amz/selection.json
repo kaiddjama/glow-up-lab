@@ -1308,8 +1308,8 @@
   ]
  },
  {
-  "handle": "nyx-buttermelt-stix-stick-eclat",
-  "title": "NYX Buttermelt Stix stick éclat",
+  "handle": "nyx-buttermelt-stix-enlumineur-creme-stick",
+  "title": "NYX Buttermelt Stix enlumineur crème stick",
   "vendor": "NYX",
   "rayon": "rayon:maquillage-bronzer-eclat",
   "sub": "sub:mk-joues",
@@ -1341,7 +1341,8 @@
     "aed": 31.85,
     "img": "https://m.media-amazon.com/images/I/51BxNfj4qYL._AC_SL1080_.jpg"
    }
-  ]
+  ],
+  "extend": "nyx-buttermelt-stix-enlumineur-creme-stick"
  },
  {
   "handle": "elf-pinceau-kabuki-visage",
