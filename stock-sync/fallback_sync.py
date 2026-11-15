@@ -40,6 +40,7 @@ def decide(r, page, mod, now):
             return "stop", None, {**off, "pend": state["pend"]}
     else:
         state.pop("pend", None)
+        state.pop("low", None)
     return "refresh", price, {**state, "src_t": s.iso(now)}
 
 

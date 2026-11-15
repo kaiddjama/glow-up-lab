@@ -115,7 +115,7 @@ jobs:
         with:
           name: sync-report-${{ strategy.job-index }}
           path: stock-sync/results/*.json
-          retention-days: 7
+          retention-days: 30  # the prices read at every check (7 days until 15 Nov: the proof of a price was gone after a week)
           if-no-files-found: ignore
   coverage:
     # Safeguard: every variant on sale must have been read on Amazon.ae by THIS check. What the readers did not read (a
