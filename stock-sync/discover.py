@@ -15,12 +15,13 @@ import urllib.parse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import amazon_sync as a  # noqa: E402
 
-ALL = {"huda": "huda beauty", "nyx": "nyx professional makeup", "elf": "e.l.f. cosmetics", "essence": "essence cosmetics"}
+ALL = {"huda": "huda beauty", "nyx": "nyx professional makeup", "elf": "e.l.f. cosmetics", "essence": "essence cosmetics", "rt": "real techniques"}
 BRANDS = {k: v for k, v in ALL.items() if k in os.environ.get("BRAND_KEYS", "huda,nyx,elf,essence").split(",")}
 TERMS = ["", "foundation", "concealer", "setting powder", "powder", "blush", "bronzer", "highlighter", "contour",
          "lipstick", "lip gloss", "lip liner", "lip oil", "lip balm", "eyeliner", "mascara", "eyeshadow palette",
          "brow", "primer", "setting spray", "makeup brush", "lashes", "skin tint", "tinted moisturizer", "kohl pencil",
          "face palette", "cream blush", "lip plumper", "cleanser", "skincare"]
+TERMS = [x.strip() for x in os.environ["TERMS"].split(",")] if os.environ.get("TERMS") else TERMS  # TERMS="a,b" overrides
 PAGES = (1, 2, 3)
 JS = """() => [...document.querySelectorAll('div[data-component-type="s-search-result"]')].map(d => ({
   asin: d.getAttribute('data-asin'),

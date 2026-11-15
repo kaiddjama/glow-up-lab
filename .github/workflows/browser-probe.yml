@@ -28,6 +28,10 @@ on:
         description: "audit = shop names vs Amazon.ae pages, discover = search the brands' current catalogue"
         type: string
         default: "audit"
+      terms:
+        description: "discover mode: search terms, comma-separated (empty = the makeup list)"
+        type: string
+        default: ""
       dry_run:
         description: "create / publish modes: list only, change nothing on Shopify"
         type: boolean
@@ -65,6 +69,7 @@ jobs:
           BROWSER_DISTRICT: ${{ inputs.district }}
           VENDORS: ${{ inputs.vendors }}
           BRAND_KEYS: ${{ inputs.brands }}
+          TERMS: ${{ inputs.terms }}
           PYTHONUNBUFFERED: "1"
           ASINS: ${{ inputs.asins }}
           MODE: ${{ inputs.mode }}
