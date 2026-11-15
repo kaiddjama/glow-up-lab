@@ -16,6 +16,14 @@ on:
         description: "unused (kept for compatibility)"
         type: boolean
         default: false
+      brands:
+        description: "discover mode: brand keys, comma-separated (huda,nyx,elf,essence)"
+        type: string
+        default: "huda,nyx,elf,essence"
+      vendors:
+        description: "audit mode: Shopify product searches, comma-separated"
+        type: string
+        default: "vendor:NYX*,vendor:e.l.f.*,vendor:elf*,vendor:Huda*,title:Huda*,title:NYX*,title:e.l.f.*"
       mode:
         description: "audit = shop names vs Amazon.ae pages, discover = search the brands' current catalogue"
         type: string
@@ -45,7 +53,8 @@ jobs:
         env:
           DELAY: "8"
           BROWSER_DISTRICT: ${{ inputs.district }}
-          VENDORS: "vendor:NYX*,vendor:e.l.f.*,vendor:elf*,vendor:Huda*,title:Huda*,title:NYX*,title:e.l.f.*"
+          VENDORS: ${{ inputs.vendors }}
+          BRAND_KEYS: ${{ inputs.brands }}
           PYTHONUNBUFFERED: "1"
         run: |
           if [ "${{ inputs.mode }}" = "discover" ]; then python3 -I discover.py ${{ matrix.shard }} 6 out
