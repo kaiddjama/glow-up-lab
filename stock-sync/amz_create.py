@@ -39,7 +39,7 @@ STAGED_M = """mutation($i:[StagedUploadInput!]!){ stagedUploadsCreate(input:$i){
 
 def html(p):
     items = "".join(f"<li>{x}</li>" for x in p["points"])
-    return f"<p>{p['intro']}</p><ul>{items}</ul>"
+    return f"<p>{p['intro']}</p><ul>{items}</ul>" + (f"<p>{p['note']}</p>" if p.get("note") else "")
 
 
 def white_square(raw):
@@ -138,6 +138,8 @@ def link_photos(p, pid, vs, sku_to_id, by_alt):
 
 
 def tags_of(p):
+    if p.get("tags_base"):  # non-makeup entries (supplements...): own tag set
+        return list(dict.fromkeys(p["tags_base"] + [s.OUT_TAG] + p.get("tags", [])))
     base = ["cat:maquillage", "concern:maquillage", "maquillage", "nouveau", p["rayon"], p["sub"], "stock:sur-commande",
             "sur-commande", s.OUT_TAG]
     return base + [t for t in p.get("tags", []) if t not in base]
@@ -259,7 +261,7 @@ def main():
             errors += 1
             continue
         inp = {
-            "title": p["title"], "handle": p["handle"], "vendor": p["vendor"], "productType": PRODUCT_TYPE, "status": "DRAFT",
+            "title": p["title"], "handle": p["handle"], "vendor": p["vendor"], "productType": p.get("product_type", PRODUCT_TYPE), "status": "DRAFT",
             "tags": tags_of(p), "descriptionHtml": html(p),
             "seo": {"title": p.get("seo_title") or p["title"][:60], "description": p["seo_desc"]},
             "productOptions": [{"name": p.get("option", "Teinte"), "values": [{"name": v["label"]} for v in p["variants"]]}],

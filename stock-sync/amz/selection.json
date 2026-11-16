@@ -2858,5 +2858,39 @@
     "img": "https://m.media-amazon.com/images/I/511jFJJ41YL._AC_SL1500_.jpg"
    }
   ]
+ },
+ {
+  "handle": "now-foods-huile-de-pepins-de-courge-1000-mg-100-capsules",
+  "title": "NOW Foods huile de pépins de courge 1000 mg, 100 capsules",
+  "vendor": "NOW Foods",
+  "product_type": "Compléments & nutrition",
+  "tags_base": [
+   "cat:complements",
+   "nouveau",
+   "rayon:complements-vitamines",
+   "sub:cp-bienetre",
+   "stock:sur-commande",
+   "sur-commande"
+  ],
+  "weight_g": 170,
+  "option": "Title",
+  "intro": "De l'huile de pépins de courge pressée à froid, en capsules molles, riche en acides gras essentiels et en phytostérols.",
+  "points": [
+   "Pour les adultes : soutien de la prostate, du confort urinaire et des cheveux",
+   "1 000 mg par capsule, 100 capsules",
+   "Pressée à froid, sans OGM",
+   "Prise conseillée : 2 capsules, 1 à 2 fois par jour, pendant un repas"
+  ],
+  "note": "Complément alimentaire. Ne remplace pas une alimentation variée. Demandez conseil à un professionnel de santé en cas de grossesse, d'allaitement ou de traitement.",
+  "seo_title": "NOW Foods huile de pépins de courge 1000 mg",
+  "seo_desc": "Huile de pépins de courge pressée à froid en capsules molles, riche en acides gras essentiels et en phytostérols. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B000A2G2U0",
+    "label": "Default Title",
+    "aed": 70.0,
+    "img": "https://m.media-amazon.com/images/I/71Lw8TpIT3L._AC_SL1500_.jpg"
+   }
+  ]
  }
 ]
