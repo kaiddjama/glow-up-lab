@@ -1,0 +1,152 @@
+{%- comment -%}
+  Offre de bienvenue -10 % mise en avant (30 oct.) pour nourrir la liste email.
+  Le code WELCOME10 n'est jamais affiché : chaque bouton ouvre le popup « Obtenir 10 % » (gul-popup-bienvenue),
+  et le code part par email une fois l'adresse donnée.
+  - Accueil : bandeau bordeaux sous les bannières.
+  - Fiche produit : carte « -10 % » au-dessus du bloc livraison.
+  - Panier (tiroir) : carte au-dessus du total.
+  - Barre d'annonce : lien #offre-bienvenue (voir header-group.json).
+  Retour arrière : retirer {% render 'gul-offre-bienvenue' %} de snippets/gul-stock-default.liquid.
+{%- endcomment -%}
+{%- assign gul_en = false -%}
+{%- if request.locale.iso_code contains 'en' -%}{%- assign gul_en = true -%}{%- endif -%}
+{%- unless template contains 'password' or template contains 'customers' -%}
+<template id="gul-offre-band">
+  <section class="gul-offre gul-offre--band" aria-labelledby="gul-offre-band-title">
+    <div class="gul-offre__inner">
+      <p class="gul-offre__figure" aria-hidden="true">-10&#8239;%</p>
+      <div class="gul-offre__copy-block">
+        <h2 class="gul-offre__title" id="gul-offre-band-title">{% if gul_en %}On your first order{% else %}Sur votre première commande{% endif %}</h2>
+        <p class="gul-offre__sub">{% if gul_en %}Leave your email, your welcome code arrives in your inbox.{% else %}Laissez votre email, votre code de bienvenue arrive dans votre boîte mail.{% endif %}</p>
+        <button type="button" class="gul-offre__cta" data-gul-wp-open>{% if gul_en %}Get my code{% else %}Recevoir mon code{% endif %}</button>
+      </div>
+    </div>
+  </section>
+</template>
+<template id="gul-offre-card">
+  <div class="gul-offre gul-offre--card" role="note">
+    <p class="gul-offre__line"><strong>{% if gul_en %}10% off your first order.{% else %}-10&#8239;% sur votre première commande.{% endif %}</strong> {% if gul_en %}Leave your email to receive your code.{% else %}Laissez votre email pour recevoir votre code.{% endif %}</p>
+    <button type="button" class="gul-offre__btn" data-gul-wp-open>{% if gul_en %}Get my code{% else %}Recevoir mon code{% endif %}</button>
+  </div>
+</template>
+
+<style>
+  :root {
+    --gul-offre-field: #701C32;
+    --gul-offre-field-deep: #551425;
+    --gul-offre-paper: #F6F1EB;
+    --gul-offre-paper-2: #E8DCCF;
+    --gul-offre-ink: #1E1A17;
+    --gul-offre-gutter: clamp(20px, 5vw, 64px);
+    --gul-offre-radius: 12px;
+  }
+  .gul-offre button { font: inherit; cursor: pointer; }
+  .gul-offre button:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+
+  /* Accueil : un aplat bordeaux, le chiffre en grand, une phrase, une action */
+  .gul-offre--band { background: var(--gul-offre-field); color: var(--gul-offre-paper); padding: clamp(40px, 7vw, 88px) var(--gul-offre-gutter); overflow-x: clip; }
+  .gul-offre__inner { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(16px, 3vw, 48px); align-items: end; max-width: 1200px; margin-inline: auto; }
+  .gul-offre__figure { margin: 0; font-size: clamp(5rem, 17vw, 11rem); font-weight: 300; line-height: 0.9; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; overflow-wrap: break-word; min-width: 0; }
+  .gul-offre__copy-block { display: grid; gap: 12px; justify-items: start; min-width: 0; }
+  .gul-offre__title { margin: 0; font-size: clamp(1.5rem, 3.4vw, 2.25rem); font-weight: 400; line-height: 1.15; letter-spacing: -0.02em; text-wrap: balance; max-width: 20ch; }
+  .gul-offre__sub { margin: 0; font-size: 1rem; line-height: 1.55; max-width: 44ch; text-wrap: pretty; opacity: 0.9; }
+  .gul-offre__cta { margin-top: 8px; min-height: 48px; padding: 12px 28px; border: 0; border-radius: 100px; background: var(--gul-offre-paper); color: var(--gul-offre-field); font-size: 1rem; font-weight: 500; transition: background-color 120ms ease-out; }
+  .gul-offre__cta:hover { background: var(--gul-offre-paper-2); }
+  @media (min-width: 750px) {
+    .gul-offre__inner { grid-template-columns: auto minmax(0, 1fr); }
+    .gul-offre__copy-block { padding-bottom: 0.6em; }
+  }
+
+  /* Fiche produit et panier : un aplat sable discret, une ligne, un bouton */
+  .gul-offre--card { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; margin: 0 0 16px; padding: 14px 16px; border-radius: var(--gul-offre-radius); background: var(--gul-offre-paper-2); color: var(--gul-offre-ink); box-sizing: border-box; }
+  .gul-offre__line { margin: 0; font-size: 0.875rem; line-height: 1.45; text-wrap: pretty; min-width: 0; }
+  .gul-offre__line strong { display: block; font-weight: 500; color: var(--gul-offre-field); }
+  .gul-offre__btn { flex: none; min-height: 40px; padding: 8px 18px; border: 0; border-radius: 100px; background: var(--gul-offre-field); color: var(--gul-offre-paper); font-size: 0.875rem; font-weight: 500; transition: background-color 120ms ease-out; }
+  .gul-offre__btn:hover { background: var(--gul-offre-field-deep); }
+  .gul-offre--cart { width: auto; margin: 16px var(--cart-drawer-padding, 20px) 0; }
+  @media (max-width: 480px) { .gul-offre--card { flex-direction: column; align-items: flex-start; } }
+
+  /* Barre d'annonce : lisible, sans lettres espacées, sur deux lignes au besoin */
+  .announcement-bar__slide { --line-height: 1.3 !important; --letter-spacing: 0 !important; }
+  .announcement-bar__text strong { font-weight: 500; }
+  @media (prefers-reduced-motion: reduce) { .gul-offre * { transition: none !important; } }
+</style>
+
+<script>
+  (function () {
+    var TEMPLATE = {{ template.name | json }};
+
+    function clone(id) {
+      var t = document.getElementById(id);
+      return t && t.content && t.content.firstElementChild ? t.content.firstElementChild.cloneNode(true) : null;
+    }
+
+    function placeHome() {
+      if (TEMPLATE !== 'index' || document.querySelector('.gul-offre--band')) return;
+      var band = clone('gul-offre-band');
+      if (!band) return;
+      var after = document.querySelector('[id$="__ban_m"]');
+      var before = document.querySelector('[id$="__brands"]');
+      if (after) after.insertAdjacentElement('afterend', band);
+      else if (before) before.parentNode.insertBefore(band, before);
+    }
+
+    function placeProduct() {
+      if (!document.querySelector('[data-gul-delivery]') || document.querySelector('.gul-offre--product')) return;
+      var box = document.querySelector('[data-gul-delivery]');
+      var card = clone('gul-offre-card');
+      if (!card) return;
+      card.classList.add('gul-offre--product');
+      box.parentNode.insertBefore(card, box);
+    }
+
+    function ensureCart() {
+      var summary = document.querySelector('#cart-drawer .cart-drawer__summary');
+      if (!summary || !summary.parentNode) return;
+      var current = summary.parentNode.querySelector(':scope > .gul-offre--cart');
+      if (current) return;
+      var card = clone('gul-offre-card');
+      if (!card) return;
+      card.classList.add('gul-offre--cart');
+      summary.parentNode.insertBefore(card, summary);
+    }
+
+    function openWelcome(source) {
+      var drawer = source.closest && source.closest('#cart-drawer');
+      var go = function () {
+        if (typeof window.gulOpenWelcome === 'function') window.gulOpenWelcome();
+        else window.location.href = '/#offre-bienvenue';
+      };
+      if (drawer) {
+        var host = drawer.closest('theme-drawer') || drawer;
+        if (typeof host.close === 'function') host.close();
+        else { var dialog = drawer.closest('dialog'); if (dialog && dialog.close) dialog.close(); }
+        window.setTimeout(go, 250);
+      } else {
+        go();
+      }
+    }
+
+    document.addEventListener('click', function (event) {
+      var trigger = event.target.closest && event.target.closest('[data-gul-wp-open], a[href="#offre-bienvenue"]');
+      if (trigger) { event.preventDefault(); openWelcome(trigger); }
+    });
+
+    function init() {
+      placeHome();
+      placeProduct();
+      ensureCart();
+      var drawer = document.getElementById('cart-drawer');
+      if (drawer && 'MutationObserver' in window) {
+        var queued = false;
+        new MutationObserver(function () {
+          if (queued) return;
+          queued = true;
+          window.requestAnimationFrame(function () { queued = false; ensureCart(); });
+        }).observe(drawer, { childList: true, subtree: true });
+      }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  })();
+</script>
+{%- endunless -%}

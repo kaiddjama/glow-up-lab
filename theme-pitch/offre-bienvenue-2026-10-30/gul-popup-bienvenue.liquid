@@ -1,0 +1,116 @@
+{%- comment -%}
+  Popup de bienvenue : « Obtenir 10 % ». Récolte l'email (client + tag welcome10, abonné marketing).
+  Le code WELCOME10 n'est jamais affiché sur le site : il part par email (automatisation Shopify Email).
+  Ouverture depuis la barre d'annonce, l'accueil, les fiches produit et le panier : lien #offre-bienvenue ou bouton [data-gul-wp-open].
+  Retour arrière : retirer {% render 'gul-popup-bienvenue' %} de layout/theme.liquid.
+{%- endcomment -%}
+{%- assign gul_en = false -%}
+{%- if request.locale.iso_code contains 'en' -%}{%- assign gul_en = true -%}{%- endif -%}
+{%- unless template contains 'cart' or template contains 'customers' or template contains 'password' -%}
+<div class="gul-wp" id="gul-wp" role="dialog" aria-modal="true" aria-labelledby="gul-wp-title" hidden>
+  <div class="gul-wp__backdrop" data-gul-wp-close></div>
+  <div class="gul-wp__card">
+    <button type="button" class="gul-wp__close" data-gul-wp-close aria-label="{% if gul_en %}Close{% else %}Fermer{% endif %}">&times;</button>
+    <div class="gul-wp__badge" aria-hidden="true"><span>-10%</span></div>
+    {%- form 'customer', id: 'gul-wp-form', class: 'gul-wp__form', return_to: request.path -%}
+      {%- if form.posted_successfully? -%}
+        <p class="gul-wp__eyebrow">{% if gul_en %}Welcome{% else %}Bienvenue{% endif %}</p>
+        <h2 class="gul-wp__title" id="gul-wp-title">{% if gul_en %}Thank you!{% else %}Merci, c'est fait !{% endif %}</h2>
+        <p class="gul-wp__text">{% if gul_en %}Your 10% welcome code is on its way to your inbox. Check your spam folder if you can't see it.{% else %}Votre code de bienvenue vous attend dans votre boîte mail. Pensez à vérifier vos courriers indésirables s'il tarde.{% endif %}</p>
+        <button type="button" class="gul-wp__button" data-gul-wp-close>{% if gul_en %}Keep browsing{% else %}Découvrir la boutique{% endif %}</button>
+        <span data-gul-wp-success hidden></span>
+      {%- else -%}
+        <p class="gul-wp__eyebrow">{% if gul_en %}Welcome gift{% else %}Cadeau de bienvenue{% endif %}</p>
+        <h2 class="gul-wp__title" id="gul-wp-title">{% if gul_en %}Get 10% off your first order{% else %}Obtenez 10 % sur votre première commande{% endif %}</h2>
+        <p class="gul-wp__text">{% if gul_en %}Join our list and receive your code by email, plus beauty tips and first looks at new arrivals.{% else %}Inscrivez-vous et recevez votre code par email, avec nos conseils beauté et nos nouveautés en avant-première.{% endif %}</p>
+        <input type="hidden" name="contact[tags]" value="newsletter, welcome10, popup">
+        <input type="hidden" name="contact[accepts_marketing]" value="true">
+        <label class="gul-wp__label" for="gul-wp-email">{% if gul_en %}Email address{% else %}Adresse email{% endif %}</label>
+        <input class="gul-wp__input" id="gul-wp-email" type="email" name="contact[email]" required autocomplete="email" placeholder="{% if gul_en %}you@email.com{% else %}vous@email.com{% endif %}">
+        {%- if form.errors -%}
+          <p class="gul-wp__error" role="alert">{% if gul_en %}Please enter a valid email address.{% else %}Merci de saisir une adresse email valide.{% endif %}</p>
+        {%- endif -%}
+        <button type="submit" class="gul-wp__button">{% if gul_en %}Get my 10%{% else %}Obtenir mes 10 %{% endif %}</button>
+        <p class="gul-wp__legal">{% if gul_en %}Welcome offer for new customers, one use only. Unsubscribe at any time.{% else %}Offre de bienvenue pour les nouveaux clients, valable une seule fois. Désinscription possible à tout moment.{% endif %}</p>
+        <button type="button" class="gul-wp__skip" data-gul-wp-close>{% if gul_en %}No thanks{% else %}Non merci{% endif %}</button>
+      {%- endif -%}
+    {%- endform -%}
+  </div>
+</div>
+
+<style>
+  .gul-wp[hidden] { display: none; }
+  .gul-wp { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .gul-wp__backdrop { position: absolute; inset: 0; background: rgba(30, 26, 23, 0.55); animation: gul-wp-fade 0.3s ease both; }
+  .gul-wp__card { position: relative; width: 100%; max-width: 420px; max-height: calc(100dvh - 32px); overflow-y: auto; box-sizing: border-box; padding: 48px 32px 28px; text-align: center; color: #1E1A17; background: #F6F1EB; border-radius: 20px; box-shadow: 0 24px 60px rgba(30, 26, 23, 0.28); animation: gul-wp-rise 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+  .gul-wp__close { position: absolute; top: 10px; right: 12px; width: 40px; height: 40px; border: 0; background: none; font-size: 28px; line-height: 1; color: #5A4136; cursor: pointer; }
+  .gul-wp__badge { position: absolute; top: -28px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background: #701C32; color: #F6F1EB; font-weight: 500; font-size: 18px; letter-spacing: 0.02em; box-shadow: 0 8px 20px rgba(112, 28, 50, 0.35); }
+  .gul-wp__eyebrow { margin: 0 0 8px; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: #8A4B2F; }
+  .gul-wp__title { margin: 0 0 12px; font-size: 26px; line-height: 1.2; font-weight: 400; color: #701C32; }
+  .gul-wp__text { margin: 0 0 20px; font-size: 14px; line-height: 1.55; color: #5A4136; }
+  .gul-wp__label { display: block; margin: 0 0 6px; text-align: left; font-size: 12px; color: #5A4136; }
+  .gul-wp__input { width: 100%; box-sizing: border-box; padding: 14px 18px; font: inherit; font-size: 16px; color: #1E1A17; background: #fff; border: 1px solid #C8A48A; border-radius: 100px; }
+  .gul-wp__input:focus-visible { outline: 2px solid #701C32; outline-offset: 2px; }
+  .gul-wp__error { margin: 8px 0 0; font-size: 13px; color: #A3262F; }
+  .gul-wp__button { display: block; width: 100%; margin-top: 14px; padding: 15px 20px; font: inherit; font-size: 15px; font-weight: 500; color: #F6F1EB; background: #701C32; border: 0; border-radius: 100px; cursor: pointer; transition: background 0.2s ease; }
+  .gul-wp__button:hover { background: #551425; }
+  .gul-wp__legal { margin: 14px 0 0; font-size: 11px; line-height: 1.5; color: #7A675C; }
+  .gul-wp__skip { margin-top: 6px; padding: 10px; font: inherit; font-size: 13px; color: #5A4136; background: none; border: 0; text-decoration: underline; cursor: pointer; }
+  @keyframes gul-wp-fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes gul-wp-rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .gul-wp__backdrop, .gul-wp__card { animation: none; } }
+  @media (max-width: 480px) { .gul-wp__card { padding: 48px 22px 22px; } .gul-wp__title { font-size: 23px; } }
+</style>
+
+<script>
+  (function () {
+    var KEY = 'gul-wp-closed';
+    var DELAY = 7000;
+    var DAYS = 14;
+    var root = document.getElementById('gul-wp');
+    if (!root) return;
+
+    function store(action, value) {
+      try { return action === 'get' ? window.localStorage.getItem(KEY) : window.localStorage.setItem(KEY, value); } catch (e) { return null; }
+    }
+    function recentlyClosed() {
+      var t = parseInt(store('get'), 10);
+      return t && Date.now() - t < DAYS * 86400000;
+    }
+
+    var lastFocus = null;
+    function open() {
+      lastFocus = document.activeElement;
+      root.hidden = false;
+      var field = root.querySelector('input[type="email"]') || root.querySelector('.gul-wp__button');
+      if (field) field.focus();
+    }
+    function close() {
+      root.hidden = true;
+      store('set', String(Date.now()));
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+    }
+
+    root.addEventListener('click', function (event) {
+      if (event.target.closest('[data-gul-wp-close]')) close();
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && !root.hidden) close();
+    });
+
+    window.gulOpenWelcome = function () { if (root.hidden) open(); };
+    if (window.location.hash === '#offre-bienvenue') open();
+
+    var justSubscribed = root.querySelector('[data-gul-wp-success]') || /customer_posted=true/.test(window.location.search);
+    var hasError = root.querySelector('.gul-wp__error');
+    if (justSubscribed) {
+      store('set', String(Date.now() + 30 * 86400000));
+      open();
+    } else if (hasError) {
+      open();
+    } else if (!recentlyClosed()) {
+      window.setTimeout(function () { if (root.hidden) open(); }, DELAY);
+    }
+  })();
+</script>
+{%- endunless -%}
