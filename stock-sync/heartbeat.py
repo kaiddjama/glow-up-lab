@@ -31,7 +31,10 @@ SYNC = "stock-sync.yml"
 FULL_TITLE = "Contrôle complet du stock"  # run-name of a real full check in stock-sync.yml
 # workflow file, minutes between two runs, minute of the hour of the first one
 JOBS = (("order-check.yml", 10, 4), ("medx-sync.yml", 10, 7), ("fallback-sync.yml", 10, 1),
-        ("padelshop-sync.yml", 30, 27), ("inventory-audit.yml", 30, 23))
+        ("padelshop-sync.yml", 30, 27), ("inventory-audit.yml", 30, 23),
+        # runs started by this clock (GITHUB_TOKEN) never fire workflow_run, so park-soldout no longer followed the order
+        # checks: the clock starts it itself every 30 min (10 Nov: not run for over 2 h)
+        ("park-soldout.yml", 30, 11))
 EARLY = 0.7  # a control that ran less than this share of its interval ago is not started again
 SYNC_GRACE_MIN = 12  # a full check is started by the clock when GitHub has not started it this long after its hour
 SYNC_WINDOW_MIN = 150  # ...and no longer started when its hour is this far behind (the next one is close)
