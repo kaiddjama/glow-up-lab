@@ -1,0 +1,99 @@
+{%- comment -%}
+  Aimé Essentials : sous-rayons d'une rubrique, lus dans le menu principal.
+  Affiché sous la bannière de chaque page collection : la rubrique de la collection est
+  retrouvée dans le menu (elle-même ou l'un de ses sous-rayons), puis ses sous-rayons
+  sont listés, celui de la page en surbrillance. Aucune liste à tenir à jour : un nouveau
+  rayon ajouté au menu apparaît ici tout seul.
+{%- endcomment -%}
+{%- assign nav_handle = collection.url | default: '' -%}
+{%- assign rubrique = nil -%}
+{%- for top in linklists['main-menu'].links -%}
+  {%- if top.links.size > 1 -%}
+    {%- for sub in top.links -%}
+      {%- if sub.url == nav_handle and rubrique == nil -%}
+        {%- assign rubrique = top -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+{%- endfor -%}
+
+{%- if rubrique != nil -%}
+  <nav class="rayon-nav" aria-label="{{ rubrique.title | escape }}">
+    <div class="rayon-nav__inner">
+      <ul class="rayon-nav__list">
+        {%- for sub in rubrique.links -%}
+          {%- liquid
+            assign label = sub.title
+            if forloop.first and sub.url == rubrique.url
+              if request.locale.iso_code == 'en'
+                assign label = 'All ' | append: rubrique.title
+              else
+                assign label = 'Tout ' | append: rubrique.title
+              endif
+            endif
+          -%}
+          <li>
+            <a
+              class="rayon-nav__link{% if sub.url == nav_handle %} rayon-nav__link--active{% endif %}"
+              href="{{ sub.url }}"
+              {% if sub.url == nav_handle %}aria-current="page"{% endif %}
+            >{{ label }}</a>
+          </li>
+        {%- endfor -%}
+      </ul>
+    </div>
+  </nav>
+{%- endif -%}
+
+{% stylesheet %}
+  .rayon-nav {
+    background: #faf6f0;
+    border-bottom: 1px solid #e8dccb;
+  }
+  .rayon-nav__inner {
+    max-width: var(--page-width, 1440px);
+    margin-inline: auto;
+    padding: 14px var(--page-margin, 20px);
+  }
+  .rayon-nav__list {
+    display: flex;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .rayon-nav__list::-webkit-scrollbar { display: none; }
+  @media screen and (min-width: 990px) {
+    .rayon-nav__list { flex-wrap: wrap; overflow: visible; }
+  }
+  .rayon-nav__link {
+    display: block;
+    white-space: nowrap;
+    padding: 8px 16px;
+    border: 1px solid #d9c8b4;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    line-height: 1.2;
+    color: #4a3426;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  .rayon-nav__link:hover { background: #f3ede4; }
+  .rayon-nav__link--active,
+  .rayon-nav__link--active:hover {
+    background: #4a3426;
+    border-color: #4a3426;
+    color: #faf6f0;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Sous-rayons",
+  "enabled_on": { "templates": ["collection"] },
+  "settings": [],
+  "presets": []
+}
+{% endschema %}

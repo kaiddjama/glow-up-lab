@@ -1,0 +1,17 @@
+{%- comment -%}
+  Floating WhatsApp button. Shows only when the shop metafield glowuplab.whatsapp
+  holds the number in international digits (e.g. 25377123456).
+{%- endcomment -%}
+{%- assign gul_wa = shop.metafields.glowuplab.whatsapp.value | default: shop.metafields.glowuplab.whatsapp -%}
+{%- if gul_wa != blank -%}
+  <a
+    class="gul-whatsapp"
+    href="https://wa.me/{{ gul_wa | remove: '+' | remove: ' ' }}?text={% if request.locale.iso_code == 'en' %}{{ 'Hello Aimé Essentials! ' | url_encode }}{% else %}{{ 'Bonjour Aimé essentials ! ' | url_encode }}{% endif %}"
+    target="_blank"
+    rel="noopener"
+    aria-label="{% if request.locale.iso_code == 'en' %}Message Aimé Essentials on WhatsApp{% else %}Écrire à Aimé essentials sur WhatsApp{% endif %}"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12.04 2a9.9 9.9 0 0 0-8.47 15l-1.5 5.5 5.64-1.48A9.9 9.9 0 1 0 12.04 2Zm0 1.8a8.1 8.1 0 1 1-4.2 15.04l-.3-.18-3.3.87.88-3.2-.2-.33A8.1 8.1 0 0 1 12.04 3.8Zm-3.2 4.2c-.2 0-.5.07-.76.35-.26.28-1 1-1 2.45s1.03 2.84 1.17 3.04c.15.2 2.02 3.23 5 4.4 2.47.98 2.97.78 3.5.73.54-.05 1.73-.7 1.97-1.38.24-.68.24-1.27.17-1.38-.07-.12-.27-.2-.56-.34-.3-.15-1.73-.86-2-.95-.27-.1-.46-.15-.66.14-.2.3-.76.95-.93 1.15-.17.2-.34.22-.63.07-.3-.15-1.24-.46-2.37-1.46-.88-.78-1.47-1.75-1.64-2.04-.17-.3-.02-.46.13-.6.13-.13.3-.34.44-.51.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.66-1.6-.9-2.18-.24-.57-.48-.5-.66-.5Z"/></svg>
+    <span>whatsapp</span>
+  </a>
+{%- endif -%}

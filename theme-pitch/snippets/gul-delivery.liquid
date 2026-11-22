@@ -1,0 +1,105 @@
+{%- doc -%}
+  Délai de livraison sur la fiche produit.
+  Les variantes dont le métachamp supplier.delivery_range vaut "3-10" (écrit par la synchro)
+  affichent « Livraison en 3 à 10 jours » ; le texte suit la variante choisie, et le délai est
+  joint à la ligne du panier (visible au paiement et dans la commande).
+
+  @param {product} p - Le produit.
+  @param {string} form_id - L'id du formulaire d'ajout au panier.
+{%- enddoc -%}
+{%- liquid
+  assign v = p.selected_or_first_available_variant
+  assign long = false
+  if v.metafields.supplier.delivery_range == '3-10'
+    assign long = true
+  endif
+  assign dd = p.metafields.supplier.delivery_days.value
+  assign en = false
+  if request.locale.iso_code == 'en'
+    assign en = true
+  endif
+  if en
+    assign long_text = 'Delivery in 3 to 10 days in Djibouti City'
+    assign prop_name = 'Delivery time'
+    assign prop_value = '3 to 10 days'
+    if dd != blank and dd < 5
+      assign standard_text = 'Delivery in ' | append: dd | append: ' days in Djibouti City'
+    else
+      assign standard_text = 'Delivery in 2 to 3 days in Djibouti City'
+    endif
+  else
+    assign long_text = 'Livraison en 3 à 10 jours à Djibouti-ville'
+    assign prop_name = 'Délai de livraison'
+    assign prop_value = '3 à 10 jours'
+    if dd != blank and dd < 5
+      assign standard_text = 'Livraison en ' | append: dd | append: ' jours à Djibouti-ville'
+    else
+      assign standard_text = 'Livraison en 2 à 3 jours à Djibouti-ville'
+    endif
+  endif
+-%}
+<style>
+  .gul-delivery__long-note { display: block; font-size: 0.85em; margin-top: 4px; }
+  .gul-delivery__long-note[hidden] { display: none; }
+  .gul-delivery--long .gul-delivery__status { color: #8A5A1F; }
+</style>
+<div class="gul-delivery{% if long %} gul-delivery--long{% endif %}" data-gul-delivery>
+  <script type="application/json" data-gul-ranges>
+    {%- liquid
+      echo '{'
+      assign first = true
+      for variant in p.variants
+        if variant.metafields.supplier.delivery_range == '3-10'
+          unless first
+            echo ','
+          endunless
+          echo '"' | append: variant.id | append: '":"3-10"'
+          assign first = false
+        endif
+      endfor
+      echo '}'
+    -%}
+  </script>
+  <span class="gul-delivery__status" data-standard="{{ standard_text | escape }}" data-long="{{ long_text | escape }}">
+    {%- if long -%}{{ long_text }}{%- else -%}{{ standard_text }}{%- endif -%}
+  </span>
+  <span class="gul-delivery__long-note"{% unless long %} hidden{% endunless %}>{% if en %}This item is ordered especially for you from our supplier: allow 3 to 10 days.{% else %}Cet article est commandé spécialement pour vous auprès de notre fournisseur : comptez 3 à 10 jours.{% endif %}</span>
+  <span class="gul-delivery__note">
+    {%- if en -%}
+      {%- if p.tags contains 'en-stock' and p.available -%}Pay with D-Money, Waafi, or cash on delivery (+5%).{%- else -%}This item is paid when you order, by D-Money or Waafi.{%- endif %} Free delivery from 10,000 Fdj.
+    {%- else -%}
+      {%- if p.tags contains 'en-stock' and p.available -%}Paiement D-Money, Waafi, ou à la livraison (+5 %).{%- else -%}Cet article se règle à la commande, par D-Money ou Waafi.{%- endif %} Livraison offerte dès 10 000 Fdj de commande.
+    {%- endif -%}
+  </span>
+  <input type="hidden" form="{{ form_id }}" name="properties[{{ prop_name }}]" value="{{ prop_value }}"{% unless long %} disabled{% endunless %} data-gul-prop>
+</div>
+<script>
+  (() => {
+    const box = document.currentScript.previousElementSibling;
+    if (!box || box.dataset.gulReady) return;
+    box.dataset.gulReady = '1';
+    let ranges = {};
+    try { ranges = JSON.parse(box.querySelector('[data-gul-ranges]').textContent); } catch (e) {}
+    const status = box.querySelector('.gul-delivery__status');
+    const note = box.querySelector('.gul-delivery__long-note');
+    const prop = box.querySelector('[data-gul-prop]');
+    const idInput = () => document.querySelector('#' + CSS.escape(prop.getAttribute('form')) + ' input[name="id"]');
+    const apply = (id) => {
+      const long = ranges[String(id)] === '3-10';
+      box.classList.toggle('gul-delivery--long', long);
+      status.textContent = long ? status.dataset.long : status.dataset.standard;
+      note.hidden = !long;
+      prop.disabled = !long;
+    };
+    let last = idInput()?.value;
+    const watch = () => {
+      let n = 0;
+      const t = setInterval(() => {
+        const id = idInput()?.value || new URL(location.href).searchParams.get('variant');
+        if (id && id !== last) { last = id; apply(id); }
+        if (++n > 30) clearInterval(t);
+      }, 100);
+    };
+    document.addEventListener('change', (e) => { if (e.target.closest?.('variant-picker')) watch(); });
+  })();
+</script>

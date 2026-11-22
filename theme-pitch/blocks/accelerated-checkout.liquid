@@ -1,0 +1,87 @@
+
+
+{%- doc -%}
+  Glow Up Lab : bouton « Commander maintenant » à la place du bouton de paiement accéléré de Shopify
+  (dont le texte « Acheter maintenant » ne peut pas être modifié).
+  Ajoute la variante choisie (avec sa quantité) au panier puis ouvre directement le paiement.
+  Intended for product-form.liquid block.
+
+  @param {string} can_add_to_cart - Whether the product can be added to the cart
+  @param form_obj - The form object
+
+  @example
+  {% content_for 'block', type: 'accelerated-checkout', id: 'accelerated-checkout', can_add_to_cart: can_add_to_cart, form_obj: form %}
+{%- enddoc -%}
+
+{% liquid
+  assign product = closest.product
+  if request.visual_preview_mode and product == blank
+    assign product = collections.all.products.first
+  endif
+%}
+
+{% if product != blank and form_obj != blank %}
+  <div
+    class="accelerated-checkout-block"
+    ref="acceleratedCheckoutButtonContainer"
+    {{ block.shopify_attributes }}
+    {% if request.visual_preview_mode %}
+      data-shopify-visual-preview
+    {% endif %}
+    {% unless can_add_to_cart %}
+      hidden
+    {% endunless %}
+  >
+    <button
+      type="button"
+      class="button-secondary gul-commander-maintenant"
+      data-gul-commander-maintenant
+    >
+      {% if request.locale.iso_code == 'en' %}Order now{% else %}Commander maintenant{% endif %}
+    </button>
+  </div>
+  <script>
+    if (!window.gulCommanderMaintenant) {
+      window.gulCommanderMaintenant = true;
+      document.addEventListener('click', async (event) => {
+        const button = event.target.closest('[data-gul-commander-maintenant]');
+        if (!button) return;
+        const form = button.closest('form');
+        if (!form) return;
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        try {
+          const root = (window.Shopify && Shopify.routes && Shopify.routes.root) || '/';
+          const response = await fetch(root + 'cart/add.js', {
+            method: 'POST',
+            headers: { Accept: 'application/json' },
+            body: new FormData(form),
+          });
+          if (!response.ok) throw new Error('add');
+          window.location.href = root + 'checkout';
+        } catch (error) {
+          button.disabled = false;
+          button.removeAttribute('aria-busy');
+          const addButton = form.querySelector('[name="add"]');
+          if (addButton) addButton.click();
+        }
+      });
+    }
+  </script>
+{% endif %}
+
+{% render 'buy-buttons-styles' %}
+
+{% stylesheet %}
+  .gul-commander-maintenant {
+    height: var(--height-buy-buttons);
+    text-transform: var(--button-text-case-secondary);
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.accelerated_checkout",
+  "tag": null
+}
+{% endschema %}
