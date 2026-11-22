@@ -1,0 +1,32 @@
+{%- comment -%}
+  Aimé Essentials : les produits épuisés sont masqués (voir masquage-epuises-2026-10-24.md).
+  Pour que les pages de collection restent bien remplies (24 produits par page) et que le nombre de pages
+  soit juste, Shopify doit appliquer lui-même le filtre « En stock » avant de découper en pages.
+  Ce script l'ajoute à chaque clic sur un lien vers une collection (menu, sous-rayons, accueil, pagination).
+  Une collection ouverte sans ce filtre (lien direct) reste correcte : le thème masque quand même les épuisés.
+{%- endcomment -%}
+<script>
+  (() => {
+    const collection = /^(\/[a-z]{2}(-[A-Za-z]{2,4})?)?\/collections\/[^/]+\/?$/;
+    document.addEventListener(
+      'click',
+      (event) => {
+        if (event.defaultPrevented || event.button !== 0) return;
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        const lien = event.target.closest && event.target.closest('a[href]');
+        if (!lien || (lien.target && lien.target !== '_self')) return;
+        let url;
+        try {
+          url = new URL(lien.href, window.location.href);
+        } catch (e) {
+          return;
+        }
+        if (url.origin !== window.location.origin || !collection.test(url.pathname)) return;
+        if (url.searchParams.has('filter.v.availability')) return;
+        url.searchParams.set('filter.v.availability', '1');
+        lien.setAttribute('href', url.pathname + url.search + url.hash);
+      },
+      true
+    );
+  })();
+</script>
