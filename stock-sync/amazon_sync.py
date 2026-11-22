@@ -152,16 +152,29 @@ def have_credentials():
 
 
 def token():
-    """SHOPIFY_TOKEN if set, else a short-lived token from a Dev Dashboard app (client credentials)."""
+    """SHOPIFY_TOKEN if set, else a short-lived token from a Dev Dashboard app (client credentials).
+    Shopify answers 502 or 503 for a few seconds now and then: the request is tried again, like every other call (gql).
+    On 22 Nov a single 502 here failed a whole job and sent a false alert. A refusal (400, 401, 403: wrong or removed
+    credentials) is not tried again: it fails at once and the alert is real."""
     if not os.environ.get("SHOPIFY_TOKEN"):
-        req = urllib.request.Request(
-            f"https://{os.environ['SHOPIFY_STORE']}/admin/oauth/access_token",
-            data=urllib.parse.urlencode({"grant_type": "client_credentials",
-                                         "client_id": os.environ["SHOPIFY_CLIENT_ID"],
-                                         "client_secret": os.environ["SHOPIFY_CLIENT_SECRET"]}).encode(),
-            headers={"Content-Type": "application/x-www-form-urlencoded"})
-        with urllib.request.urlopen(req, timeout=30) as r:
-            os.environ["SHOPIFY_TOKEN"] = json.load(r)["access_token"]
+        for attempt in range(1, 7):
+            req = urllib.request.Request(
+                f"https://{os.environ['SHOPIFY_STORE']}/admin/oauth/access_token",
+                data=urllib.parse.urlencode({"grant_type": "client_credentials",
+                                             "client_id": os.environ["SHOPIFY_CLIENT_ID"],
+                                             "client_secret": os.environ["SHOPIFY_CLIENT_SECRET"]}).encode(),
+                headers={"Content-Type": "application/x-www-form-urlencoded"})
+            try:
+                with urllib.request.urlopen(req, timeout=30) as r:
+                    os.environ["SHOPIFY_TOKEN"] = json.load(r)["access_token"]
+                break
+            except (TimeoutError, OSError, ValueError) as e:  # HTTP errors are OSError too
+                refused = isinstance(e, urllib.error.HTTPError) and e.code < 500 and e.code != 429
+                if refused or attempt >= 6:
+                    raise
+                what = f"HTTP {e.code}" if isinstance(e, urllib.error.HTTPError) else type(e).__name__
+                print(f"Shopify did not give a token ({what}), try {attempt} of 6", flush=True)
+                time.sleep(10 * attempt + random.uniform(0, 5))
     return os.environ["SHOPIFY_TOKEN"]
 
 
