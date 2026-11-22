@@ -43,16 +43,22 @@ def html(p):
 
 
 def white_square(raw):
-    """Main photo -> 1600 px square, pure white (#FFFFFF) background, product centred with a margin."""
-    from PIL import Image  # installed by the workflow
+    """Main photo -> 1600 px square, pure white (#FFFFFF) background. The product is cropped to its own outline, so a photo
+    with a lot of empty margin or an off-centre product still ends up whole, centred and large, with an even margin."""
+    from PIL import Image, ImageChops  # installed by the workflow
     im = Image.open(io.BytesIO(raw)).convert("RGB")
-    im.thumbnail((1480, 1480), Image.LANCZOS)
     px = im.load()
     for y in range(im.height):  # near-white pixels (Amazon backgrounds are 250-255) become exactly 255
         for x in range(im.width):
             r, g, b = px[x, y]
             if r >= 247 and g >= 247 and b >= 247:
                 px[x, y] = (255, 255, 255)
+    diff = ImageChops.difference(im, Image.new("RGB", im.size, (255, 255, 255))).convert("L").point(lambda v: 255 if v > 8 else 0)
+    box = diff.getbbox()
+    if box:
+        im = im.crop(box)
+    scale = min(1440 / im.width, 1440 / im.height, 3.0)  # 80 px margin at least; limited upscaling for small sources
+    im = im.resize((max(1, round(im.width * scale)), max(1, round(im.height * scale))), Image.LANCZOS)
     canvas = Image.new("RGB", (1600, 1600), (255, 255, 255))
     canvas.paste(im, ((1600 - im.width) // 2, (1600 - im.height) // 2))
     out = io.BytesIO()
@@ -164,6 +170,67 @@ def fix_photos(p, prod):
     return link_photos(p, prod["id"], [v for _, v in todo], {n["sku"]: n["id"] for n, _ in todo}, by_alt)
 
 
+REFIT_Q = """query($id:ID!){ product(id:$id){ media(first:100){ nodes{ id alt status } }
+  variants(first:100){ nodes{ id sku media(first:3){ nodes{ id } } } } } }"""
+DETACH_M = """mutation($p:ID!,$m:[ProductVariantDetachMediaInput!]!){ productVariantDetachMedia(productId:$p, variantMedia:$m){
+  userErrors{ field message } } }"""
+FILE_DELETE_M = """mutation($ids:[ID!]!){ fileDelete(fileIds:$ids){ deletedFileIds userErrors{ field message } } }"""
+
+
+def refit(p, prod, dry):
+    """Replaces the photo of each selection variant of an existing product by a freshly cropped one (see white_square)."""
+    cur = s.gql(REFIT_Q, {"id": prod["id"]})["product"]
+    want = {v["asin"]: v for v in p["variants"]}
+    todo = [(n, want[n["sku"]]) for n in cur["variants"]["nodes"] if n["sku"] in want]
+    print(("DRY RUN: would refit " if dry else "refitting ") + f"{prod['handle']}: {len(todo)} photos")
+    if dry or not todo:
+        return 0
+    old_ids = {m["id"] for m in cur["media"]["nodes"]}
+    files = [photo_file(p, v) for _, v in todo]
+    media = [{"originalSource": f["originalSource"], "alt": f["alt"], "mediaContentType": "IMAGE"} for f in files]
+    errs = s.gql(UPDATE_M, {"i": {"id": prod["id"]}, "m": media})["productUpdate"]["userErrors"]
+    if errs:
+        print("update error:", p["handle"], errs)
+        return 1
+    alts = [f["alt"] for f in files]
+    new = {}
+    for _ in range(80):
+        nodes = s.gql(MEDIA_Q, {"id": prod["id"]})["product"]["media"]["nodes"]
+        new = {m["alt"]: m for m in nodes if m["id"] not in old_ids}
+        if all(a in new and new[a]["status"] in ("READY", "FAILED") for a in alts):
+            break
+        time.sleep(5)
+    errors, detach, links, drop = 0, [], [], []
+    for (n, v), f in zip(todo, files):
+        m = new.get(f["alt"])
+        if not m or m["status"] != "READY":
+            errors += 1
+            print("photo not ready:", p["handle"], v["label"], m and m["status"])
+            continue
+        olds = [x["id"] for x in n["media"]["nodes"]]
+        if olds:
+            detach.append({"variantId": n["id"], "mediaIds": olds})
+            drop += olds
+        links.append({"variantId": n["id"], "mediaIds": [m["id"]]})
+    if detach:
+        errs = s.gql(DETACH_M, {"p": prod["id"], "m": detach})["productVariantDetachMedia"]["userErrors"]
+        if errs:
+            errors += 1
+            print("detach error:", p["handle"], errs)
+    if links:
+        errs = s.gql(APPEND_M, {"p": prod["id"], "m": links})["productVariantAppendMedia"]["userErrors"]
+        if errs:
+            errors += 1
+            print("link error:", p["handle"], errs)
+            return errors  # keep the old photos
+    if drop:
+        errs = s.gql(FILE_DELETE_M, {"ids": drop})["fileDelete"]["userErrors"]
+        if errs:
+            errors += 1
+            print("delete error:", p["handle"], errs)
+    return errors
+
+
 def extend(p, prod, now, dry):
     have = {v["sku"] for v in prod["variants"]["nodes"]}
     new = [v for v in p["variants"] if v["asin"] not in have]
@@ -227,6 +294,7 @@ def main():
     if len(sys.argv) > 1 and sys.argv[1] == "publish":
         return publish(dry)
     only = set(filter(None, os.environ.get("ONLY_HANDLES", "").split(",")))
+    refit_mode = len(sys.argv) > 1 and sys.argv[1] == "refit"
     selection = json.load(open(os.path.join(HERE, "amz", "selection.json"), encoding="utf-8"))
     now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     made, errors, asins = 0, 0, []
@@ -237,6 +305,10 @@ def main():
         found = s.gql(FIND_Q, {"q": f"handle:{handle}"})["products"]["nodes"]
         found = [x for x in found if x["handle"] == handle]
         asins += [v["asin"] for v in p["variants"]]
+        if refit_mode:
+            if found:
+                errors += refit(p, found[0], dry)
+            continue
         if p.get("extend"):
             if not found:
                 print("extend target not found:", handle)
