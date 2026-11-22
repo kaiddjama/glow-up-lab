@@ -6,13 +6,26 @@
                                     SKU "MEDX-..." are read on medxpharmacy.com instead, stock at least MEDX_MIN_QTY, and
                                     items with a SKU "PSAE-..." on padelshop.ae, which must say available):
                                     - all items sellable: the order gets the tag amazon-ok
-                                    - an item not sellable (or with no ASIN): the order gets the tag amazon-ko, the
-                                      variant goes to Épuisé and stays so for COOL_HOURS (the robot may still read it
-                                      "available" while it is not), and alert.md describes it for the owner
+                                    - an item not sellable (or with no ASIN): the page is read a second time first (a
+                                      serious verdict is checked twice); then the order gets the tag amazon-ko, the
+                                      variant goes to Épuisé, and alert.md describes it for the owner with what the page
+                                      showed (seller, stock, every delivery date). When the reason is about STOCK (out
+                                      of stock, tiny stock, listing removed or replaced) the variant stays Épuisé for
+                                      COOL_HOURS: the robot may still read it "available" while it is not. When it is
+                                      about the DATE, the next stock check decides (no cool-down): order #1048 hid six
+                                      good variants for a day on an evening date
+                                    - the same rule as the stock check decides, evening slack included (the item was on
+                                      sale when the customer ordered it)
                                     - an Amazon.ae item that cannot be bought there but can at its second source
                                       (supplier.fallback): the order is fine, alert.md says where to buy it (tag source-2)
                                     - more units ordered than Amazon.ae shows or allows per order: tag amazon-qte, a
                                       line in alert.md, nothing hidden
+                                    - since 15 Nov, the PRICE: when Amazon.ae now asks clearly more than the price the
+                                      customer paid was computed on (the formula on today's Amazon.ae price is above the
+                                      price paid by more than ORDER_PRICE_GAP and by 100 Fdj at least), tag amazon-prix
+                                      and a line in alert.md with both amounts, nothing hidden. What Amazon.ae asked for
+                                      every item when the order arrived is kept on the order (metafield
+                                      internal.amazon_prices), so the margin of an order is computed on real costs
                                     - a page that could not be read: the order is left alone and tried again at the next
                                       run, until it is ORDER_MAX_AGE_H old (then amazon-incertain)
 An order stays in the list until it carries one of these tags, for WINDOW_H hours: a check that was down for a night
@@ -23,6 +36,7 @@ import datetime as dt
 import json
 import os
 import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # python -I does not add the script folder
 import amazon_sync as s  # noqa: E402
@@ -38,11 +52,14 @@ Q = """query($q:String!,$after:String){ orders(first:20, after:$after, query:$q,
   pageInfo{hasNextPage endCursor}
   nodes{ id name createdAt tags
   lineItems(first:50){ nodes{ title variantTitle sku quantity
+    originalUnitPriceSet{ shopMoney{ amount } }
     variant{ id inventoryPolicy
+      inventoryItem{ measurement{ weight{ value unit } } }
       state: metafield(namespace:"supplier", key:"sync_state"){value}
       fallback: metafield(namespace:"supplier", key:"fallback"){value}
-      product{ id handle vendor isGiftCard
+      product{ id handle vendor isGiftCard tags
         ref: metafield(namespace:"internal", key:"supplier_ref"){value}
+        weight: metafield(namespace:"internal", key:"weight_g"){value}
         spreadr: metafield(namespace:"global", key:"spreadr-asin"){value}
         variantsCount{ count } } } } } } } }"""
 TAGS_ADD_ORDER_M = """mutation($id:ID!,$t:[String!]!){tagsAdd(id:$id, tags:$t){userErrors{field message}}}"""
@@ -76,20 +93,35 @@ def asin_of(item):
     return None
 
 
+def seen(pg):
+    """What the page showed, so the owner can compare with her own account without asking."""
+    bits = [f"vendeur {pg['seller']}" if pg.get("seller") else "",
+            "expédié par Amazon" if pg.get("amazonShips") else "",
+            f"dates affichées : {pg['promises']}" if pg.get("promises") else ""]
+    bits = [b for b in bits if b]
+    return f" [lu à {pg['hour']} h à Dubaï : {' ; '.join(bits)}]" if bits and pg.get("hour") is not None else ""
+
+
 def why_not(pg):
-    """In French, for the owner: why this Amazon.ae page cannot be bought now."""
+    """(in French, for the owner: why this Amazon.ae page cannot be bought now; is the reason about stock?).
+    A stock reason keeps the variant Épuisé for COOL_HOURS; a date reason is left to the next stock check."""
     if pg.get("gone"):
-        return "fiche supprimée sur Amazon.ae"
+        return "fiche supprimée sur Amazon.ae", True
     if pg.get("redirect"):
-        return f"Amazon.ae affiche maintenant un autre article ({pg['redirect']}) à cette adresse"
+        return f"Amazon.ae affiche maintenant un autre article ({pg['redirect']}) à cette adresse", True
+    if pg.get("amazonNow"):
+        # same decision as out of stock (no ordinary offer to order), but the owner is told what the page really shows
+        return ("plus d'offre ordinaire sur Amazon.ae, l'article n'est proposé qu'en Amazon Now (livraison en quelques "
+                "minutes à Dubaï, panier à part)" + seen(pg)), True
     if not pg.get("inStock"):
-        return "pas en stock sur Amazon.ae"
+        return "pas en stock sur Amazon.ae" + seen(pg), True
     if s.low_stock(pg):
         return (f"stock très faible sur Amazon.ae ({pg['stockLeft']} restant(s)) : l'offre peut passer à un vendeur lent, "
-                "vérifie le délai sur ton compte et achète vite")
+                "vérifie le délai sur ton compte et achète vite" + seen(pg)), True
     if pg.get("sourceDays") is None:
-        return "en stock mais sans date de livraison pour Dubaï"
-    return f"livraison trop lente ({pg.get('deliveryText')})"
+        return "en stock mais sans date de livraison pour Dubaï" + seen(pg), False
+    return (f"livraison trop lente ({pg.get('deliveryText')}, soit {pg['sourceDays']} jours jusqu'à Dubaï) : "
+            "vérifie sur ton compte, la variante revient seule en vente si le délai redevient bon" + seen(pg)), False
 
 
 def quantity_note(pg, wanted):
@@ -102,6 +134,36 @@ def quantity_note(pg, wanted):
     return None
 
 
+def price_note(it, pg, costs=None):
+    """A warning when Amazon.ae now asks clearly more than the price the customer paid was computed on, else None.
+    costs (a list) receives what Amazon.ae asks for this item right now, kept on the order by main().
+    Orders #1048, #1050, #1055, #1061 (11-13 Nov): NYX items ordered while Amazon.ae showed 11 to 22 AED, at 28 to 42 AED
+    a few hours later. The stock check no longer follows a price down at once (amazon_sync.guard_price); this is the
+    second layer, at the moment the money is at stake."""
+    if pg.get("aed") is None:
+        return None
+    v = it.get("variant") or {}
+    qty = it.get("quantity") or 1
+    cost = s.cost_of(pg)
+    try:
+        paid = float(((it.get("originalUnitPriceSet") or {}).get("shopMoney") or {}).get("amount"))
+    except (TypeError, ValueError):
+        paid = None
+    if costs is not None:
+        costs.append({"sku": it.get("sku") or "", "asin": asin_of(it), "qty": qty, "paid": paid, "aed": round(cost, 2)})
+    if not paid or not s.AED_TO_FDJ or not s.MARGIN_CUSTOMS:
+        return None
+    grams = s.grams_of(v.get("product") or {}, v)
+    today = s.formula(cost, grams)
+    if today - paid < max(100.0, s.ORDER_PRICE_GAP * paid):
+        return None
+    used = max(0.0, (paid / s.AED_TO_FDJ - grams / 1000 * s.SHIPPING_AED_PER_KG) / s.MARGIN_CUSTOMS)
+    extra = int(round((cost - used) * s.AED_TO_FDJ * qty / 50.0)) * 50
+    return (f"prix : Amazon.ae demande maintenant {cost:.2f} AED, alors que le prix payé par la cliente ({paid:.0f} Fdj) "
+            f"était calculé sur environ {used:.2f} AED. Cela fait environ {extra} Fdj de plus à l'achat pour {qty} "
+            f"unité(s), hors douane : vérifie le prix sur ton compte avant d'acheter" + seen(pg))
+
+
 def other_source(pages, ref):
     """(page, module, display name) of a MEDX-/PSAE- reference, read once per run."""
     mod, slug, name = suppliers.module_of(ref)
@@ -112,37 +174,50 @@ def other_source(pages, ref):
     return pages[ref], mod, name
 
 
-def check_item(it, amazon_page_of, other_pages):
-    """("ok" | "ko" | "unknown", reason or None, notes). notes = [(tag, text)] to tell the owner without blocking."""
+def check_item(it, amazon_page_of, other_pages, costs=None):
+    """("ok" | "ko" | "unknown", reason or None, notes, cool). notes = [(tag, text)] to tell the owner without blocking;
+    cool = the variant must stay Épuisé for COOL_HOURS (a stock reason). amazon_page_of(asin, again=False) reads a page
+    (again=True: a fresh reading). costs (a list) receives today's Amazon.ae price of the item (price_note)."""
     for mod, name in ((medx, "MedX"), (padelshop, "PadelShop.ae")):
         if mod.slug_of(it.get("sku")):
             pg, _, _ = other_source(other_pages, it["sku"].strip())
             if pg.get("error"):
-                return "unknown", None, []
+                return "unknown", None, [], False
             if mod.sellable(pg, True):
-                return "ok", None, []
+                return "ok", None, [], False
             if pg.get("gone"):
-                return "ko", f"fiche retirée chez {name}", []
+                return "ko", f"fiche retirée chez {name}", [], False
             if mod is medx:
-                return "ko", (f"stock MedX insuffisant ({pg['qty']} restant)" if pg["publish"] else "fiche MedX non publiée"), []
-            return "ko", f"plus disponible chez {name}", []
+                return "ko", (f"stock MedX insuffisant ({pg['qty']} restant)" if pg["publish"] else "fiche MedX non publiée"), [], False
+            return "ko", f"plus disponible chez {name}", [], False
     asin = asin_of(it)
     if not asin:
-        return "ko", "pas de code ASIN, impossible à vérifier", []
+        return "ko", "pas de code ASIN, impossible à vérifier", [], False
     pg = amazon_page_of(asin)
     if pg.get("error"):
-        return "unknown", None, []
-    if s.sellable(pg):
-        note = quantity_note(pg, it.get("quantity") or 1)
-        return "ok", None, [("amazon-qte", note)] if note else []
+        return "unknown", None, [], False
+    ext = s.EXT_TAG in {x.lower() for x in ((it.get("variant") or {}).get("product") or {}).get("tags") or []}
+    pg, ok = s.offer_for(pg, True, ext)  # the item was on sale when it was ordered: same rule as the stock check
+    if not ok:  # a serious verdict is checked twice: a second, fresh reading
+        again = amazon_page_of(asin, True)
+        if not again.get("error"):
+            pg, ok = s.offer_for(again, True, ext)
+    if ok:
+        note, dear = quantity_note(pg, it.get("quantity") or 1), None
+        try:  # the price comparison is an extra: it never turns a checked order into an unchecked one
+            dear = price_note(it, pg, costs)
+        except Exception as e:
+            print(f"::warning::price not compared ({type(e).__name__}: {str(e)[:120]})")
+        return "ok", None, ([("amazon-qte", note)] if note else []) + ([("amazon-prix", dear)] if dear else []), False
+    why, cool = why_not(pg)
     ref = ((it["variant"].get("fallback") or {}).get("value") or "").strip()
     if ref:  # Amazon.ae cannot sell it: is the second source able to?
         other, mod, name = other_source(other_pages, ref)
         if mod and other.get("error"):
-            return "unknown", None, []
+            return "unknown", None, [], False
         if mod and mod.sellable(other, True):
-            return "ok", None, [("source-2", f"à acheter chez {name} ({ref}) : {why_not(pg)}")]
-    return "ko", why_not(pg), []
+            return "ok", None, [("source-2", f"à acheter chez {name} ({ref}) : {why}")], False
+    return "ko", why, [], cool
 
 
 def main():
@@ -169,7 +244,10 @@ def main():
     pages, other_pages, alerts, problems = {}, {}, [], 0
     browser = {"tried": False}
 
-    def page_of(asin):
+    def page_of(asin, again=False):
+        if again and s.READER and not pages.get(asin, {}).get("error"):
+            time.sleep(6)
+            pages.pop(asin, None)
         if asin not in pages:
             if not browser["tried"]:  # started only when an Amazon.ae item has to be read
                 browser["tried"] = True
@@ -189,18 +267,18 @@ def main():
     try:
         for o in orders:
             try:
-                bad, unknown, notes = [], [], []
+                bad, unknown, notes, costs = [], [], [], []
                 for it in o["lineItems"]["nodes"]:
                     if (it.get("variant") or {}).get("product", {}).get("isGiftCard"):
                         continue  # gift card: nothing to buy
                     label = f"{it['title']}" + (f" ({it['variantTitle']})" if it.get("variantTitle") else "")
                     if not it.get("variant"):
-                        bad.append((it, label, "article sans fiche dans la boutique (supprimée ?), impossible à vérifier"))
+                        bad.append((it, label, "article sans fiche dans la boutique (supprimée ?), impossible à vérifier", False))
                         continue
-                    verdict, why, extra = check_item(it, page_of, other_pages)
+                    verdict, why, extra, cool_it = check_item(it, page_of, other_pages, costs)
                     notes += [(tag, f"{label} : {text}") for tag, text in extra]
                     if verdict == "ko":
-                        bad.append((it, label, why))
+                        bad.append((it, label, why, cool_it))
                     elif verdict == "unknown":
                         unknown.append(label)
                 age_h = s.hours_since(o["createdAt"], now)
@@ -214,7 +292,7 @@ def main():
                 else:
                     tag = "amazon-ok"
                 print(f"{o['name']}: {tag}")
-                for it, label, why in bad:
+                for it, label, why, _ in bad:
                     print(f"  indisponible: {label} - {why}")
                     alerts.append(f"- Commande {o['name']}: **{label}** : {why}")
                 if tag == "amazon-incertain":
@@ -222,6 +300,8 @@ def main():
                 for _, text in notes:
                     print(f"  note: {text}")
                     alerts.append(f"- Commande {o['name']}: {text}")
+                if costs:
+                    print(f"  Amazon.ae prices when checked: {json.dumps(costs, ensure_ascii=False)}")
                 if dry:
                     continue
                 tags = [tag] + sorted({t for t, _ in notes})
@@ -231,13 +311,13 @@ def main():
                     print("tag error:", errs)
                 by_product, cool = {}, []
                 until = s.iso(now + dt.timedelta(hours=COOL_HOURS))
-                for it, _, _ in bad:
+                for it, _, _, cool_it in bad:
                     v = it.get("variant")
                     if not v:
                         continue
                     if v["inventoryPolicy"] == "CONTINUE":
                         by_product.setdefault(v["product"]["id"], []).append({"id": v["id"], "inventoryPolicy": "DENY"})
-                    if asin_of(it) and not suppliers.is_other_source(it.get("sku")):
+                    if cool_it and asin_of(it) and not suppliers.is_other_source(it.get("sku")):
                         state = {**s.read_state(v.get("state")), "cool": until}
                         state.pop("src", None)
                         state.pop("src_t", None)
@@ -251,6 +331,15 @@ def main():
                     errs = s.gql(s.META_M, {"m": cool})["metafieldsSet"]["userErrors"]
                     if errs:
                         print("cool-down error:", errs)
+                if costs:  # what every item costs on Amazon.ae now, kept on the order: its margin is known for good.
+                    try:   # Last step and on its own: a note for later sums, never a reason to fail the order check
+                        kept = json.dumps({"t": s.iso(now), "lines": costs}, separators=(",", ":"), ensure_ascii=False)
+                        errs = s.gql(s.META_M, {"m": [s.field(o["id"], "amazon_prices", "json", kept, "internal")]}
+                                     )["metafieldsSet"]["userErrors"]
+                        if errs:
+                            print("price note error:", errs)
+                    except Exception as e:
+                        print(f"price note error: {type(e).__name__}: {str(e)[:150]}")
             except Exception as e:  # one order that cannot be handled must not stop the others
                 problems += 1
                 print(f"::warning::{o.get('name')}: not checked ({type(e).__name__}: {str(e)[:150]}), tried again at the next run")

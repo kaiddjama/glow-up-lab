@@ -10,7 +10,8 @@ For every variant that has an ASIN (SKU "B0…" / "AMZ-B0…", or the product me
 reads the Amazon.ae page (amazon_page.py: price, stock, delivery date of every offer of the buy box, which item the page
 is about) and updates the price, the "continue selling" setting and the supplier.* metafields.
 
-What never changes a variant: a page that could not be read (blocked, partial, wrong delivery city). What hides it: out of
+What never changes a variant: a page that could not be read (blocked, partial, wrong delivery city, or not
+understood because Amazon.ae changed its layout: see layout_watch). What hides it: out of
 stock, too slow, a tiny stock, a listing that was removed, a page that now shows ANOTHER item (another ASIN). What never
 hides it: another seller, a changed title, description or shade label on the same ASIN (Hoodo, 10 Nov).
 The decisions are taken by plan(), a function without side effects that the tests run offline.
@@ -31,7 +32,7 @@ import zlib
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # python -I does not add the script folder
 import amazon_page  # noqa: E402,F401  (reading of the Amazon.ae pages, tested offline)
-from amazon_page import ASIN_RE, EXTRA_DAYS, MONTHS, days_until, dubai_today, parse, parse_price, parse_seller  # noqa: E402,F401
+from amazon_page import ASIN_RE, EXTRA_DAYS, MONTHS, days_until, dubai_now, dubai_today, parse, parse_price, parse_seller  # noqa: E402,F401
 import suppliers  # noqa: E402  (the other sources: MedX, PadelShop.ae)
 
 API = "2025-07"
@@ -46,20 +47,52 @@ MAX_CHANGE = 1.50  # a price that would rise by more than this share (+150 %) is
 # later gives the same amount (about 5 % tolerance). A held rise puts the variant to Épuisé meanwhile: its real cost is unknown.
 PRICE_DROP_MAX = float(os.environ.get("PRICE_DROP_MAX", "0.4"))
 PRICE_CONFIRM_HOURS = float(os.environ.get("PRICE_CONFIRM_HOURS", "3"))
+# Since 15 Nov (Hoodo: "the stock check is supposed to make me always sell at a profit"): the shop price no longer follows
+# Amazon.ae down at once. Measured on the 34 full checks of 10-15 Nov: the Amazon.ae price of 214 items moved by 40 % or
+# more, 80 of them back and forth (two sellers taking turns in the buy box: NYX blush 21.67 AED, 39 the next morning,
+# 21.67 at noon, 38 in the afternoon). A customer ordered at the low price and the item cost twice as much a few hours
+# later, when it was bought (orders #1048, #1050, #1055, #1061). So: a RISE is applied at once, as before; a FALL is applied
+# only once every reading for PRICE_DROP_HOURS has been below the shop price (at least PRICE_DROP_READS readings), and the
+# price then goes down to the HIGHEST of those readings. One reading back at the shop price or above starts the wait again.
+# In short, the shop price is the formula on the highest Amazon.ae price of the last two days. PRICE_DROP_HOURS=0 restores
+# the rule of 10 Nov (falls applied at once, beyond PRICE_DROP_MAX after a second reading).
+PRICE_DROP_HOURS = float(os.environ.get("PRICE_DROP_HOURS", "48"))
+PRICE_DROP_READS = int(os.environ.get("PRICE_DROP_READS", "4"))
+# Since 15 Nov: the order check compares what Amazon.ae asks when the order arrives with the price the customer paid. When
+# the formula on today's Amazon.ae price is above the price paid by more than this share (and by 100 Fdj at least), the
+# order gets the tag amazon-prix and the alert gives both amounts: buy at once, or check before buying.
+ORDER_PRICE_GAP = float(os.environ.get("ORDER_PRICE_GAP", "0.05"))
 # Since 10 Nov: when the only delivery offered to Dubai is a PAID standard one (e.g. AED 9), its fee is added to the Amazon.ae
 # price before the formula, so the margin is not eaten. INCLUDE_DELIVERY_FEE=0 turns it off.
 INCLUDE_DELIVERY_FEE = os.environ.get("INCLUDE_DELIVERY_FEE", "1") == "1"
-# Delivery to Dubai (standard delivery only, never a paid express option) up to MAX_DAYS days is sellable, which gives
-# the "4 to 5 days" shown in the shop (2 + 2-3 days of forwarding to Djibouti); anything later counts as out of stock.
-# Since 2 Nov: 2 days (a guest sees "FREE delivery <in 2 days> on your first order" on almost every page; the paid
-# "fastest delivery tomorrow" option used to be read as 1 day). MAX_DAYS can be changed without touching the code.
+# Delivery to Dubai (never a Rush / same-day express option) up to MAX_DAYS days is sellable, which gives the "4 to 5 days"
+# shown in the shop (2 + 2-3 days of forwarding to Djibouti); anything later counts as out of stock.
+# The date that counts is the one Hoodo's account gets (amazon_page.pick_delivery): for an offer shipped by Amazon itself
+# the "fastest delivery" date, else the free date, else a paid standard one. MAX_DAYS can be changed without touching the code.
 MAX_DAYS = int(os.environ.get("MAX_DAYS", "2"))
+# Since 15 Nov (Hoodo's decision for the makeup best-sellers): a product carrying the tag EXT_TAG may be sold up to EXT_MAX_DAYS
+# days to Dubai instead of MAX_DAYS. Its variants then show the long delay ("3 to 10 days"), see delivery_range.
+EXT_TAG = "delai-etendu"
+EXT_MAX_DAYS = int(os.environ.get("EXT_MAX_DAYS", "4"))
 STANDARD_DAYS = MAX_DAYS  # up to this many days to Dubai: standard delay; later (if MAX_DAYS is raised): longer delay shown
+# Since 11 Nov: every evening, once Amazon's dispatch cut-off has passed (about 20:00-21:00 in Dubai), the dates slip by one
+# day until midnight, then come back. Measured on 10-11 Nov on the whole catalogue: 1,469 variants at 1 day at 19:00, none
+# at 21:45 (all at 2 days); the next evening 1,700 variants went from 2 to 3 days. That is the hour the shop sells most, and
+# the order check then flagged a whole order as unbuyable (order #1048; #1039 looks the same). So, from EVENING_FROM_HOUR
+# (Dubai time) to midnight, a variant that is ALREADY ON SALE keeps EVENING_SLACK_DAYS more day(s). A variant that is Épuisé
+# only comes back under the strict rule, at any hour: nothing slow is put on sale by this slack, and a variant that is
+# really slow goes out at the first morning check. EVENING_SLACK_DAYS=0 turns it off.
+EVENING_FROM_HOUR = int(os.environ.get("EVENING_FROM_HOUR", "19"))
+EVENING_SLACK_DAYS = int(os.environ.get("EVENING_SLACK_DAYS", "1"))
 FORWARD_DAYS = (2, 3)  # Dubai -> Djibouti
 # Since 10 Nov: "Only N left in stock" with N <= LOW_STOCK_MAX is not sellable. A tiny stock usually belongs to a small
 # seller shipped by Amazon; once it is gone the offer moves to a seller who delivers the next week (orders #1014, #1040:
 # the robot read "tomorrow", Hoodo saw "next week" and had to buy elsewhere). LOW_STOCK_MAX=0 turns the rule off.
 LOW_STOCK_MAX = int(os.environ.get("LOW_STOCK_MAX", "3"))
+# Since 11 Nov: a variant that is Épuisé only comes back when Amazon.ae shows more than LOW_STOCK_BACK units (or no "Only N
+# left" line at all). With a single threshold, a stock moving between 3 and 4 put the variant on sale and off again at
+# every check: 130 variants changed state twice or more in 24 hours (10-11 Nov), some of them at every single check.
+LOW_STOCK_BACK = int(os.environ.get("LOW_STOCK_BACK", "5"))
 PRICES_ONLY = os.environ.get("PRICES_ONLY") == "1"  # update prices only: no stock, set-aside or delivery-range change
 # Since 5 Nov: a page in stock with NO delivery date for the Dubai address is not sellable (it usually means Amazon.ae
 # does not deliver it there; eos body butter sold out for Hoodo while the robot read "in stock"). NO_DATE_KEEPS=1 restores
@@ -67,6 +100,11 @@ PRICES_ONLY = os.environ.get("PRICES_ONLY") == "1"  # update prices only: no sto
 RETRY_MAX = int(os.environ.get("RETRY_MAX", "40"))  # pages read a second time at the end of each reader
 NO_DATE_KEEPS = os.environ.get("NO_DATE_KEEPS", "0") == "1"
 STOCK_GUARD = float(os.environ.get("STOCK_GUARD", "0.35"))  # share of read variants that may newly go Épuisé in one run before stock changes are held
+# Since 11 Nov: Amazon.ae changes its pages (often on a share of the visitors first). Every fact has a spare reading
+# (amazon_page.py); a page whose featured offer cannot be understood counts as NOT READ (never "out of stock" on a guess).
+# One reader raises the alert when more than LAYOUT_MAX of its pages are in that case, read through a spare reading, or
+# missing a fact altogether: the shop keeps running, and the main reading is repaired before the spare one breaks too.
+LAYOUT_MAX = float(os.environ.get("LAYOUT_MAX", "0.10"))
 ODD_PAGES_MAX = 0.10  # more "listing removed / another item shown" pages than this share in one reader = a misread, not the truth
 PARK_TAG = "livraison-lente"  # draft + this tag = set aside for slow delivery, republished by this script
 OUT_TAG = "epuise-auto"  # draft + this tag = every variant Épuisé, hidden by park_soldout.py, republished when one is sellable again
@@ -85,6 +123,7 @@ PRODUCTS_Q = """query($after:String,$q:String!){ products(first:50, after:$after
     spreadr: metafield(namespace:"global", key:"spreadr-asin"){value}
     weight: metafield(namespace:"internal", key:"weight_g"){value}
     variants(first:100){ nodes{ id title sku price inventoryPolicy
+      cost: metafield(namespace:"internal", key:"cost_aed"){value}
       range: metafield(namespace:"supplier", key:"delivery_range"){value}
       state: metafield(namespace:"supplier", key:"sync_state"){value}
       fallback: metafield(namespace:"supplier", key:"fallback"){value}
@@ -168,8 +207,11 @@ def hours_since(text, now):
 
 def read_state(meta):
     """supplier.sync_state of a variant, the robot's memory between two runs:
-    "pend" {aed, t} = a price jump seen at t, waiting for a second reading; "src" / "src_t" = sold from its second source,
-    last confirmed at src_t; "cool" = not to be put back on sale before that time (an order just proved it unavailable)."""
+    "pend" {aed, t} = a price jump seen at t, waiting for a second reading; "low" {t, fdj, n} = Amazon.ae has been cheaper
+    than the shop price since t, on n readings, fdj being the highest price the formula gave on them (guard_price);
+    "src" / "src_t" = sold from its second source,
+    last confirmed at src_t; "cool" = not to be put back on sale before that time (an order just proved it unavailable);
+    "why" = why the variant is Épuisé (why_out), absent when it is on sale."""
     try:
         state = json.loads((meta or {}).get("value") or "{}")
     except ValueError:
@@ -199,6 +241,23 @@ def load_variants(held=()):
     return rows
 
 
+def grams_of(p, v):
+    """Shipping weight the formula uses for a variant: the product's internal.weight_g, else the variant's own weight,
+    else DEFAULT_WEIGHT_G. The order check uses the same one to compare a price paid with today's Amazon.ae price."""
+    grams = None
+    if p.get("weight"):
+        try:
+            grams = float(p["weight"]["value"])
+        except (TypeError, ValueError):
+            grams = None
+    else:
+        w = ((v.get("inventoryItem") or {}).get("measurement") or {}).get("weight") or {}
+        factor = {"GRAMS": 1, "KILOGRAMS": 1000, "POUNDS": 453.6, "OUNCES": 28.35}.get(w.get("unit"))
+        if factor and w.get("value"):
+            grams = float(w["value"]) * factor
+    return grams or DEFAULT_WEIGHT_G
+
+
 def load_rows(search, parked, held=()):
     rows, after = [], None
     while True:
@@ -221,22 +280,15 @@ def load_rows(search, parked, held=()):
                 asin = m.group(1) if m else (product_asin if total == 1 else None)
                 if not asin:
                     continue
-                grams = None
-                if p.get("weight"):
-                    grams = float(p["weight"]["value"])
-                else:
-                    w = ((v.get("inventoryItem") or {}).get("measurement") or {}).get("weight") or {}
-                    factor = {"GRAMS": 1, "KILOGRAMS": 1000, "POUNDS": 453.6, "OUNCES": 28.35}.get(w.get("unit"))
-                    if factor and w.get("value"):
-                        grams = float(w["value"]) * factor
+                grams = grams_of(p, v)
                 rows.append({"productId": p["id"], "handle": p["handle"], "vendor": p.get("vendor") or "",
                              "variantId": v["id"], "variant": v["title"], "asin": asin, "price": float(v["price"]),
                              "policy": v["inventoryPolicy"], "policy0": v["inventoryPolicy"],
-                             "grams": grams or DEFAULT_WEIGHT_G, "range": (v.get("range") or {}).get("value"),
-                             "state": read_state(v.get("state")),
+                             "grams": grams, "range": (v.get("range") or {}).get("value"),
+                             "state": read_state(v.get("state")), "cost0": (v.get("cost") or {}).get("value"),
                              "fallback": ((v.get("fallback") or {}).get("value") or "").strip(),
                              "blocked": BLOCK_TAG in tags or f"{BLOCK_TAG}:{asin.lower()}" in tags or asin in held,
-                             "parked": parked, "nvariants": total})
+                             "parked": parked, "nvariants": total, "ext": EXT_TAG in tags})
         if not data["pageInfo"]["hasNextPage"]:
             return rows
         after = data["pageInfo"]["endCursor"]
@@ -269,35 +321,88 @@ def read_page(asin):
             page = parse(fetch(asin), dubai_today(), asin)
         if page.get("error") == "location":
             raise LocationLost(f"delivery location is '{page.get('location')}', not {amazon_page.CITY}")
+    if not page.get("error"):
+        page["hour"] = dubai_now().hour  # the hour of the reading decides the evening slack (days_allowed)
     return choose_offer(page)
 
 
-def low_stock(page):
-    """Only a few units left on Amazon.ae: the offer can switch to a slow seller at any moment."""
+def low_stock(page, on_sale=True):
+    """Only a few units left on Amazon.ae: the offer can switch to a slow seller at any moment. A variant on sale goes
+    out at LOW_STOCK_MAX units or fewer; one that is Épuisé needs more than LOW_STOCK_BACK to come back."""
     left = page.get("stockLeft")
-    return LOW_STOCK_MAX > 0 and left is not None and left <= LOW_STOCK_MAX
+    limit = LOW_STOCK_MAX if on_sale else max(LOW_STOCK_MAX, LOW_STOCK_BACK)
+    return LOW_STOCK_MAX > 0 and left is not None and left <= limit
 
 
-def sellable(page, row=None):
-    """Can this offer be bought now and reach Dubai in time? The seller's name plays no part."""
+def days_allowed(on_sale, hour):
+    """Days to Dubai accepted for a variant: MAX_DAYS, plus the evening slack when the variant is already on sale and the
+    page was read between EVENING_FROM_HOUR and midnight in Dubai (hour None = unknown: strict)."""
+    late = on_sale and hour is not None and hour >= EVENING_FROM_HOUR
+    return MAX_DAYS + (EVENING_SLACK_DAYS if late else 0)
+
+
+def sellable(page, max_days=None, on_sale=True):
+    """Can this offer be bought now and reach Dubai in time (max_days, by default the strict MAX_DAYS)? on_sale=False
+    asks more stock of a variant that is Épuisé before it comes back. The seller's name plays no part."""
     if page.get("error") or page.get("held") or page.get("gone") or page.get("redirect"):
         return False
-    if low_stock(page):
+    if low_stock(page, on_sale):
         return False
     days = page.get("sourceDays")
-    return bool(page.get("inStock")) and days is not None and days <= MAX_DAYS
+    return bool(page.get("inStock")) and days is not None and days <= (MAX_DAYS if max_days is None else max_days)
 
 
-def choose_offer(page):
+def choose_offer(page, max_days=None, on_sale=True):
     """Some buy boxes list several offers (two sellers, each with its price, stock and date). The first one that can be
     sold is the one we would buy; without any, the featured offer describes the page."""
     if page.get("error") or page.get("gone") or page.get("redirect"):
         return page
-    for k, offer in enumerate(page.get("offers") or []):
+    offers = page.get("offers") or []
+    for k, offer in enumerate(offers):
         chosen = {**page, **offer, "offer": k}
-        if sellable(chosen):
+        if sellable(chosen, max_days, on_sale):
             return chosen
-    return page
+    return {**page, **offers[0], "offer": 0} if offers else page
+
+
+def offer_for(page, on_sale, ext=False):
+    """(the offer we would buy, can it be sold?) for a variant that is on sale or not: a variant on sale gets the evening
+    slack, one that is Épuisé must meet the strict rule to come back. An offer inside the strict rule is always preferred."""
+    page = choose_offer(page, None, on_sale)
+    if sellable(page, None, on_sale):
+        return page, True
+    limit = days_allowed(on_sale, page.get("hour"))
+    if ext:  # product tagged EXT_TAG: longer delay accepted
+        limit = max(limit, EXT_MAX_DAYS)
+    if limit > MAX_DAYS:
+        page = choose_offer(page, limit, on_sale)
+    return page, sellable(page, limit, on_sale)
+
+
+def why_out(page, on_sale=True, blocked=False, cooling=False, hold=None):
+    """Why a variant is Épuisé, as a short code kept on the variant (supplier.sync_state "why") and counted in the
+    reports and in the audit, so "why are so many products hidden?" has an answer at every check:
+    retenue (held by hand), pause-commande (an order just proved it unavailable), prix (price jump waiting for a second
+    reading), fiche-supprimee, autre-article, rupture, amazon-now (only the Amazon Now box is offered, no ordinary
+    offer), stock-bas, sans-date (no delivery date for Dubai: mostly Amazon US / UK imports), delai:3 (one day too slow)
+    or delai:4+."""
+    if blocked:
+        return "retenue"
+    if cooling:
+        return "pause-commande"
+    if hold == "rise":
+        return "prix"
+    if page.get("gone"):
+        return "fiche-supprimee"
+    if page.get("redirect"):
+        return "autre-article"
+    if not page.get("inStock"):
+        return "amazon-now" if page.get("amazonNow") else "rupture"
+    if low_stock(page, on_sale):
+        return "stock-bas"
+    if page.get("sourceDays") is None:
+        return "sans-date"
+    return "delai:3" if page["sourceDays"] <= MAX_DAYS + 1 else "delai:4+"
 
 
 def cost_of(page):
@@ -312,22 +417,47 @@ def formula(aed, grams):
 
 
 def guard_price(old, new, aed, state, now):
-    """(price to set or None, "rise" / "drop" when the change is held, new state).
-    A jump beyond the limits is not applied at once: the amount and the time are remembered ("pend") and the change goes
-    through when a reading at least PRICE_CONFIRM_HOURS later gives the same amount. Normal changes clear the memory."""
-    rest = {k: v for k, v in state.items() if k != "pend"}
+    """(price to set or None, "rise" / "drop" / "wait" when the change is not applied now, new state).
+    A rise is applied at once, unless it is beyond MAX_CHANGE: then the amount and the time are remembered ("pend") and it
+    goes through when a reading at least PRICE_CONFIRM_HOURS later gives the same amount ("rise": not sold meanwhile).
+    A fall waits ("wait"): "low" remembers since when Amazon.ae has been cheaper than the shop price, on how many readings,
+    and the highest price the formula gave on them. Once that has lasted PRICE_DROP_HOURS on at least PRICE_DROP_READS
+    readings, the price goes down to that highest reading. Any reading at the shop price or above forgets "low": a price
+    that is low for a few hours never reaches the shop. With PRICE_DROP_HOURS=0 a fall is applied at once, or, beyond
+    PRICE_DROP_MAX, after a second reading ("drop"), as before 15 Nov."""
+    rest = {k: v for k, v in state.items() if k not in ("pend", "low")}
     if not old or old <= 0:
         return new, None, rest
-    kind = "rise" if new > old * (1 + MAX_CHANGE) else "drop" if new < old * (1 - PRICE_DROP_MAX) else None
-    if not kind:
-        return new, None, rest
-    pend = state.get("pend") if isinstance(state.get("pend"), dict) else {}
-    same = bool(pend.get("aed")) and abs(pend["aed"] - aed) <= 0.05 * aed
-    if same and hours_since(pend.get("t"), now) >= PRICE_CONFIRM_HOURS:
-        return new, None, rest
-    if same:
-        return None, kind, dict(state)
-    return None, kind, {**rest, "pend": {"aed": round(aed, 2), "t": iso(now)}}
+    if new >= old or PRICE_DROP_HOURS <= 0:
+        kind = "rise" if new > old * (1 + MAX_CHANGE) else "drop" if new < old * (1 - PRICE_DROP_MAX) else None
+        if not kind:
+            return new, None, rest
+        pend = state.get("pend") if isinstance(state.get("pend"), dict) else {}
+        same = bool(pend.get("aed")) and abs(pend["aed"] - aed) <= 0.05 * aed
+        if same and hours_since(pend.get("t"), now) >= PRICE_CONFIRM_HOURS:
+            return new, None, rest
+        if same:
+            return None, kind, {**rest, "pend": pend}
+        return None, kind, {**rest, "pend": {"aed": round(aed, 2), "t": iso(now)}}
+    low = state.get("low") if isinstance(state.get("low"), dict) else {}
+    try:
+        seen, reads, since = int(low["fdj"]), int(low["n"]), str(low["t"])
+        if seen >= old or hours_since(since, now) > 1e8:  # the shop price changed by hand, or an unreadable time: start again
+            raise ValueError
+    except (KeyError, TypeError, ValueError):
+        seen, reads, since = 0, 0, iso(now)
+    seen, reads = max(seen, int(new)), reads + 1
+    if reads >= PRICE_DROP_READS and hours_since(since, now) >= PRICE_DROP_HOURS:
+        return seen, None, rest
+    return None, "wait", {**rest, "low": {"t": since, "fdj": seen, "n": reads}}
+
+
+def cost_text(value):
+    """A stored cost as the robot writes it ("54.00"), or None when it is absent or unreadable."""
+    try:
+        return f"{float(value):.2f}"
+    except (TypeError, ValueError):
+        return None
 
 
 def no_date(page):
@@ -385,7 +515,7 @@ def hide_unavailable(rows, pages, dry, hidden):
     live = [r for r in rows if not r["parked"] and pages.get(r["asin"]) and not pages[r["asin"]].get("error")]
     out = [r for r in live if r["policy"] == "CONTINUE" and not r["fallback"]
            and not (pages[r["asin"]].get("inStock") and pages[r["asin"]].get("sourceDays") is None)
-           and not sellable(pages[r["asin"]])]
+           and not offer_for(pages[r["asin"]], True, r.get("ext"))[1]]
     if len(live) < 20 or len(hidden) + len(out) > STOCK_GUARD * len(live):
         return
     by_product = {}
@@ -421,12 +551,16 @@ def plan(rows, pages, now, fetch_other=None, hidden=(), prices_only=False):
         cooling = bool(state.get("cool")) and hours_since(state["cool"], now) < 0
         if state.get("cool") and not cooling:
             state.pop("cool")
+        # on sale when the run started (policy0: hide_unavailable may have set "policy" to DENY during this very run)
+        on_sale = r["policy0"] == "CONTINUE" and not r["parked"]
+        page, can_sell = offer_for(page, on_sale, r.get("ext"))
         d = {"r": r, "page": page, "sell": False, "src": "amazon", "cost": None, "days": None, "price": None,
-             "hold": None, "wait": False}
+             "hold": None, "wait": False, "why": None}
         if r["blocked"] or cooling:
             pass
-        elif sellable(page):
-            d.update(sell=True, cost=cost_of(page), days=page["sourceDays"])
+        elif can_sell:  # days: never more than MAX_DAYS for the shop's delivery label, also under the evening slack
+            d.update(sell=True, cost=cost_of(page),
+                     days=min(page["sourceDays"], EXT_MAX_DAYS if r.get("ext") else MAX_DAYS))
         elif r["fallback"] and fetch_other:
             mod, slug, _ = suppliers.module_of(r["fallback"])
             if mod:
@@ -442,8 +576,9 @@ def plan(rows, pages, now, fetch_other=None, hidden=(), prices_only=False):
             new = formula(d["cost"], r["grams"])
             if r["parked"] or abs(new - r["price"]) >= 50:  # a republished product always gets a fresh price
                 d["price"], d["hold"], state = guard_price(r["price"], new, d["cost"], state, now)
-            else:
+            else:  # Amazon.ae is back at the shop price: nothing is waiting any more
                 state.pop("pend", None)
+                state.pop("low", None)
             if d["hold"] == "rise":  # the real cost is unknown until the second reading: not sold meanwhile
                 d["sell"] = False
         if d["sell"] and d["src"] != "amazon":
@@ -451,6 +586,10 @@ def plan(rows, pages, now, fetch_other=None, hidden=(), prices_only=False):
         else:
             state.pop("src", None)
             state.pop("src_t", None)
+        if d["sell"]:
+            state.pop("why", None)
+        else:
+            d["why"] = state["why"] = why_out(page, on_sale, r["blocked"], cooling, d["hold"])
         d["policy"], d["state"] = ("CONTINUE" if d["sell"] else "DENY"), state
         decisions.append(d)
     # Safety net: if too many variants would newly go Épuisé in one run (counting those already hidden during the
@@ -536,6 +675,50 @@ def read_all(asins, rows, dry, hidden, delay):
     return pages, stopped
 
 
+FACT_NAMES = {"price": "the price", "delivery": "the delivery date", "stock": "the stock line", "cart": "the add-to-cart "
+              "button", "shipper": "who ships the offer", "buybox": "the buy box", "title": "the product title",
+              "location": "the delivery city", "offer": "the offer"}
+
+
+def layout_watch(pages):
+    """What this reading says about the layout of Amazon.ae's pages: (stats for the report, alert lines).
+    Changes pages in one case: far more pages "in stock without a delivery date" than Amazon.ae ever has (2 to 4 % are
+    imports without a date) is a delivery block that changed, not the truth: those pages become NOT READ."""
+    stats = {"unreadable": {}, "spare": {}, "missing": {}, "noDateInBulk": 0,
+             "amazonNow": sum(1 for p in pages.values() if p.get("amazonNow"))}
+    for p in pages.values():
+        if p.get("layout"):
+            stats["unreadable"][p["layout"]] = stats["unreadable"].get(p["layout"], 0) + 1
+        if p.get("error"):
+            continue
+        for k in set((p.get("via") or []) + (p.get("pageVia") or [])):
+            stats["spare"][k] = stats["spare"].get(k, 0) + 1
+        for k in set((p.get("blind") or []) + (p.get("pageBlind") or [])):
+            stats["missing"][k] = stats["missing"].get(k, 0) + 1
+    readable = sum(1 for p in pages.values() if not p.get("error"))
+    alerts = []
+    no_date = [a for a, p in pages.items() if not p.get("error") and p.get("inStock") and p.get("sourceDays") is None
+               and not p.get("held")]
+    if len(no_date) > max(8, LAYOUT_MAX * readable):
+        stats["noDateInBulk"] = len(no_date)
+        for a in no_date:
+            pages[a] = {"error": "layout: delivery", "layout": "delivery"}
+        alerts.append(f"{len(no_date)} of {readable} pages in stock show no delivery date (2 to 4 % is normal): Amazon.ae "
+                      "probably changed its delivery block. These pages count as not read, nothing was hidden for it.")
+        readable -= len(no_date)
+    unreadable = sum(stats["unreadable"].values())
+    if unreadable > max(5, LAYOUT_MAX / 2 * len(pages)):
+        what = ", ".join(f"{FACT_NAMES.get(k, k)} ({n})" for k, n in sorted(stats["unreadable"].items(), key=lambda x: -x[1]))
+        alerts.append(f"{unreadable} of {len(pages)} pages could not be understood, missing: {what}. Amazon.ae probably "
+                      "changed its page. These pages count as not read: nothing hidden on a guess, nothing confirmed.")
+    for kind, text in (("spare", "read only through the spare reading: the shop still works, repair the main reading"),
+                       ("missing", "not found at all: a rule is off for these pages (low stock, fastest date or city check)")):
+        for k, n in sorted(stats[kind].items(), key=lambda x: -x[1]):
+            if n >= max(10, LAYOUT_MAX * readable):
+                alerts.append(f"{FACT_NAMES.get(k, k)} was {text} ({n} of {readable} pages).")
+    return stats, alerts
+
+
 def start_browser():
     """A headless browser set to the Dubai address: up to 3 tries, whatever goes wrong (address, CAPTCHA, a crash)."""
     global READER
@@ -613,21 +796,24 @@ def main():
         if READER:
             READER.close()
 
+    layout, layout_alerts = layout_watch(pages)
     decisions, info = plan(rows, pages, now_t, fetch_other=lambda mod, slug: mod.fetch(slug), hidden=hidden,
                            prices_only=PRICES_ONLY)
     revive = info["revive"]
     report = {"checkedAt": now, "dryRun": dry, "shard": os.environ.get("SHARD"), "pagesAsked": len(asins),
               "pagesRead": sum(1 for p in pages.values() if not p.get("error")), "changes": [], "skipped": [],
-              "errors": [], "republished": [], "stillParked": [], "gone": [], "redirected": [], "secondSource": [],
+              "waiting": [], "costUpdates": 0, "costErrors": 0, "errors": [], "republished": [], "stillParked": [], "gone": [], "redirected": [],
+              "secondSource": [],
               "nameMismatch": [], "blocked": len(skip), "hiddenDuringRun": len(hidden),
-              "stockGuardTripped": info["guard"], "stoppedEarly": stopped}
+              "stockGuardTripped": info["guard"], "stoppedEarly": stopped, "layout": layout,
+              "layoutAlerts": layout_alerts}
     for r in rows:
         page = pages.get(r["asin"])
         if page and page.get("error"):
             report["errors"].append({"asin": r["asin"], "handle": r["handle"], "error": page["error"]})
     if info["guard"]:
         print(f"Stock guard: {info['newlyOut']} of {info['live']} variants would newly go Épuisé, no stock change made.")
-    by_product, stamps, agg, second = {}, {}, {}, set()
+    by_product, stamps, agg, second, costs = {}, {}, {}, set(), {}
     for d in decisions:
         r, page = d["r"], d["page"]
         who = {"handle": r["handle"], "variant": r["variant"], "asin": r["asin"]}
@@ -640,7 +826,11 @@ def main():
         if r["parked"] and r["productId"] not in revive:
             report["stillParked"].append({**who, "aed": page.get("aed"), "inStock": page.get("inStock"),
                                           "delivery": page.get("deliveryText"), "days": page.get("sourceDays")})
-        if d["hold"]:
+        if d["hold"] == "wait":  # Amazon.ae is cheaper than the shop price, not for long enough yet (guard_price)
+            low = d["state"].get("low") or {}
+            report["waiting"].append({**who, "aed": d["cost"], "now": r["price"], "formula": formula(d["cost"], r["grams"]),
+                                      "since": low.get("t"), "reads": low.get("n")})
+        elif d["hold"]:
             report["skipped"].append({**who, "aed": d["cost"], "now": r["price"], "formula": formula(d["cost"], r["grams"]),
                                       "kind": d["hold"]})
         upd = {"id": r["variantId"]}
@@ -654,6 +844,11 @@ def main():
             mine.append(field(r["variantId"], "variant_checked_at", "date_time", now))  # coverage.py checks it
             if d["state"] != r["state"]:
                 mine.append(field(r["variantId"], "sync_state", "json", json.dumps(d["state"], separators=(",", ":"))))
+            # Since 15 Nov: what the item costs on Amazon.ae (or at its second source) today is kept on the variant, so a
+            # margin is computed on the real cost. It used to be written once, when the product was created.
+            if d["sell"] and d["cost"] and f"{d['cost']:.2f}" != cost_text(r.get("cost0")):
+                costs.setdefault(r["productId"], []).append(
+                    field(r["variantId"], "cost_aed", "number_decimal", f"{d['cost']:.2f}", "internal"))
             if d["policy"] == "CONTINUE":
                 mine.append(field(r["variantId"], "delivery_eta", "single_line_text_field", eta_of(d["days"])))
                 rng = "standard" if d["days"] <= STANDARD_DAYS else "3-10"
@@ -706,11 +901,38 @@ def main():
             errors += len(res)
             for e in res[:3]:
                 print("metafield error:", e)
+        # The cost notes go last and apart: a note that Shopify refuses must never keep a "verified" stamp from being
+        # written (one refused value cancels its whole batch), nor turn a good check into an alert.
+        notes = [f for pid, fs in costs.items() if pid not in failed for f in fs]
+        for i in range(0, len(notes), 25):
+            try:
+                res = gql(META_M, {"m": notes[i:i + 25]})["metafieldsSet"]["userErrors"]
+            except Exception as e:
+                res = [f"{type(e).__name__}: {str(e)[:150]}"]
+            if res:
+                report["costErrors"] += 1
+                print("::warning::cost note not written:", res[:2])
+            else:
+                report["costUpdates"] += len(notes[i:i + 25])
 
+    if dry:
+        report["costUpdates"] = sum(len(fs) for fs in costs.values())
     report["republished"] = sorted({r["handle"] for r in rows if r["productId"] in revive - failed})
     report["noDeliveryDate"] = sum(1 for d in decisions if not d["r"]["parked"] and d["page"].get("inStock")
                                    and d["page"].get("sourceDays") is None)
     report["lowStock"] = sum(1 for d in decisions if not d["r"]["parked"] and low_stock(d["page"]))
+    # every Épuisé variant with its reason and what the page showed: the next fine-tuning starts from facts
+    report["out"] = [{"asin": d["r"]["asin"], "handle": d["r"]["handle"], "why": d["why"], "wasOnSale": d["r"]["policy0"] == "CONTINUE",
+                      "days": d["page"].get("sourceDays"), "left": d["page"].get("stockLeft"),
+                      "amazonShips": d["page"].get("amazonShips"), "promises": d["page"].get("promises"),
+                      "hour": d["page"].get("hour")} for d in decisions if not d["sell"]]
+    why_count = {}
+    for d in decisions:
+        if not d["sell"]:
+            why_count[d["why"]] = why_count.get(d["why"], 0) + 1
+    report["outByReason"] = why_count
+    report["eveningSlack"] = sum(1 for d in decisions if d["sell"] and d["src"] == "amazon"
+                                 and (d["page"].get("sourceDays") or 0) > MAX_DAYS)
     tail = (os.environ.get("SHARD") or "all").replace("/", "of")
     path = os.path.join(outdir, f"sync-{now[:13].replace(':', '')}-{tail}.json")
     json.dump(report, open(path, "w"), indent=1, ensure_ascii=False)
@@ -729,15 +951,24 @@ def main():
         f"whose page was not read" + (f" ({reasons})" if reasons else ""),
         f"Stock: {to_out} to Épuisé ({len(hidden)} of them during the reading), {back} back on sale, "
         f"{len(report['republished'])} hidden products back online, {len(report['stillParked'])} variants still hidden.",
-        f"Prices: {prices} changed, {len(report['skipped'])} jumps held until a second reading.",
+        f"Prices: {prices} changed, {len(report['waiting'])} falls waiting ({PRICE_DROP_HOURS:g} h below the shop price before "
+        f"they are applied), {len(report['skipped'])} jumps held until a second reading; cost on Amazon.ae noted on "
+        f"{report['costUpdates']} variants.",
         f"Delivery days read (None = no date): {days_seen}",
+        f"Épuisé by reason: {dict(sorted(why_count.items(), key=lambda x: -x[1]))}; {report['eveningSlack']} kept on sale "
+        f"by the evening slack.",
         f"{report['noDeliveryDate']} in stock without a delivery date, {report['lowStock']} with {LOW_STOCK_MAX} or fewer "
         f"left, {len(report['gone'])} listings removed, {len(report['redirected'])} pages showing another item, "
         f"{len(report['secondSource'])} sold from their second source, {len(report['nameMismatch'])} option names that differ "
         f"(information only).",
+        f"Page layout: {sum(layout['unreadable'].values())} pages not understood {layout['unreadable'] or ''}, spare "
+        f"readings used {layout['spare'] or 'on no page'}, facts missing {layout['missing'] or 'on no page'}; "
+        f"{layout['amazonNow']} pages offered only through Amazon Now (not sold, reason amazon-now).",
         f"{errors} Shopify errors. Report: {path}"]
     if stopped:
         lines.insert(0, f"::warning::{stopped}")
+    for a in layout_alerts:
+        lines.insert(0, f"::warning::Amazon.ae page layout: {a}")
     print("\n".join(lines))
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
@@ -747,6 +978,8 @@ def main():
         sys.exit("ALERTE: stock guard tripped, no stock change made by this reader (probably a misread).")
     if errors and not dry:
         sys.exit(f"ALERTE: {errors} Shopify errors.")
+    if layout_alerts and not dry:
+        sys.exit("ALERTE: Amazon.ae page layout: " + " | ".join(layout_alerts))
 
 
 if __name__ == "__main__":

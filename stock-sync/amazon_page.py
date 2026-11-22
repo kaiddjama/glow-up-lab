@@ -9,7 +9,10 @@ What the page tells us (measured on 23 real pages, 10 Nov 2026, guest session wi
     (id="newAccordionRow_0") and "another way to buy" (newAccordionRow_1...). The old reader only looked at the first 30,000
     characters, so it saw the featured offer's header and nothing else;
   - the delivery promises are tags data-csa-c-delivery-time / -price / -type: FREE standard delivery, a paid standard delivery
-    (e.g. AED 9) and express options ("fastest", "Rush": never counted, they cost extra and are not a promise for every order);
+    (e.g. AED 9), the plain "Or fastest delivery" line (counted only for an offer that Amazon ships itself, since 11 Nov) and
+    express options ("Rush", same day: never counted, they cost extra and are not a promise for every order);
+  - who ships: the offer says "Fulfilled by Amazon" (another seller's stock held in Amazon's warehouse) or "Shipper / Seller
+    Amazon.ae". "Delivered by Amazon.ae" (the seller hands the parcel over later) and "Amazon US / UK" (import) are not that;
   - a removed listing answers "Page Not Found" (no product title).
 Hoodo's rule of 10 Nov: the seller, the wording of the title or of the specs never decide anything. Only the ASIN decides
 whether the page is the same item.
@@ -37,9 +40,14 @@ def clean(fragment):
     return re.sub(r"\s+", " ", htmllib.unescape(re.sub(r"<[^>]+>", " ", text))).strip()
 
 
+def dubai_now():
+    """Amazon.ae lives on Dubai time (UTC+4)."""
+    return dt.datetime.now(dt.timezone(dt.timedelta(hours=4)))
+
+
 def dubai_today():
-    """Amazon.ae dates are Dubai dates (UTC+4); read per page, because a long run can cross midnight."""
-    return dt.datetime.now(dt.timezone(dt.timedelta(hours=4))).date()
+    """Amazon.ae dates are Dubai dates; read per page, because a long run can cross midnight."""
+    return dubai_now().date()
 
 
 def days_until(text, today):
@@ -64,9 +72,9 @@ def days_until(text, today):
     return (d - today).days
 
 
-def parse_price(block):
+def parse_price(block, via=None):
     """AED price of the buy box (or of one offer) inside this HTML fragment, or None. Never reads another product's price:
-    only the price blocks of the fragment itself."""
+    only the price blocks of the fragment itself. via (a list) receives "price" when the spare reading was needed."""
     i = block.find("apex-pricetopay-value")  # the price to pay; its a-offscreen text is often empty
     if i >= 0:
         w = re.search(r'a-price-whole">([\d,]+)', block[i:i + 600])
@@ -87,6 +95,15 @@ def parse_price(block):
         if w:
             f = re.search(r'a-price-fraction">(\d+)', part[w.end():w.end() + 200])
             return float(w.group(1).replace(",", "") + "." + (f.group(1) if f else "0"))
+    # Spare reading, for the day Amazon renames its price blocks: the amount the add-to-cart form of this offer sends (a
+    # hidden field). On 65 real offers (11 Nov) it is the displayed price every time. No looser reading than that: a price
+    # taken from "the first AED amount around" could be a delivery fee or a crossed-out price.
+    m = re.search(r'customerVisiblePrice\]\[amount\]"[^>]*\bvalue="(\d+(?:\.\d+)?)"', block) or \
+        re.search(r'\bvalue="(\d+(?:\.\d+)?)"[^>]*customerVisiblePrice\]\[amount\]', block)
+    if m and float(m.group(1)) > 0:
+        if via is not None:
+            via.append("price")
+        return float(m.group(1))
     return None
 
 
@@ -98,8 +115,8 @@ def _attr(tag, name):
 def delivery_options(block):
     """The delivery promises of a fragment: [{"text", "kind": free | paid | express, "fee"}].
     free = FREE standard delivery (also "on your first order": a guest always sees it), paid = a standard delivery with a fee
-    (AED 9...), express = "fastest" / "Rush" / same-day arrangements: never counted, they cost extra and are not offered
-    on every order."""
+    (AED 9...), fastest = the plain "Or fastest delivery <date>" line (counted only when Amazon ships the offer itself),
+    express = "Rush" / same-day arrangements: never counted, they cost extra and are not offered on every order."""
     out = []
     for tag in DELIVERY_TAG_RE.findall(block):
         when = _attr(tag, "delivery-time")
@@ -108,8 +125,10 @@ def delivery_options(block):
         price = _attr(tag, "delivery-price").lower()
         mir = _attr(tag, "mir-type").lower()
         program = _attr(tag, "delivery-benefit-program-id").lower()
-        if mir == "arranged" or price in ("fastest", "rush") or program == "express" or program.startswith("sub_same_day"):
+        if mir == "arranged" or price == "rush" or program == "express" or program.startswith("sub_same_day"):
             out.append({"text": when, "kind": "express", "fee": 0.0})
+        elif price == "fastest":
+            out.append({"text": when, "kind": "fastest", "fee": 0.0})
         elif price in ("", "free"):
             out.append({"text": when, "kind": "free", "fee": 0.0})
         else:
@@ -118,10 +137,41 @@ def delivery_options(block):
     return out
 
 
-def pick_delivery(options, today):
+DATE_TEXT = (r"(?:(?:today|tomorrow|overnight|[a-z]+day),?\s*)?(?:\d{1,2}(?:\s+[a-z]{3,9})?\s*-\s*)?\d{1,2}\s+[a-z]{3,9}"
+             r"|today(?:\s+\d{1,2}\s*[ap]m\s*-\s*\d{1,2}\s*[ap]m)?|tomorrow|overnight")
+DELIVERY_TEXT_RE = re.compile(r"(FREE delivery|AED\s*[\d.,]+\s+delivery|fastest delivery)\s+(" + DATE_TEXT + r")"
+                              r"(\s+\d{1,2}\s*[ap]m\b)?", re.I)
+
+
+def delivery_options_text(block):
+    """Spare reading of the delivery promises, from the words of the offer ("FREE delivery Saturday, 14 November on your
+    first order Or fastest delivery Tomorrow, 12 November"), for the day Amazon drops the data-csa-c-delivery-* attributes
+    delivery_options reads. Same kinds; a "fastest" promise worded as a time slot ("Today 6 PM - 10 PM") or "Overnight" is
+    express (the attributes that told Rush from standard are gone with the rest)."""
+    out = []
+    for label, when, slot in DELIVERY_TEXT_RE.findall(clean(block)):
+        low = label.lower()
+        if low.startswith("fastest"):
+            rush = slot or re.search(r"overnight|\b[ap]m\b", when, re.I)
+            out.append({"text": when, "kind": "express" if rush else "fastest", "fee": 0.0})
+        elif low.startswith("free"):
+            out.append({"text": when, "kind": "free", "fee": 0.0})
+        else:
+            m = re.search(r"(\d[\d,]*(?:\.\d+)?)", label)
+            out.append({"text": when, "kind": "paid", "fee": float(m.group(1).replace(",", "")) if m else 0.0})
+    return out
+
+
+def pick_delivery(options, today, amazon=False):
     """(days to Dubai, text, delivery fee) of the delivery that counts: the earliest FREE one; only when there is none,
-    the earliest paid standard one (its fee is returned so the price can cover it). Express options never count."""
-    free = [o for o in options if o["kind"] == "free"]
+    the earliest paid standard one (its fee is returned so the price can cover it). Express options never count.
+    amazon=True (the offer is shipped by Amazon itself, see shipped_by_amazon): the plain "Or fastest delivery" date counts
+    too. A guest only gets "FREE delivery <date> on your first order", a slow date that slips by one more day every evening
+    (measured 10-11 Nov: 1 day at 19:00 Dubai, 2 days at 21:45; on 11 Nov 2 days all day and 3 days from about 21:00, for
+    1,700 of 2,000 variants), while Hoodo's account gets the fastest date: order #1048, 6 NYX items read "Saturday 14",
+    she saw "today or tomorrow" and the page said "Or fastest delivery Tomorrow". Offers shipped by the seller keep the
+    free date only."""
+    free = [o for o in options if o["kind"] == "free" or (amazon and o["kind"] == "fastest")]
     pool = free or [o for o in options if o["kind"] == "paid"]
     scored = [(days_until(o["text"], today), o) for o in pool]
     scored = [x for x in scored if x[0] is not None]
@@ -129,6 +179,41 @@ def pick_delivery(options, today):
         return None, (pool[0]["text"] if pool else None), 0.0
     days, o = min(scored, key=lambda x: x[0])
     return days, o["text"], o["fee"]
+
+
+def _feature(block, name):
+    """(label, value) of one line of the "seller, shipping and buying option details" box of an offer, e.g.
+    ("Fulfilled by", "Amazon") for fulfillerInfoFeature, ("Sold by", "Padimu") for merchantInfoFeature."""
+    # "<div id=": the same name also appears as data-csa-c-slot-id="..." inside the tag itself
+    m = re.search(rf'<div id="{name}_feature_div"(.*?)(?:<div id="\w+_feature_div"|$)', block, re.S)
+    if not m:
+        return "", ""
+    label = re.search(r'a-color-tertiary">(.*?)</span>', m.group(1), re.S)
+    value = re.search(r'offer-display-feature-text-message">(.*?)</span>', m.group(1), re.S)
+    return (clean(label.group(1)) if label else ""), (clean(value.group(1)) if value else "")
+
+
+def shipped_by_amazon(block, via=None, blind=None):
+    """True when Amazon ships this offer itself from its UAE warehouses: "Fulfilled by Amazon" (whoever sells it) or
+    "Shipper / Seller Amazon.ae". Those are the offers an account gets at the "fastest delivery" date. Not the seller's
+    identity (which never decides anything, Hoodo, 10 Nov): the same seller can have both kinds of offers."""
+    label, who = _feature(block, "fulfillerInfoFeature")
+    if label.lower().startswith("fulfilled") and who.lower().startswith("amazon"):
+        return True
+    label2, who2 = _feature(block, "merchantInfoFeature")
+    if label or label2:
+        return label2.lower().startswith("shipper") and who2.lower() == "amazon.ae"
+    # Spare reading (neither box found: Amazon renamed them): the same two wordings in the text of the offer. "Amazon US",
+    # "Amazon UK" (imports) and "Delivered by Amazon.ae" (the seller ships) still do not count.
+    text = clean(block)
+    found = bool(re.search(r"Fulfilled by\s*:?\s*Amazon\b(?!\s*(?:US|UK|Global)\b)", text) or
+                 re.search(r"Shipper\s*/\s*Seller\s*:?\s*Amazon\.ae\b", text))
+    worded = re.search(r"Fulfilled by|Shipper\s*/\s*Seller|Sold by|Ships from|Dispatched from|Delivered by", text)
+    if worded and via is not None:
+        via.append("shipper")
+    if not worded and blind is not None:
+        blind.append("shipper")  # nothing says who ships: the "fastest date" rule cannot apply to this offer
+    return found
 
 
 def parse_seller(block):
@@ -141,10 +226,14 @@ def parse_seller(block):
     return "Amazon.ae" if "Amazon.ae" in text else ""
 
 
-def buybox_offers(html):
+def buybox_offers(html, via=None):
     """The offers of the buy box as HTML fragments, in the order Amazon shows them (the featured one first). Empty list when
     the page has no desktop buy box."""
     i = html.find('id="desktop_buybox"')
+    if i < 0:
+        i = html.find('id="buybox"')  # spare: the inner box, should Amazon rename the outer one
+        if i >= 0 and via is not None:
+            via.append("buybox")
     if i < 0:
         return []
     end = html.find('id="wishlistButtonStack"', i)
@@ -160,22 +249,84 @@ def buybox_offers(html):
     return segments
 
 
-def parse_offer(seg, today):
-    """Facts of one offer: price, stock line, quantity limits, delivery, seller."""
-    price = parse_price(seg)
+NOW_BOX = 'id="desktop_almBuyBox"'  # the Amazon Now buy box (only seen on pages whose featured offer is Amazon Now)
+AVAIL_TEXT_RE = re.compile(
+    r"only\s+\d+\s+left in stock(?:\s*-\s*order soon)?\.?|currently unavailable\.?|temporarily out of stock\.?|"
+    r"out of stock\.?|(?:available|in stock)\s+(?:on|from|soon)\b[^.]{0,30}|in stock\b|"
+    r"usually (?:ships|dispatched) within [\w ]{1,25}", re.I)
+OFF_RE = re.compile(r"unavailable|out of stock|not yet released|pre-?order|(?:available|in stock) (?:on|from|soon)|temporarily",
+                    re.I)
+
+
+def availability_of(seg, via=None):
+    """The stock line of an offer ("In Stock", "Only 2 left in stock - order soon.", "Currently unavailable.")."""
     m = re.search(r'\sid="availability"[^>]*>(.*?)</div>', seg, re.S)
-    avail = clean(m.group(1)) if m else ""
+    if m and clean(m.group(1)):
+        return clean(m.group(1))
+    # The two other boxes Amazon.ae uses today have their own stock line: the "Currently unavailable" box and the
+    # Amazon Now box. They are normal readings, not spare ones.
+    for mark in ('id="outOfStock"', 'id="availability-string"'):
+        i = seg.find(mark)
+        found = AVAIL_TEXT_RE.search(clean(seg[i:i + 3000])) if i >= 0 else None
+        if found:
+            return found.group(0).strip()
+    # Spare reading: the same wording, looked for in the availability box of the buy box, then in the text of the offer.
+    i = seg.find("availabilityInsideBuyBox_feature_div")
+    for text in ((clean(seg[i:i + 4000]) if i >= 0 else ""), clean(seg)):
+        found = AVAIL_TEXT_RE.search(text)
+        if found:
+            if via is not None:
+                via.append("stock")
+            return found.group(0).strip()
+    return ""
+
+
+def parse_offer(seg, today):
+    """Facts of one offer: price, stock line, quantity limits, delivery, seller.
+
+    Every fact has a spare reading for the day Amazon changes its page (validated on real pages, see PROTOCOLE section 13):
+    "via" lists the facts that needed it. "blind" lists the facts found by neither reading on an offer that can be bought
+    (a rule is then silently off: low stock, fastest date). "doubt" says the offer itself could not be understood: it does
+    not look buyable, and nothing on the page says it is unavailable. Such an offer is never read as out of stock.
+
+    "amazonNow": the featured box is Amazon Now (delivery in minutes inside Dubai, its own basket, no ordinary "Add to
+    cart"). It is recognised by its own marker, so it is neither a page we cannot read nor a plain "out of stock": the
+    ordinary offer is absent, the variant is not sold, and the reason is kept apart (PROTOCOLE section 13)."""
+    via, blind = [], []
+    price = parse_price(seg, via)
+    avail = availability_of(seg, via)
+    now = NOW_BOX in seg
     left = re.search(r"only\s+(\d+)\s+left in stock", avail, re.I)
     cart = 'id="add-to-cart-button"' in seg
-    off = re.search(r"unavailable|out of stock|not yet released|pre-?order|(?:available|in stock) (?:on|from|soon)|temporarily",
-                    avail, re.I)
+    if not cart and ('name="submit.add-to-cart"' in seg or 'id="buy-now-button"' in seg):
+        cart = True
+        via.append("cart")
+    off = OFF_RE.search(avail) or 'id="outOfStock"' in seg or "buybox-see-all-buying-choices" in seg
     q = re.search(r'<select[^>]*\bid="quantity"[^>]*>(.*?)</select>', seg, re.S)
     options = [int(x) for x in re.findall(r'<option[^>]*value="(\d+)"', q.group(1))] if q else []
-    days, text, fee = pick_delivery(delivery_options(seg), today)
-    return {"aed": price, "inStock": price is not None and cart and not off, "availability": avail[:80],
-            "seller": parse_seller(seg), "stockLeft": int(left.group(1)) if left else None,
+    in_stock = price is not None and cart and not off
+    ships = shipped_by_amazon(seg, via if in_stock else None, blind if in_stock else None)
+    promises = delivery_options(seg)
+    if not promises:
+        promises = delivery_options_text(seg)
+        if promises:
+            via.append("delivery")
+    days, text, fee = pick_delivery(promises, today, amazon=ships)
+    doubt = None
+    if now and not cart:
+        in_stock = False  # Amazon Now only: nothing to put in the ordinary basket
+    elif not in_stock and not off:
+        doubt = "price" if cart else "cart" if price is not None else "offer"
+    if in_stock and not avail:
+        blind.append("stock")  # no stock line at all: "Only N left" cannot be seen
+    return {"aed": price, "inStock": bool(in_stock), "availability": avail[:80],
+            "seller": parse_seller(seg), "amazonShips": ships, "stockLeft": int(left.group(1)) if left else None,
             "maxQty": max(options) if options else None, "deliveryText": text, "sourceDays": days,
-            "storeDays": None if days is None else days + EXTRA_DAYS, "deliveryFee": fee}
+            "storeDays": None if days is None else days + EXTRA_DAYS, "deliveryFee": fee,
+            # every promise as the page words it ("free: Saturday, 14 November | fastest: Tomorrow, 12 November"), for the
+            # reports and the order alerts: Hoodo can compare with what her account shows
+            "promises": " | ".join(f"{o['kind']}: {o['text']}" for o in promises)[:160],
+            "via": via, "blind": blind, "doubt": doubt, "amazonNow": bool(now and not cart)}
 
 
 def page_asin(html):
@@ -208,8 +359,9 @@ def variation_of(html):
 
 
 def title_of(html):
-    m = re.search(r'id="productTitle"[^>]*>(.*?)</span>', html, re.S)
-    return clean(m.group(1)) if m else None
+    m = re.search(r'id="productTitle"[^>]*>(.*?)</span>', html, re.S) or \
+        re.search(r'<(h1|span)[^>]*\bid="title"[^>]*>(.*?)</\1>', html, re.S) or re.search(r"<title>(.*?)</title>", html, re.S)
+    return clean(m.group(m.lastindex)) if m else None
 
 
 def gone_page(html):
@@ -222,21 +374,31 @@ def parse(html, today, asin=None):
     """Facts of a product page. asin = the ASIN that was asked for: a page about another ASIN is flagged "redirect".
     Returns {"error": ...} for a page that cannot be read (never to be taken as "out of stock"), a page dict with "gone": True
     for a removed listing, or the featured offer's facts + "offers" (all the offers, featured first)."""
+    via = []
+    shown, agree = page_asin(html)
     if 'id="productTitle"' not in html:  # blocked, empty or partial page: never read it as out of stock
         if gone_page(html):
             return {"gone": True, "aed": None, "inStock": False, "availability": "page removed", "seller": "",
                     "stockLeft": None, "deliveryText": None, "sourceDays": None, "storeDays": None}
-        return {"error": "captcha" if "captcha" in html.lower() else "no product page"}
-    segments = buybox_offers(html)
+        # Spare: a product page whose title block was renamed still carries its ASIN markers and its title section.
+        if not (agree >= 2 and ('id="titleSection"' in html or 'id="title_feature_div"' in html or 'id="title"' in html)):
+            return {"error": "captcha" if "captcha" in html.lower() else "no product page"}
+        via.append("title")
+    segments = buybox_offers(html, via)
     if not segments:
         return {"error": "no buy box"}
     where = location_of(html)
     if where and CITY.lower() not in where.lower():
         return {"error": "location", "location": where}  # a delivery date for another address is worth nothing
     offers = [parse_offer(seg, today) for seg in segments]
+    if offers[0]["doubt"]:
+        # The featured offer cannot be understood (Amazon changed its page, or the page did not finish loading): the page
+        # counts as NOT READ. It is read again; the variant is neither hidden as "out of stock" on a guess nor confirmed.
+        return {"error": "layout: " + offers[0]["doubt"], "layout": offers[0]["doubt"]}
     page = {**offers[0], "offers": offers, "offer": 0, "location": where, "title": title_of(html),
             "variation": variation_of(html)}
-    shown, agree = page_asin(html)
+    page["pageVia"] = via  # spare readings used for the page itself (title, buy box); the offers carry their own "via"
+    page["pageBlind"] = [] if where else ["location"]  # the page does not say where it delivers: the city is unchecked
     page["asin"] = shown
     if asin and shown and shown != asin and agree >= 2:
         # The page is about ANOTHER item (the listing was merged or replaced: the shade or the size is not the same).
