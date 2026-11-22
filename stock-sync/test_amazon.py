@@ -413,6 +413,56 @@ def test_reader_keeps_its_address():
             pass
 
 
+def test_token_tries_again():
+    """Shopify answering 502 for a moment must not fail a whole job (false alert of 22 Nov); a refusal fails at once."""
+    import io
+    import json
+    import urllib.error
+    keep = {k: os.environ.get(k) for k in ("SHOPIFY_TOKEN", "SHOPIFY_STORE", "SHOPIFY_CLIENT_ID", "SHOPIFY_CLIENT_SECRET")}
+    real_open, real_sleep = s.urllib.request.urlopen, s.time.sleep
+    waits = []
+
+    def http(code):
+        return urllib.error.HTTPError("https://x", code, "x", {}, io.BytesIO(b""))
+
+    class Reply(io.BytesIO):
+        def __enter__(self): return self
+        def __exit__(self, *a): pass
+
+    def opener(answers):
+        answers = list(answers)
+
+        def urlopen(req, timeout=None):
+            a = answers.pop(0)
+            if isinstance(a, Exception):
+                raise a
+            return Reply(json.dumps(a).encode())
+        return urlopen
+    try:
+        os.environ.update({"SHOPIFY_STORE": "x.myshopify.com", "SHOPIFY_CLIENT_ID": "id", "SHOPIFY_CLIENT_SECRET": "secret"})
+        s.time.sleep = waits.append
+        os.environ.pop("SHOPIFY_TOKEN", None)
+        s.urllib.request.urlopen = opener([http(502), TimeoutError(), http(503), {"access_token": "tok"}])
+        assert s.token() == "tok" and len(waits) == 3, waits
+        os.environ.pop("SHOPIFY_TOKEN", None)
+        s.urllib.request.urlopen = opener([http(401), {"access_token": "never"}])
+        try:
+            s.token()
+            raise AssertionError("a refused request was tried again")
+        except urllib.error.HTTPError as e:
+            assert e.code == 401 and len(waits) == 3
+        s.urllib.request.urlopen = opener([http(502)] * 6)
+        try:
+            s.token()
+            raise AssertionError("no token and no error")
+        except urllib.error.HTTPError as e:
+            assert e.code == 502 and len(waits) == 8, waits  # 6 tries, then the real alert
+    finally:
+        s.urllib.request.urlopen, s.time.sleep = real_open, real_sleep
+        for k, v in keep.items():
+            os.environ.pop(k, None) if v is None else os.environ.__setitem__(k, v)
+
+
 def test_prices():
     ok = read(page())
     fair = s.formula(54.0, 200)
