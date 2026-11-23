@@ -42,10 +42,24 @@ def html(p):
     return f"<p>{p['intro']}</p><ul>{items}</ul>"
 
 
-def white_square(raw):
-    """Main photo -> 1600 px square, pure white (#FFFFFF) background, product centred with a margin."""
-    from PIL import Image  # installed by the workflow
+def white_square(raw, crop=None, wipe=None):
+    """Main photo -> 1600 px square, pure white (#FFFFFF) background, product centred with a margin.
+    crop = [left, top, right, bottom] in pixels of the source photo (to cut a texture smear or a packaging shadow);
+    wipe = [[x0, y0, x1, y1], ...] in source pixels: light-grey pixels (> 200) of those boxes become white (texture smear);
+    a small photo (< 1000 px high) is enlarged to the canvas with a light sharpening."""
+    from PIL import Image, ImageFilter  # installed by the workflow
     im = Image.open(io.BytesIO(raw)).convert("RGB")
+    for x0, y0, x1, y1 in wipe or []:
+        pw = im.load()
+        for y in range(y0, min(y1, im.height)):
+            for x in range(x0, min(x1, im.width)):
+                if min(pw[x, y]) > 200:
+                    pw[x, y] = (255, 255, 255)
+    if crop:
+        im = im.crop(tuple(crop))
+    if max(im.size) < 1000:
+        k = 1480 / max(im.size)
+        im = im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).filter(ImageFilter.UnsharpMask(2, 80, 2))
     im.thumbnail((1480, 1480), Image.LANCZOS)
     px = im.load()
     for y in range(im.height):  # near-white pixels (Amazon backgrounds are 250-255) become exactly 255
@@ -92,7 +106,7 @@ def upload(data, name):
 
 def photo_file(p, v):
     raw = download(v["img"])
-    return {"originalSource": upload(white_square(raw), f"{v['asin']}.jpg"), "alt": f"{p['title']} - {v['label']}",
+    return {"originalSource": upload(white_square(raw, v.get("crop"), v.get("wipe")), f"{v['asin']}.jpg"), "alt": f"{p['title']} - {v['label']}",
             "contentType": "IMAGE"}
 
 
@@ -138,6 +152,9 @@ def link_photos(p, pid, vs, sku_to_id, by_alt):
 
 
 def tags_of(p):
+    if p.get("tags_base"):  # non-makeup products: the entry gives its own base tags
+        base = list(p["tags_base"]) + [s.OUT_TAG]
+        return base + [t for t in p.get("tags", []) if t not in base]
     base = ["cat:maquillage", "concern:maquillage", "maquillage", "nouveau", p["rayon"], p["sub"], "stock:sur-commande",
             "sur-commande", s.OUT_TAG]
     return base + [t for t in p.get("tags", []) if t not in base]
@@ -259,7 +276,7 @@ def main():
             errors += 1
             continue
         inp = {
-            "title": p["title"], "handle": p["handle"], "vendor": p["vendor"], "productType": PRODUCT_TYPE, "status": "DRAFT",
+            "title": p["title"], "handle": p["handle"], "vendor": p["vendor"], "productType": p.get("product_type", PRODUCT_TYPE), "status": "DRAFT",
             "tags": tags_of(p), "descriptionHtml": html(p),
             "seo": {"title": p.get("seo_title") or p["title"][:60], "description": p["seo_desc"]},
             "productOptions": [{"name": p.get("option", "Teinte"), "values": [{"name": v["label"]} for v in p["variants"]]}],
