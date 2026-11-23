@@ -15,7 +15,7 @@ import urllib.parse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import amazon_sync as a  # noqa: E402
 
-ALL = {"huda": "huda beauty", "nyx": "nyx professional makeup", "elf": "e.l.f. cosmetics", "essence": "essence cosmetics", "rt": "real techniques"}
+ALL = {"huda": "huda beauty", "nyx": "nyx professional makeup", "elf": "e.l.f. cosmetics", "essence": "essence cosmetics", "rt": "real techniques", "purple": "purple shampoo", "silver": "silver shampoo grey hair", "noyellow": "anti yellow shampoo", "swim": "swimmers chlorine shampoo"}
 BRANDS = {k: v for k, v in ALL.items() if k in os.environ.get("BRAND_KEYS", "huda,nyx,elf,essence").split(",")}
 TERMS = ["", "foundation", "concealer", "setting powder", "powder", "blush", "bronzer", "highlighter", "contour",
          "lipstick", "lip gloss", "lip liner", "lip oil", "lip balm", "eyeliner", "mascara", "eyeshadow palette",
