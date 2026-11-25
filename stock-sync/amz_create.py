@@ -8,6 +8,7 @@ sets the price and puts the product on sale only when stock and delay are right 
 publishes the products to the Online Store channel.
 Photos: the main Amazon photo of each shade (selection "img") is downloaded here, put on a 1600 px pure-white square canvas
 and uploaded to Shopify (staged upload), so nothing is stored in the repository. Same Shopify settings as amazon_sync.py.
+Non-makeup products: an entry may carry "product_type" and "tags_base" (the full tag list without epuise-auto).
 """
 import io
 import json
@@ -138,8 +139,9 @@ def link_photos(p, pid, vs, sku_to_id, by_alt):
 
 
 def tags_of(p):
-    base = ["cat:maquillage", "concern:maquillage", "maquillage", "nouveau", p["rayon"], p["sub"], "stock:sur-commande",
-            "sur-commande", s.OUT_TAG]
+    base = p.get("tags_base") or ["cat:maquillage", "concern:maquillage", "maquillage", "nouveau", p["rayon"], p["sub"],
+                                  "stock:sur-commande", "sur-commande"]
+    base = base + [s.OUT_TAG]
     return base + [t for t in p.get("tags", []) if t not in base]
 
 
@@ -259,7 +261,8 @@ def main():
             errors += 1
             continue
         inp = {
-            "title": p["title"], "handle": p["handle"], "vendor": p["vendor"], "productType": PRODUCT_TYPE, "status": "DRAFT",
+            "title": p["title"], "handle": p["handle"], "vendor": p["vendor"], "productType": p.get("product_type", PRODUCT_TYPE),
+            "status": "DRAFT",
             "tags": tags_of(p), "descriptionHtml": html(p),
             "seo": {"title": p.get("seo_title") or p["title"][:60], "description": p["seo_desc"]},
             "productOptions": [{"name": p.get("option", "Teinte"), "values": [{"name": v["label"]} for v in p["variants"]]}],
