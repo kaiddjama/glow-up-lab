@@ -1,147 +1,100 @@
 [
  {
-  "handle": "fanola-no-yellow-shampooing-violet-anti-jaune-100-ml",
-  "title": "Fanola No Yellow shampooing violet anti-jaune 100 ml",
-  "vendor": "Fanola",
-  "product_type": "Cheveux",
+  "handle": "lemme-purr-gommes-probiotiques-flore-intime-ananas-60",
+  "title": "Lemme Purr gommes probiotiques flore intime, ananas, 60 gommes",
+  "vendor": "Lemme",
+  "product_type": "Compléments & nutrition",
   "tags_base": [
-   "cat:cheveux",
+   "cat:complements",
    "nouveau",
-   "rayon:cheveux-shampoings",
-   "sub:ch-shampoings",
+   "rayon:complements-vitamines",
+   "sub:cp-bienetre",
    "stock:sur-commande",
    "sur-commande"
   ],
-  "rayon": "rayon:cheveux-shampoings",
-  "sub": "sub:ch-shampoings",
-  "weight_g": 130,
+  "rayon": "rayon:complements-vitamines",
+  "sub": "sub:cp-bienetre",
+  "weight_g": 180,
   "option": "Title",
-  "intro": "Un shampooing aux pigments violets qui atténue les reflets jaunes des cheveux gris, blancs, décolorés ou très clairs. Format 100 ml, idéal pour essayer ou emporter. À utiliser une à deux fois par semaine à la place de votre shampooing habituel.",
+  "intro": "Des gommes probiotiques pensées pour les femmes, qui aident à maintenir l'équilibre du pH et de la flore intime, avec de la vitamine C pour les défenses immunitaires. Goût ananas. 2 gommes par jour, soit 30 jours de cure.",
   "points": [
-   "Pour cheveux gris, blancs, décolorés ou mèches",
-   "Neutralise les reflets jaunes",
-   "Formule vegan"
+   "Probiotique clinique SNZ 1969 + vitamine C + ananas",
+   "Formule à base de pectine, sans gélatine, végétarienne",
+   "60 gommes, 2 par jour"
   ],
-  "seo_desc": "Shampooing violet anti-jaune Fanola No Yellow 100 ml pour cheveux gris ou décolorés. Disponible chez Aimé Essentials à Djibouti.",
+  "seo_desc": "Gommes probiotiques Lemme Purr, goût ananas, 60 gommes : équilibre de la flore intime. Disponible chez Aimé Essentials à Djibouti.",
   "variants": [
    {
-    "asin": "B07JQ61ZWB",
+    "asin": "B0BSMJJX3K",
     "label": "Default Title",
-    "aed": 49.6,
-    "img": "https://m.media-amazon.com/images/I/41elJHrKb0L._AC_SL1030_.jpg"
+    "aed": 126.8,
+    "img": "https://m.media-amazon.com/images/I/710fZNx9xAL._AC_SL1500_.jpg"
    }
   ]
  },
  {
-  "handle": "loreal-elvive-color-protect-shampooing-violet-200-ml",
-  "title": "L'Oréal Paris Elvive Color Protect shampooing violet 200 ml",
-  "vendor": "L'Oréal Paris",
-  "product_type": "Cheveux",
+  "handle": "lemme-debloat-gommes-digestives-probiotiques-mure-60",
+  "title": "Lemme Debloat gommes digestives probiotiques et prébiotiques, mûre, 60 gommes",
+  "vendor": "Lemme",
+  "product_type": "Compléments & nutrition",
   "tags_base": [
-   "cat:cheveux",
+   "cat:complements",
    "nouveau",
-   "rayon:cheveux-shampoings",
-   "sub:ch-shampoings",
+   "rayon:complements-vitamines",
+   "sub:cp-bienetre",
    "stock:sur-commande",
    "sur-commande"
   ],
-  "rayon": "rayon:cheveux-shampoings",
-  "sub": "sub:ch-shampoings",
-  "weight_g": 240,
+  "rayon": "rayon:complements-vitamines",
+  "sub": "sub:cp-bienetre",
+  "weight_g": 180,
   "option": "Title",
-  "intro": "Un shampooing violet pour neutraliser les reflets jaunes et cuivrés des cheveux blonds, méchés, gris ou argentés, tout en les nourrissant. À utiliser une fois par semaine en complément de votre routine habituelle.",
+  "intro": "Des gommes digestives qui associent deux probiotiques étudiés cliniquement et un prébiotique pour aider à réduire les ballonnements et soutenir le confort digestif. Goût mûre, sans réfrigération. 2 gommes par jour, soit 30 jours de cure.",
   "points": [
-   "Pour cheveux blonds, méchés, gris ou argentés",
-   "Neutralise les reflets jaunes et cuivrés",
-   "1 fois par semaine"
+   "2 probiotiques étudiés cliniquement (3 milliards d'UFC) + prébiotique",
+   "Formule à base de pectine, sans gélatine, végétarienne",
+   "60 gommes, 2 par jour"
   ],
-  "seo_desc": "Shampooing violet L'Oréal Paris Elvive Color Protect 200 ml contre les reflets jaunes. Disponible chez Aimé Essentials à Djibouti.",
+  "seo_desc": "Gommes digestives Lemme Debloat, probiotiques et prébiotique, goût mûre, 60 gommes. Disponible chez Aimé Essentials à Djibouti.",
   "variants": [
    {
-    "asin": "B08TJ9LYF5",
+    "asin": "B0BHJ55LNQ",
     "label": "Default Title",
-    "aed": 10.8,
-    "img": "https://m.media-amazon.com/images/I/71NZFseY+BL._AC_SL1500_.jpg"
+    "aed": 147.7,
+    "img": "https://m.media-amazon.com/images/I/71ACEN7i0NL._AC_SL1500_.jpg"
    }
   ]
  },
  {
-  "handle": "hask-blonde-care-shampooing-violet-tonifiant-355-ml",
-  "title": "Hask Blonde Care shampooing violet tonifiant 355 ml",
-  "vendor": "Hask",
-  "product_type": "Cheveux",
+  "handle": "lemme-focus-gommes-concentration-memoire-fraise-50",
+  "title": "Lemme Focus gommes concentration et mémoire, fraise, 50 gommes",
+  "vendor": "Lemme",
+  "product_type": "Compléments & nutrition",
   "tags_base": [
-   "cat:cheveux",
+   "cat:complements",
    "nouveau",
-   "rayon:cheveux-shampoings",
-   "sub:ch-shampoings",
+   "rayon:complements-vitamines",
+   "sub:cp-bienetre",
    "stock:sur-commande",
    "sur-commande"
   ],
-  "rayon": "rayon:cheveux-shampoings",
-  "sub": "sub:ch-shampoings",
-  "weight_g": 420,
+  "rayon": "rayon:complements-vitamines",
+  "sub": "sub:cp-bienetre",
+  "weight_g": 160,
   "option": "Title",
-  "intro": "Un shampooing violet qui nettoie en douceur et neutralise les reflets jaunes et cuivrés pour des cheveux plus clairs et plus lumineux. Enrichi en huile de sureau et en vitamine C. Grand format de 355 ml.",
+  "intro": "Des gommes pour soutenir la concentration et la santé du cerveau, à base de citicoline Cognizin, de champignon crinière de lion et de vitamine B12. Sans caféine, goût fraise. 2 gommes par jour, soit 25 jours de cure.",
   "points": [
-   "Neutralise les reflets jaunes et cuivrés",
-   "Sans sulfates, sans parabènes, sans silicones",
-   "Formule vegan, adaptée aux cheveux colorés"
+   "Citicoline Cognizin + crinière de lion + vitamine B12",
+   "Formule à base de pectine, sans gélatine, sans caféine",
+   "50 gommes, 2 par jour"
   ],
-  "seo_desc": "Shampooing violet Hask Blonde Care 355 ml, sans sulfates. Disponible chez Aimé Essentials à Djibouti.",
+  "seo_desc": "Gommes Lemme Focus concentration et mémoire, goût fraise, 50 gommes, sans caféine. Disponible chez Aimé Essentials à Djibouti.",
   "variants": [
    {
-    "asin": "B09SRMYYTN",
+    "asin": "B0BHJ2JLRW",
     "label": "Default Title",
-    "aed": 31.08,
-    "img": "https://m.media-amazon.com/images/I/71tyMeB4MZL._AC_SL1500_.jpg"
-   }
-  ]
- },
- {
-  "handle": "pantene-after-sun-shampooing-purifiant-anti-chlore-500-ml",
-  "title": "Pantene After Sun shampooing purifiant sel et chlore 500 ml",
-  "vendor": "Pantene",
-  "product_type": "Cheveux",
-  "tags_base": [
-   "cat:cheveux",
-   "nouveau",
-   "rayon:cheveux-shampoings",
-   "sub:ch-shampoings",
-   "stock:sur-commande",
-   "sur-commande"
-  ],
-  "rayon": "rayon:cheveux-shampoings",
-  "sub": "sub:ch-shampoings",
-  "weight_g": 580,
-  "option": "Title",
-  "intro": "Un shampooing purifiant à utiliser après la piscine, la plage ou le soleil. Sa formule légère élimine le chlore, le sel, le sable et les résidus de produits, pour des cheveux propres, doux et frais. À alterner avec un shampooing violet pour les cheveux gris ou clairs.",
-  "points": [
-   "Élimine chlore, sel, sable et résidus",
-   "Formule légère qui n'alourdit pas",
-   "Parfum frais"
-  ],
-  "seo_desc": "Shampooing après-soleil Pantene qui élimine le chlore et le sel, 500 ml. Disponible chez Aimé Essentials à Djibouti.",
-  "variants": [
-   {
-    "asin": "B0GFW8TC4F",
-    "label": "Default Title",
-    "aed": 33.29,
-    "img": "https://m.media-amazon.com/images/I/61q0XSCszsL._AC_SL1500_.jpg",
-    "crop": [
-     402,
-     0,
-     945,
-     1500
-    ],
-    "wipe": [
-     [
-      380,
-      400,
-      428,
-      1000
-     ]
-    ]
+    "aed": 117.96,
+    "img": "https://m.media-amazon.com/images/I/71fskbxYuNL._AC_SL1500_.jpg"
    }
   ]
  }
