@@ -97,5 +97,38 @@
     "img": "https://m.media-amazon.com/images/I/71fskbxYuNL._AC_SL1500_.jpg"
    }
   ]
+ },
+ {
+  "handle": "lemme-glow-gommes-collagene-biotine-cheveux-peau-ongles-peche-60",
+  "title": "Lemme Glow gommes collagène et biotine cheveux, peau et ongles, pêche, 60 gommes",
+  "vendor": "Lemme",
+  "product_type": "Compléments & nutrition",
+  "tags_base": [
+   "cat:complements",
+   "nouveau",
+   "rayon:complements-vitamines",
+   "sub:cp-bienetre",
+   "stock:sur-commande",
+   "sur-commande"
+  ],
+  "rayon": "rayon:complements-vitamines",
+  "sub": "sub:cp-bienetre",
+  "weight_g": 160,
+  "option": "Title",
+  "intro": "Des gommes beauté au collagène et à la biotine, enrichies en zinc, oligo-éléments et vitamines A, C et E, pour prendre soin des cheveux, de la peau et des ongles de l'intérieur. Goût pêche, sans produits laitiers ni gluten. 2 gommes par jour, soit 30 jours de cure.",
+  "points": [
+   "Collagène + biotine + zinc + vitamines A, C et E",
+   "Sans gluten, sans produits laitiers",
+   "60 gommes, 2 par jour"
+  ],
+  "seo_desc": "Gommes Lemme Glow collagène et biotine pour cheveux, peau et ongles, goût pêche, 60 gommes. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0BSM4WRQY",
+    "label": "Default Title",
+    "aed": 143.55,
+    "img": "https://m.media-amazon.com/images/I/71s7WxxMpjL._AC_SL1500_.jpg"
+   }
+  ]
  }
 ]
