@@ -130,5 +130,38 @@
     "img": "https://m.media-amazon.com/images/I/71s7WxxMpjL._AC_SL1500_.jpg"
    }
   ]
+ },
+ {
+  "handle": "lemme-sleep-gommes-sommeil-melatonine-baies-60",
+  "title": "Lemme Sleep gommes sommeil à la mélatonine, baies, 60 gommes",
+  "vendor": "Lemme",
+  "product_type": "Compléments & nutrition",
+  "tags_base": [
+   "cat:complements",
+   "nouveau",
+   "rayon:complements-vitamines",
+   "sub:cp-bienetre",
+   "stock:sur-commande",
+   "sur-commande"
+  ],
+  "rayon": "rayon:complements-vitamines",
+  "sub": "sub:cp-bienetre",
+  "weight_g": 180,
+  "option": "Title",
+  "intro": "Des gommes du soir pour accompagner l'endormissement, avec 5 mg de mélatonine, du magnésium, de la L-théanine, de la camomille, de la lavande et du sureau. Goût baies, à base de pectine, sans gélatine. 2 gommes avant le coucher, soit 30 jours de cure.",
+  "points": [
+   "Mélatonine 5 mg + magnésium + L-théanine + camomille + lavande",
+   "Formule à base de pectine, sans gélatine, végétarienne",
+   "60 gommes, 2 par soir"
+  ],
+  "seo_desc": "Gommes Lemme Sleep à la mélatonine, magnésium et camomille, goût baies, 60 gommes. Disponible chez Aimé Essentials à Djibouti.",
+  "variants": [
+   {
+    "asin": "B0BL79D45P",
+    "label": "Default Title",
+    "aed": 150.0,
+    "img": "https://m.media-amazon.com/images/I/71gk3NDG6xL._AC_SL1500_.jpg"
+   }
+  ]
  }
 ]
